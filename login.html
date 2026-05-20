@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CasterBPO — Acesso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;--g400:#3d8a5a;--g300:#5aaa76;
+  --d700:#b37f00;--d600:#c99520;--d500:#d4a832;--d400:#e0bc55;--d300:#e8cc7a;--d200:#f0dc9e;
+  --n900:#111418;--n100:#dde1e4;--n050:#f4f5f6;
+  --vermelho:#c0392b;
+  --fonte-d:'Cormorant Garamond',serif;
+  --fonte-b:'DM Sans',sans-serif;
+  --r-md:10px;--r-lg:14px;--r-xl:20px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:var(--fonte-b);
+  background:var(--g900);
+  color:#fff;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(46,106,68,.3) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(180,130,0,.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 85%, rgba(11,31,19,.9) 0%, transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrapper{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:420px;
+  padding:1.5rem;
+  animation:fadeUp .5s ease both;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* LOGO */
+.logo-area{
+  text-align:center;
+  margin-bottom:2rem;
+}
+.logo-img-wrap{
+  width:110px;
+  height:110px;
+  border-radius:22px;
+  background:linear-gradient(135deg,var(--g700),var(--g600));
+  border:1px solid rgba(201,168,76,.2);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  margin-bottom:1.2rem;
+}
+.logo-img-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  padding:10px;
+}
+.logo-nome{
+  font-family:var(--fonte-d);
+  font-size:2rem;
+  font-weight:700;
+  color:var(--d300);
+  letter-spacing:.03em;
+  line-height:1;
+}
+.logo-nome em{
+  font-style:normal;
+  color:rgba(255,255,255,.85);
+}
+.logo-sub{
+  font-size:11px;
+  color:rgba(255,255,255,.35);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  margin-top:6px;
+}
+
+/* CARD */
+.card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--r-xl);
+  padding:2rem;
+  backdrop-filter:blur(12px);
+  box-shadow:0 16px 48px rgba(0,0,0,.3);
+}
+.card-titulo{
+  font-family:var(--fonte-d);
+  font-size:1.3rem;
+  font-weight:600;
+  color:#fff;
+  margin-bottom:.3rem;
+}
+.card-sub{
+  font-size:12px;
+  color:rgba(255,255,255,.4);
+  margin-bottom:1.5rem;
+}
+
+/* FORM */
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:1rem;
+}
+.form-label{
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:rgba(255,255,255,.45);
+}
+.form-input{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r-md);
+  padding:11px 14px;
+  font-size:13px;
+  font-family:var(--fonte-b);
+  color:#fff;
+  outline:none;
+  transition:border-color .2s, background .2s;
+  width:100%;
+}
+.form-input::placeholder{color:rgba(255,255,255,.2);}
+.form-input:focus{
+  border-color:rgba(201,168,76,.5);
+  background:rgba(255,255,255,.09);
+  box-shadow:0 0 0 3px rgba(201,168,76,.08);
+}
+
+/* ESQUECI SENHA */
+.link-esqueci{
+  display:block;
+  text-align:right;
+  font-size:11px;
+  color:var(--d300);
+  text-decoration:none;
+  margin-top:-6px;
+  margin-bottom:1.2rem;
+  opacity:.8;
+  cursor:pointer;
+  transition:opacity .15s;
+}
+.link-esqueci:hover{opacity:1;}
+
+/* BOTÃO */
+.btn-entrar{
+  width:100%;
+  background:linear-gradient(135deg,var(--g600),var(--g700));
+  border:1px solid rgba(201,168,76,.2);
+  border-radius:var(--r-md);
+  padding:13px;
+  font-size:14px;
+  font-weight:600;
+  font-family:var(--fonte-b);
+  color:#fff;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  letter-spacing:.02em;
+}
+.btn-entrar:hover{
+  background:linear-gradient(135deg,var(--g500),var(--g600));
+  border-color:rgba(201,168,76,.4);
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(0,0,0,.3);
+}
+.btn-entrar:active{transform:translateY(0);}
+.btn-entrar:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ERRO */
+.msg-erro{
+  background:rgba(192,57,43,.15);
+  border:1px solid rgba(192,57,43,.3);
+  border-radius:var(--r-md);
+  padding:10px 14px;
+  font-size:12px;
+  color:#ff8a7a;
+  margin-bottom:1rem;
+  display:none;
+}
+.msg-erro.visivel{display:block;}
+
+/* RECUPERAR SENHA */
+.rec-info{
+  font-size:12px;
+  color:rgba(255,255,255,.4);
+  text-align:center;
+  margin-top:1.2rem;
+  line-height:1.6;
+}
+
+/* DIVIDER */
+.divider{
+  border:none;
+  border-top:1px solid rgba(255,255,255,.07);
+  margin:1.5rem 0;
+}
+
+/* RODAPÉ */
+.rodape{
+  text-align:center;
+  margin-top:1.5rem;
+  font-size:11px;
+  color:rgba(255,255,255,.2);
+  letter-spacing:.05em;
+}
+
+/* SPINNER */
+.spinner{
+  width:16px;height:16px;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  display:none;
+}
+.btn-entrar.carregando .spinner{display:block;}
+.btn-entrar.carregando .btn-texto{display:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TELA RECUPERAÇÃO */
+.tela{display:none;}
+.tela.ativa{display:block;}
+</style>
+</head>
+<body>
+
+
+  <!-- LOGO -->
+  <div class="logo-area">
+     <img src="https://lh3.googleusercontent.com/d/1WPilrYCUkiIMUO_Uc0Ln4rlZsazhIK5i" alt="CasterBPO" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-family:var(--fonte-d);font-size:2rem;font-weight:700;color:var(--d300)\'>C</span>'">
+  
+   
+  </div>
+
+  <!-- TELA: LOGIN -->
+  <div class="tela ativa" id="tela-login">
+    <div class="card">
+      <div class="card-titulo">Bem-vindo</div>
+      <div class="card-sub">Entre com suas credenciais de acesso</div>
+
+      <div class="msg-erro" id="erro-login"></div>
+
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" id="login-email" type="email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input class="form-input" id="login-senha" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <span class="link-esqueci" onclick="mostrarRecuperacao()">Esqueci minha senha</span>
+
+      <button class="btn-entrar" id="btn-login" onclick="fazerLogin()">
+        <div class="spinner"></div>
+        <span class="btn-texto">Entrar no sistema</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TELA: RECUPERAÇÃO DE SENHA -->
+  <div class="tela" id="tela-recuperacao">
+    <div class="card">
+      <div class="card-titulo">Recuperar senha</div>
+      <div class="card-sub">Enviaremos um link para redefinir sua senha</div>
+
+      <div class="msg-erro" id="erro-rec"></div>
+
+      <div class="form-group">
+        <label class="form-label">E-mail cadastrado</label>
+        <input class="form-input" id="rec-email" type="email" placeholder="seu@email.com">
+      </div>
+
+      <button class="btn-entrar" id="btn-rec" onclick="recuperarSenha()">
+        <div class="spinner"></div>
+        <span class="btn-texto">Enviar link de recuperação</span>
+      </button>
+
+      <div class="rec-info" id="msg-rec-ok" style="display:none;color:var(--d300);">
+        ✓ Link enviado! Verifique sua caixa de entrada.
+      </div>
+
+      <hr class="divider">
+      <span class="link-esqueci" style="text-align:center;display:block;" onclick="mostrarLogin()">← Voltar ao login</span>
+    </div>
+  </div>
+
+  <div class="rodape">© 2026 CasterBPO · Todos os direitos reservados</div>
+</div>
+
+<script>
+// ── Supabase ──
+const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// Redireciona se já estiver logado
+supa.auth.getSession().then(({data:{session}})=>{
+  if(session) redirecionar(session.user);
+});
+
+// ── Alternar telas ──
+function mostrarLogin(){
+  document.getElementById('tela-login').classList.add('ativa');
+  document.getElementById('tela-recuperacao').classList.remove('ativa');
+}
+function mostrarRecuperacao(){
+  document.getElementById('tela-login').classList.remove('ativa');
+  document.getElementById('tela-recuperacao').classList.add('ativa');
+}
+
+// ── Login ──
+async function fazerLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const btn   = document.getElementById('btn-login');
+  const erro  = document.getElementById('erro-login');
+
+  erro.classList.remove('visivel');
+
+  if(!email || !senha){
+    mostrarErro(erro, 'Preencha e-mail e senha.');
+    return;
+  }
+
+  btn.classList.add('carregando');
+  btn.disabled = true;
+
+  const { data, error } = await supa.auth.signInWithPassword({ email, password: senha });
+
+  btn.classList.remove('carregando');
+  btn.disabled = false;
+
+  if(error){
+    mostrarErro(erro, traduzirErro(error.message));
+    return;
+  }
+
+  redirecionar(data.user);
+}
+
+// ── Recuperação de senha ──
+async function recuperarSenha(){
+  const email = document.getElementById('rec-email').value.trim();
+  const btn   = document.getElementById('btn-rec');
+  const erro  = document.getElementById('erro-rec');
+
+  erro.classList.remove('visivel');
+
+  if(!email){
+    mostrarErro(erro, 'Informe o e-mail cadastrado.');
+    return;
+  }
+
+  btn.classList.add('carregando');
+  btn.disabled = true;
+
+  const { error } = await supa.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://casterbpo.github.io/sistema/login.html'
+  });
+
+  btn.classList.remove('carregando');
+  btn.disabled = false;
+
+  if(error){
+    mostrarErro(erro, traduzirErro(error.message));
+    return;
+  }
+
+  document.getElementById('msg-rec-ok').style.display = 'block';
+  btn.style.display = 'none';
+}
+
+// ── Redirecionar após login ──
+async function redirecionar(user){
+  // Busca a empresa vinculada ao usuário
+  const { data: usuario } = await supa
+    .from('usuarios')
+    .select('empresa_id, papel')
+    .eq('id', user.id)
+    .single();
+
+  if(usuario){
+    sessionStorage.setItem('empresa_ativa', usuario.empresa_id);
+    sessionStorage.setItem('usuario_papel', usuario.papel);
+    sessionStorage.setItem('usuario_email', user.email);
+  }
+
+  window.location.href = 'caster-modulo1-painel.html';
+}
+
+// ── Helpers ──
+function mostrarErro(el, msg){
+  el.textContent = msg;
+  el.classList.add('visivel');
+}
+
+function traduzirErro(msg){
+  if(msg.includes('Invalid login')) return 'E-mail ou senha incorretos.';
+  if(msg.includes('Email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+  if(msg.includes('Too many requests')) return 'Muitas tentativas. Aguarde alguns minutos.';
+  return 'Erro ao conectar. Tente novamente.';
+}
+
+// Enter para logar
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){
+    if(document.getElementById('tela-login').classList.contains('ativa')) fazerLogin();
+    else recuperarSenha();
+  }
+});
+</script>
+</body>
+</html>
