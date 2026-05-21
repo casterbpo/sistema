@@ -1720,13 +1720,6 @@ body {
 
 <script>
 // ╔══════════════════════════════════════════════════════╗
-// Proteção de rota
-(async () => {
-  const { data: { session } } = await supa.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  const empresa_id = sessionStorage.getItem('empresa_ativa');
-  if (!empresa_id) { window.location.href = 'index.html'; return; }
-})();
   //   ESTRUTURA DO BANCO DE DADOS (localStorage)
 //   Chave: caster_bpo_v2
 //   DB = {
