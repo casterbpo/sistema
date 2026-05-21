@@ -414,7 +414,7 @@ async function redirecionar(user){
     .single();
 
   if(usuario){
-    sessionStorage.setItem('empresa_ativa', usuario.empresa_id);
+    if(usuario.empresa_id) sessionStorage.setItem('empresa_ativa', usuario.empresa_id);
     sessionStorage.setItem('usuario_papel', usuario.papel);
     sessionStorage.setItem('usuario_email', user.email);
   }
