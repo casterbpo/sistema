@@ -1780,7 +1780,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   if (papel !== 'admin') {
     const empresa_id = sessionStorage.getItem('empresa_ativa');
     if (!empresa_id) { window.location.href = 'index.html'; return; }
-    // Cliente entra direto na empresa dele
+    init();
     entrarEmpresa(empresa_id);
   }
 })();
@@ -2590,7 +2590,8 @@ document.querySelectorAll('.overlay').forEach(ov => {
 });
 
 // ── START ──────────────────────────────────────────────
-init();
+const papel = sessionStorage.getItem('usuario_papel');
+if (papel === 'admin') init();
 </script>
 </body>
 </html>
