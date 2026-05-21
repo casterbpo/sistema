@@ -329,7 +329,14 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // Redireciona se já estiver logado
 supa.auth.getSession().then(({data:{session}})=>{
-  if(session) redirecionar(session.user);
+  if(session){
+    // Se já tem papel gravado, vai direto sem buscar no banco de novo
+    if(localStorage.getItem('usuario_papel')){
+      window.location.href = 'caster-modulo1-painel.html';
+    } else {
+      redirecionar(session.user);
+    }
+  }
 });
 
 // ── Alternar telas ──
