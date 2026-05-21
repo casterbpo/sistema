@@ -1777,6 +1777,29 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   if (!session) { window.location.href = 'index.html'; return; }
 
   const papel = localStorage.getItem('usuario_papel');
+  
+  // Se papel ainda não foi gravado, busca direto do Supabase
+  if (!papel) {
+    const { data: usuario } = await supa
+      .from('usuarios')
+      .select('empresa_id, papel')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (!usuario) { window.location.href = 'index.html'; return; }
+    
+    if(usuario.empresa_id) localStorage.setItem('empresa_ativa', usuario.empresa_id);
+    localStorage.setItem('usuario_papel', usuario.papel);
+    
+    if (usuario.papel === 'admin') {
+      init();
+    } else {
+      init();
+      entrarEmpresa(usuario.empresa_id);
+    }
+    return;
+  }
+
   if (papel === 'admin') {
     init();
   } else {
