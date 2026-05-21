@@ -1776,9 +1776,9 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   const { data: { session } } = await supa.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
 
-  const papel = sessionStorage.getItem('usuario_papel');
+  const papel = localStorage.getItem('usuario_papel');
   if (papel !== 'admin') {
-    const empresa_id = sessionStorage.getItem('empresa_ativa');
+    const empresa_id = localStorage.getItem('empresa_ativa');
     if (!empresa_id) { window.location.href = 'index.html'; return; }
     init();
     entrarEmpresa(empresa_id);
@@ -2590,7 +2590,7 @@ document.querySelectorAll('.overlay').forEach(ov => {
 });
 
 // ── START ──────────────────────────────────────────────
-const papel = sessionStorage.getItem('usuario_papel');
+const papel = localStorage.getItem('usuario_papel');
 if (papel === 'admin') init();
 </script>
 </body>
