@@ -414,9 +414,9 @@ async function redirecionar(user){
     .single();
 
   if(usuario){
-    if(usuario.empresa_id) sessionStorage.setItem('empresa_ativa', usuario.empresa_id);
-    sessionStorage.setItem('usuario_papel', usuario.papel);
-    sessionStorage.setItem('usuario_email', user.email);
+    if(usuario.empresa_id) localStorage.setItem('empresa_ativa', usuario.empresa_id);
+localStorage.setItem('usuario_papel', usuario.papel);
+localStorage.setItem('usuario_email', user.email);
   }
 
   window.location.href = 'caster-modulo1-painel.html';
