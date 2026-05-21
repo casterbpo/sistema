@@ -1736,6 +1736,28 @@ body {
 // ╚══════════════════════════════════════════════════════╝
 
 const CHAVE_DB = 'caster_bpo_v2';
+function carregarDB() {
+  try {
+    const s = localStorage.getItem(CHAVE_DB);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return estruturaInicial();
+}
+
+function estruturaInicial() {
+  return {
+    empresas: [],
+    bancos: {},
+    lancamentos: {},
+    categorias: {},
+    centrosCusto: {},
+    fornecedores: {}
+  };
+}
+
+function salvarDB() {
+  localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
+}
 let DB = carregarDB();
 let empresaAtiva = null;
 let periodoAtivo = 'mes-atual';
