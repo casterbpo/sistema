@@ -1777,14 +1777,16 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   if (!session) { window.location.href = 'index.html'; return; }
 
   const papel = localStorage.getItem('usuario_papel');
-  if (papel !== 'admin') {
+  if (papel === 'admin') {
+    init();
+  } else {
     const empresa_id = localStorage.getItem('empresa_ativa');
     if (!empresa_id) { window.location.href = 'index.html'; return; }
     init();
     entrarEmpresa(empresa_id);
   }
 })();
-
+   
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
@@ -2590,8 +2592,6 @@ document.querySelectorAll('.overlay').forEach(ov => {
 });
 
 // ── START ──────────────────────────────────────────────
-const papel = localStorage.getItem('usuario_papel');
-if (papel === 'admin') init();
 </script>
 </body>
 </html>
