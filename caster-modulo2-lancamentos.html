@@ -7,13 +7,6 @@
 <title>CasterBPO — Lançamentos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-// Proteção de rota
-(async () => {
-  const { data: { session } } = await supa.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  const empresa_id = sessionStorage.getItem('empresa_ativa');
-  if (!empresa_id) { window.location.href = 'index.html'; return; }
-})();
 <style>
 :root {
   --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;
@@ -738,7 +731,14 @@ th.sort:hover{color:var(--d300) !important;}
 // ══════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════
-const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+// Proteção de rota
+(async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  const empresa_id = sessionStorage.getItem('empresa_ativa');
+  if (!empresa_id) { window.location.href = 'index.html'; return; }
+})();
+  const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
