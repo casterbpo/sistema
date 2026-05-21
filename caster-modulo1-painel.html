@@ -1775,8 +1775,14 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 (async () => {
   const { data: { session } } = await supa.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
-  const empresa_id = sessionStorage.getItem('empresa_ativa');
-  if (!empresa_id) { window.location.href = 'index.html'; return; }
+
+  const papel = sessionStorage.getItem('usuario_papel');
+  if (papel !== 'admin') {
+    const empresa_id = sessionStorage.getItem('empresa_ativa');
+    if (!empresa_id) { window.location.href = 'index.html'; return; }
+    // Cliente entra direto na empresa dele
+    entrarEmpresa(empresa_id);
+  }
 })();
 
 function uid() {
