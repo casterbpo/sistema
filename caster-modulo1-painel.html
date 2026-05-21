@@ -8,13 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-// Proteção de rota
-(async () => {
-  const { data: { session } } = await supa.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  const empresa_id = sessionStorage.getItem('empresa_ativa');
-  if (!empresa_id) { window.location.href = 'index.html'; return; }
-})();
+
 <style>
 /* ═══════════════════════════════════════
    TOKENS & RESET
@@ -1726,7 +1720,14 @@ body {
 
 <script>
 // ╔══════════════════════════════════════════════════════╗
-//   ESTRUTURA DO BANCO DE DADOS (localStorage)
+// Proteção de rota
+(async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  const empresa_id = sessionStorage.getItem('empresa_ativa');
+  if (!empresa_id) { window.location.href = 'index.html'; return; }
+})();
+  //   ESTRUTURA DO BANCO DE DADOS (localStorage)
 //   Chave: caster_bpo_v2
 //   DB = {
 //     empresas: [ { id, razao, fantasia, cnpj, segmento, responsavel, email, criadaEm } ],
