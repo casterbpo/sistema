@@ -1756,6 +1756,14 @@ const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
+// Proteção de rota
+(async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  const empresa_id = sessionStorage.getItem('empresa_ativa');
+  if (!empresa_id) { window.location.href = 'index.html'; return; }
+})();
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
