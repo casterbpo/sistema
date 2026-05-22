@@ -1762,18 +1762,20 @@ async function carregarDB(){
   try{
     const eid=sessionStorage.getItem('empresa_ativa');
     if(!eid) return;
-    const [bancos,cats,centros,forn,lancs]=await Promise.all([
-      supa.from('bancos').select('*').eq('empresa_id',eid),
-      supa.from('categorias').select('*').eq('empresa_id',eid),
-      supa.from('centros_custo').select('*').eq('empresa_id',eid),
-      supa.from('fornecedores').select('*').eq('empresa_id',eid),
-      supa.from('lancamentos').select('*').eq('empresa_id',eid),
-    ]);
-    DB.bancos[eid]       = bancos.data  ||[];
-    DB.categorias[eid]   = cats.data    ||[];
-    DB.centrosCusto[eid] = centros.data ||[];
-    DB.fornecedores[eid] = forn.data    ||[];
-    DB.lancamentos[eid]  = lancs.data   ||[];
+    const [empresas, bancos,cats,centros,forn,lancs]=await Promise.all([
+  supa.from('empresas').select('*'),
+  supa.from('bancos').select('*').eq('empresa_id',eid),
+  supa.from('categorias').select('*').eq('empresa_id',eid),
+  supa.from('centros_custo').select('*').eq('empresa_id',eid),
+  supa.from('fornecedores').select('*').eq('empresa_id',eid),
+  supa.from('lancamentos').select('*').eq('empresa_id',eid),
+]);
+DB.empresas          = empresas.data ||[];
+DB.bancos[eid]       = bancos.data   ||[];
+DB.categorias[eid]   = cats.data     ||[];
+DB.centrosCusto[eid] = centros.data  ||[];
+DB.fornecedores[eid] = forn.data     ||[];
+DB.lancamentos[eid]  = lancs.data    ||[];
     localStorage.setItem(CHAVE_DB,JSON.stringify(DB));
   }catch(e){
     console.warn('Supabase indisponível, usando cache local:',e);
