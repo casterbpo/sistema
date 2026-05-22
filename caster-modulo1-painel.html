@@ -1719,6 +1719,9 @@ body {
 // ╚══════════════════════════════════════════════════════╝
 
 const CHAVE_DB = 'caster_bpo_v2';
+const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 let DB = carregarDB();
 let empresaAtiva = null;
 let periodoAtivo = 'mes-atual';
@@ -1751,6 +1754,30 @@ function estruturaInicial() {
 
 function salvarDB() {
   localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
+}
+
+async function carregarDB(){
+  const cache=localStorage.getItem(CHAVE_DB);
+  if(cache) DB=JSON.parse(cache);
+  try{
+    const eid=sessionStorage.getItem('empresa_ativa');
+    if(!eid) return;
+    const [bancos,cats,centros,forn,lancs]=await Promise.all([
+      supa.from('bancos').select('*').eq('empresa_id',eid),
+      supa.from('categorias').select('*').eq('empresa_id',eid),
+      supa.from('centros_custo').select('*').eq('empresa_id',eid),
+      supa.from('fornecedores').select('*').eq('empresa_id',eid),
+      supa.from('lancamentos').select('*').eq('empresa_id',eid),
+    ]);
+    DB.bancos[eid]       = bancos.data  ||[];
+    DB.categorias[eid]   = cats.data    ||[];
+    DB.centrosCusto[eid] = centros.data ||[];
+    DB.fornecedores[eid] = forn.data    ||[];
+    DB.lancamentos[eid]  = lancs.data   ||[];
+    localStorage.setItem(CHAVE_DB,JSON.stringify(DB));
+  }catch(e){
+    console.warn('Supabase indisponível, usando cache local:',e);
+  }
 }
 
 function uid() {
@@ -2581,7 +2608,7 @@ document.querySelectorAll('.overlay').forEach(ov => {
 });
 
 // ── START ──────────────────────────────────────────────
-init();
+carregarDB().then(()=>inicializar());
 </script>
 </body>
 </html>
