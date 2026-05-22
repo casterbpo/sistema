@@ -1269,7 +1269,7 @@ td.mono{font-family:var(--fonte-m);}
 <script>
 /* ═══ DB ═══ */
 const CHAVE='caster_bpo_v2';
-let DB=JSON.parse(localStorage.getItem(CHAVE)||'null')||{empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
+let DB=JSON.parse(/* substituir por carregarDB() */||'null')||{empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
 function salvarDB(){localStorage.setItem(CHAVE,JSON.stringify(DB));}
 function fmtM(v,abs=true){const x=abs?Math.abs(v):v;return'R$ '+x.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtDt(d){if(!d)return'—';const[y,m,dia]=d.split('-');return`${dia}/${m}/${y}`;}

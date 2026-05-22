@@ -486,7 +486,7 @@ if (window.self !== window.top) {
 }
 
 const CHAVE='caster_bpo_v2';
-let DB=JSON.parse(localStorage.getItem(CHAVE)||'null')||{empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
+let DB=JSON.parse(/* substituir por carregarDB() */||'null')||{empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
 function salvarDB(){localStorage.setItem(CHAVE,JSON.stringify(DB));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function fmtM(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}

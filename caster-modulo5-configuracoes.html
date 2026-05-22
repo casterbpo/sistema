@@ -640,14 +640,35 @@ const CHAVE = 'caster_bpo_v2';
 const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-
-let DB = JSON.parse(localStorage.getItem(CHAVE) || 'null') || {
+let DB = {
   empresas: [], bancos: {}, lancamentos: {}, categorias: {},
   centrosCusto: {}, fornecedores: {}, fornecedoresObj: {}, orcamentos: {}
 };
 
 function salvarDB() {
   localStorage.setItem(CHAVE, JSON.stringify(DB));
+}
+
+async function carregarDB() {
+  const cache = localStorage.getItem(CHAVE);
+  if (cache) DB = JSON.parse(cache);
+  try {
+    const eid = sessionStorage.getItem('empresa_ativa');
+    if (!eid) return;
+    const [bancos, cats, centros, forn] = await Promise.all([
+      supa.from('bancos').select('*').eq('empresa_id', eid),
+      supa.from('categorias').select('*').eq('empresa_id', eid),
+      supa.from('centros_custo').select('*').eq('empresa_id', eid),
+      supa.from('fornecedores').select('*').eq('empresa_id', eid),
+    ]);
+    DB.bancos[eid]       = bancos.data  || [];
+    DB.categorias[eid]   = cats.data    || [];
+    DB.centrosCusto[eid] = centros.data || [];
+    DB.fornecedores[eid] = forn.data    || [];
+    localStorage.setItem(CHAVE, JSON.stringify(DB));
+  } catch(e) {
+    console.warn('Supabase indisponível, usando cache local:', e);
+  }
   // Sincroniza com Supabase em background (sem travar a UI)
   sincronizarComSupabase();
 }
@@ -735,6 +756,7 @@ let editandoBanco=null,editandoCat=null,editandoCC=null,editandoForn=null;
 async function init() {
   const eid = sessionStorage.getItem('empresa_ativa');
   if (!eid && DB.empresas.length) sessionStorage.setItem('empresa_ativa', DB.empresas[0].id);
+  await carregarDB();
 
   // Carrega do cache local primeiro (UI rápida)
   const eidAtual = sessionStorage.getItem('empresa_ativa');
