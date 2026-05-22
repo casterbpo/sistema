@@ -486,8 +486,35 @@ if (window.self !== window.top) {
 }
 
 const CHAVE='caster_bpo_v2';
-let DB=JSON.parse(/* substituir por carregarDB() */||'null')||{empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
+const SUPA_URL='https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+let DB={empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
 function salvarDB(){localStorage.setItem(CHAVE,JSON.stringify(DB));}
+
+async function carregarDB(){
+  const cache=localStorage.getItem(CHAVE);
+  if(cache) DB=JSON.parse(cache);
+  try{
+    const eid=sessionStorage.getItem('empresa_ativa');
+    if(!eid) return;
+    const [bancos,cats,centros,forn,lancs]=await Promise.all([
+      supa.from('bancos').select('*').eq('empresa_id',eid),
+      supa.from('categorias').select('*').eq('empresa_id',eid),
+      supa.from('centros_custo').select('*').eq('empresa_id',eid),
+      supa.from('fornecedores').select('*').eq('empresa_id',eid),
+      supa.from('lancamentos').select('*').eq('empresa_id',eid),
+    ]);
+    DB.bancos[eid]       = bancos.data  ||[];
+    DB.categorias[eid]   = cats.data    ||[];
+    DB.centrosCusto[eid] = centros.data ||[];
+    DB.fornecedores[eid] = forn.data    ||[];
+    DB.lancamentos[eid]  = lancs.data   ||[];
+    localStorage.setItem(CHAVE,JSON.stringify(DB));
+  }catch(e){
+    console.warn('Supabase indisponível, usando cache local:',e);
+  }
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function fmtM(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtDt(d){if(!d)return'—';const[y,m,dia]=d.split('-');return`${dia}/${m}/${y}`;}
@@ -1043,6 +1070,7 @@ document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=
 
 const eid=sessionStorage.getItem('empresa_ativa');
 if(!eid&&DB.empresas.length) sessionStorage.setItem('empresa_ativa',DB.empresas[0].id);
+carregarDB().then(()
 init();
 </script>
 </body>
