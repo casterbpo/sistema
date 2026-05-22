@@ -1411,7 +1411,7 @@ document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=
 
 const eid=sessionStorage.getItem('empresa_ativa');
 if(!eid&&DB.empresas.length) sessionStorage.setItem('empresa_ativa',DB.empresas[0].id);
-init();
+carregarDB().then(()=>init());
 </script>
 </body>
 </html>

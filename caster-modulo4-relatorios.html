@@ -3980,8 +3980,7 @@ document.getElementById('overlay-exportar').addEventListener('click',e=>{
   if(!DB.orcamentos)DB.orcamentos={};
   let eid=sessionStorage.getItem('empresa_ativa');
   if(!eid&&DB.empresas.length){eid=DB.empresas[0].id;sessionStorage.setItem('empresa_ativa',eid);}
-carregarDB().then(();
-  init();
+  carregarDB().then(()=>init());
 })();
 </script>
 </body>
