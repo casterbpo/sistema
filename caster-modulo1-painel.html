@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CasterBPO — Painel de Empresas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1726,7 +1727,6 @@ let DB = carregarDB();
 let empresaAtiva = null;
 let periodoAtivo = 'mes-atual';
 let tipoLancAtivo = 'receber';
-let stepAtual = 1;
 let segmentoSelecionado = 'Comércio';
 let bancosStep = [];
 let chartEvolucao = null, chartCats = null;
@@ -2335,6 +2335,7 @@ function getPeriodoDatas() {
 }
 
 // ── MODAL EMPRESA ──────────────────────────────────────
+let stepAtual = 1;
 function abrirModalEmpresa() {
   stepAtual = 1; bancosStep = [];
   segmentoSelecionado = 'Comércio';
