@@ -2439,36 +2439,53 @@ function renderResumoEmpresa() {
   `;
 }
 
-function criarEmpresa() {
+async function criarEmpresa() {
   const id = uid();
   const razao = document.getElementById('emp-razao').value.trim();
-  DB.empresas.push({
+  const novaEmpresa = {
     id, razao,
     fantasia: document.getElementById('emp-fantasia').value.trim() || razao,
     cnpj: document.getElementById('emp-cnpj').value.trim(),
     segmento: segmentoSelecionado,
     responsavel: document.getElementById('emp-responsavel').value.trim(),
     email: document.getElementById('emp-email').value.trim(),
-    criadaEm: new Date().toISOString()
-  });
-  DB.bancos[id]       = bancosStep.map(b => ({ ...b, id: uid() }));
+    criado_em: new Date().toISOString()
+  };
+
+  const bancos = bancosStep.map(b => ({ ...b, id: uid(), empresa_id: id }));
+  const categorias = [
+    { id:uid(), empresa_id:id, nome:'Vendas de Produtos', mae:'Entradas' },
+    { id:uid(), empresa_id:id, nome:'Prestação de Serviços', mae:'Entradas' },
+    { id:uid(), empresa_id:id, nome:'Outras Receitas', mae:'Entradas' },
+    { id:uid(), empresa_id:id, nome:'Pessoal e Encargos', mae:'Saídas' },
+    { id:uid(), empresa_id:id, nome:'Fornecedores', mae:'Saídas' },
+    { id:uid(), empresa_id:id, nome:'Impostos e Taxas', mae:'Saídas' },
+    { id:uid(), empresa_id:id, nome:'Administrativo', mae:'Saídas' }
+  ];
+  const centrosCusto = [
+    { id:uid(), empresa_id:id, nome:'Administrativo' },
+    { id:uid(), empresa_id:id, nome:'Comercial' },
+    { id:uid(), empresa_id:id, nome:'Operacional' }
+  ];
+
+  try {
+    await supa.from('empresas').insert(novaEmpresa);
+    if(bancos.length)      await supa.from('bancos').insert(bancos);
+    if(categorias.length)  await supa.from('categorias').insert(categorias);
+    if(centrosCusto.length)await supa.from('centros_custo').insert(centrosCusto);
+  } catch(e) {
+    console.error('Erro ao salvar no Supabase:', e);
+    toast('Erro ao salvar. Verifique a conexão.', 'erro');
+    return;
+  }
+
+  DB.empresas.push(novaEmpresa);
+  DB.bancos[id]       = bancos;
   DB.lancamentos[id]  = [];
   DB.fornecedores[id] = [];
-  // Categorias padrão
-  DB.categorias[id] = [
-    { id:uid(), nome:'Vendas de Produtos', mae:'Entradas' },
-    { id:uid(), nome:'Prestação de Serviços', mae:'Entradas' },
-    { id:uid(), nome:'Outras Receitas', mae:'Entradas' },
-    { id:uid(), nome:'Pessoal e Encargos', mae:'Saídas' },
-    { id:uid(), nome:'Fornecedores', mae:'Saídas' },
-    { id:uid(), nome:'Impostos e Taxas', mae:'Saídas' },
-    { id:uid(), nome:'Administrativo', mae:'Saídas' }
-  ];
-  DB.centrosCusto[id] = [
-    { id:uid(), nome:'Administrativo' },
-    { id:uid(), nome:'Comercial' },
-    { id:uid(), nome:'Operacional' }
-  ];
+  DB.categorias[id]   = categorias;
+  DB.centrosCusto[id] = centrosCusto;
+
   salvarDB();
   fecharModal('overlay-empresa');
   renderPainel();
