@@ -6,6 +6,7 @@
 <title>CasterBPO — Lançamentos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 if (window.self !== window.top) {
   document.body.classList.add('embed');
@@ -1573,8 +1574,7 @@ document.querySelectorAll('.overlay').forEach(ov=>{
 // Tentar pegar empresa ativa
 const eid = sessionStorage.getItem('empresa_ativa');
 if(!eid && DB.empresas.length) sessionStorage.setItem('empresa_ativa', DB.empresas[0].id);
-carregarDB().then(();
-init();
+carregarDB().then(()=>init());
 </script>
 </body>
 </html>
