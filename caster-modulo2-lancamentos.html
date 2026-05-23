@@ -8,20 +8,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-if (window.self !== window.top) {
-  document.write('<style>.topbar{display:none!important;}.layout{min-height:100vh!important;}</style>');
-}
+// ── GUARD DE SESSÃO ──────────────────────────────────
+(async () => {
+  // Só aplica guard se carregado diretamente (não dentro de iframe do painel)
+  if (window.self === window.top) {
+    const _supa = supabase.createClient(
+      'https://mojqonunykhrdmunojzu.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU'
+    );
+    const { data: { session } } = await _supa.auth.getSession();
+    if (!session) window.location.replace('https://casterbpo.github.io/sistema/index.html');
+  }
+  // Oculta topbar quando em iframe
+  if (window.self !== window.top) document.documentElement.style.setProperty('--hide-topbar','none');
+})();
 </script>
 <style>
-} 
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const topbar = document.querySelector('.topbar');
-    if (topbar) topbar.style.display = 'none';
-  });
-} else {
-  document.body.classList.remove('embed');
-}
+:root { --hide-topbar: flex; }
+.topbar { display: var(--hide-topbar) !important; }
+body.embed .conteudo { padding-top: 0; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 :root {
   --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;
   --g400:#3d8a5a;--g300:#5aaa76;--g200:#8dcca4;--g100:#c4e8d0;--g050:#edf7f1;
@@ -299,6 +305,7 @@ th.sort:hover{color:var(--d300) !important;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px;opacity:.5;"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
   <div class="spacer"></div>
+  <div id="sync-status" style="font-size:11px;color:var(--verde-ok);display:flex;align-items:center;gap:4px;opacity:0;transition:opacity 0.4s;margin-right:8px;"></div>
   <nav style="display:flex;gap:2px;">
     <button class="tnav-btn" onclick="navegar('caster-modulo1-painel.html')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
@@ -428,6 +435,12 @@ th.sort:hover{color:var(--d300) !important;}
       <label class="filtro-label">Centro de Custo</label>
       <select class="filtro-select" id="f-cc" onchange="filtrar()">
         <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">Conta</label>
+      <select class="filtro-select" id="f-banco" onchange="filtrar()">
+        <option value="">Todas</option>
       </select>
     </div>
     <div class="filtro-grupo">
@@ -562,10 +575,11 @@ th.sort:hover{color:var(--d300) !important;}
       </div>
       <div class="form-row fr-1">
         <div class="form-group">
-          <label class="form-label">Conta Bancária</label>
+          <label class="form-label">Conta bancária</label>
           <select class="form-select" id="m-banco">
             <option value="">— selecione —</option>
           </select>
+          <span class="form-hint">Conta de recebimento ou pagamento</span>
         </div>
       </div>
       <hr class="form-divider">
@@ -762,7 +776,7 @@ let DB = { empresas:[], bancos:{}, lancamentos:{}, categorias:{}, centrosCusto:{
 let EMP = null;  // empresa ativa
 
 let tabAtiva = 'todos';
-let filtros  = { busca:'', status:'', categoria:'', cc:'', de:'', ate:'' };
+let filtros  = { busca:'', status:'', categoria:'', cc:'', banco:'', de:'', ate:'' };
 let ordemCol = 'dtVencimento';
 let ordemDir = 1; // 1 asc, -1 desc
 let pagAtual = 1;
@@ -794,15 +808,13 @@ async function carregarDB(){
     if(cats.data)   DB.categorias[eid] = cats.data;
     if(centros.data)DB.centrosCusto[eid]= centros.data;
     if(forn.data)   DB.fornecedores[eid]= forn.data;
-    if(lancs.data)  DB.lancamentos[eid] = lancs.data;
+    if(lancs.data)  DB.lancamentos[eid] = lancs.data.map(l=>({...l, valor: Number(l.valor)||0}));
     localStorage.setItem(CHAVE, JSON.stringify(DB));
   }catch(e){
     console.warn('Supabase indisponível, usando cache local:',e);
   }
 }
-function uid() {
-  return crypto.randomUUID();
-}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function hoje(){ return new Date().toISOString().slice(0,10); }
 function fmtM(v){ return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDt(d){ if(!d) return '—'; const [y,m,dia]=d.split('-'); return `${dia}/${m}/${y}`; }
@@ -818,6 +830,73 @@ function navegar(url){
     const abaAlvo = mapaAbas[aba] || 'dashboard';
     window.parent.irAba(abaAlvo, window.parent.document.getElementById('sb-'+abaAlvo));
   } else window.location.href=url;
+}
+
+// ══════════════════════════════════════
+// SINCRONIZAÇÃO EM TEMPO REAL
+// ══════════════════════════════════════
+let _realtimeChannel = null;
+let _syncTimeoutId   = null;
+
+function setSyncStatus(estado){
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  const icons = {
+    sincronizando: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;animation:spin 1s linear infinite;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>`,
+    ok:            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;"><polyline points="20 6 9 17 4 12"/></svg>`,
+    erro:          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+  };
+  const cores  = { sincronizando: 'var(--d300)', ok: 'var(--g300)', erro: '#ff8a7a' };
+  const textos = { sincronizando: 'Sincronizando…', ok: 'Sincronizado', erro: 'Offline' };
+  el.style.color   = cores[estado];
+  el.innerHTML     = icons[estado] + `<span>${textos[estado]}</span>`;
+  if(estado === 'ok'){
+    clearTimeout(_syncTimeoutId);
+    _syncTimeoutId = setTimeout(()=>{ el.style.opacity='0'; }, 3000);
+  } else {
+    el.style.opacity = '1';
+  }
+}
+
+async function sincronizarAgora(){
+  if(!EMP) return;
+  setSyncStatus('sincronizando');
+  try{
+    const eid = EMP.id;
+    const [bancos,cats,centros,forn,lancs] = await Promise.all([
+      supa.from('bancos').select('*').eq('empresa_id',eid),
+      supa.from('categorias').select('*').eq('empresa_id',eid),
+      supa.from('centros_custo').select('*').eq('empresa_id',eid),
+      supa.from('fornecedores').select('*').eq('empresa_id',eid),
+      supa.from('lancamentos').select('*').eq('empresa_id',eid),
+    ]);
+    if(bancos.data) DB.bancos[eid]       = bancos.data;
+    if(cats.data)   DB.categorias[eid]   = cats.data;
+    if(centros.data)DB.centrosCusto[eid] = centros.data;
+    if(forn.data)   DB.fornecedores[eid] = forn.data;
+    if(lancs.data)  DB.lancamentos[eid]  = lancs.data.map(l=>({...l,valor:Number(l.valor)||0}));
+    salvarDB();
+    preencherFiltrosCats();
+    renderKPIs();
+    filtrar();
+    setSyncStatus('ok');
+  }catch(e){
+    console.warn('Erro ao sincronizar:',e);
+    setSyncStatus('erro');
+  }
+}
+
+function iniciarRealtime(){
+  if(!EMP) return;
+  if(_realtimeChannel) supa.removeChannel(_realtimeChannel);
+  _realtimeChannel = supa.channel('lancamentos-rt-'+EMP.id)
+    .on('postgres_changes',{ event:'*', schema:'public', table:'lancamentos', filter:`empresa_id=eq.${EMP.id}` },
+      () => sincronizarAgora())
+    .on('postgres_changes',{ event:'*', schema:'public', table:'bancos', filter:`empresa_id=eq.${EMP.id}` },
+      () => sincronizarAgora())
+    .subscribe();
+  // Também atualiza a cada 60s como fallback
+  setInterval(sincronizarAgora, 60000);
 }
 
 // ══════════════════════════════════════
@@ -837,18 +916,36 @@ function init(){
   renderKPIs();
   filtrar();
   atualizarSortHeaders();
+  iniciarRealtime();
 }
 
 function preencherFiltrosCats(){
   const cats = DB.categorias[EMP.id]||[];
   const ccs  = DB.centrosCusto[EMP.id]||[];
+  const bancos = DB.bancos[EMP.id]||[];
+
+  // Categorias com hierarquia mãe > filha
   const sel = document.getElementById('f-categoria');
   sel.innerHTML='<option value="">Todas</option>'+
-    ['Entradas','Saídas'].map(mae=>`<optgroup label="${mae}">`+
-      cats.filter(c=>c.mae===mae).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')+
-    '</optgroup>').join('');
+    ['Entradas','Saídas'].map(mae=>{
+      const nivel1 = cats.filter(c=>c.mae===mae && !c.pai);
+      if(!nivel1.length) return '';
+      return `<optgroup label="${mae}">` +
+        nivel1.map(c=>{
+          const filhas = cats.filter(x=>x.pai===c.id);
+          return `<option value="${c.id}">${c.nome}</option>` +
+            filhas.map(f=>`<option value="${f.id}">&nbsp;&nbsp;↳ ${f.nome}</option>`).join('');
+        }).join('') +
+      '</optgroup>';
+    }).join('');
+
+  // Centros de custo
   const cSel = document.getElementById('f-cc');
   cSel.innerHTML='<option value="">Todos</option>'+ccs.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+
+  // Banco
+  const bSel = document.getElementById('f-banco');
+  if(bSel) bSel.innerHTML='<option value="">Todas</option>'+bancos.filter(b=>b.ativo!==false).map(b=>`<option value="${b.id}">${b.nome}</option>`).join('');
 }
 
 // ══════════════════════════════════════
@@ -865,7 +962,7 @@ function renderKPIs(){
   const venc   = lancs.filter(l=>!l.dtPagamento&&l.dtVencimento<hj);
   const real   = lancs.filter(l=>l.dtPagamento&&l.dtPagamento.startsWith(mesAtual));
 
-  const soma = arr => arr.reduce((s,l)=>s+l.valor,0);
+  const soma = arr => arr.reduce((s,l)=>s+Number(l.valor),0);
 
   document.getElementById('kpi-a-receber').textContent   = fmtM(soma(aRec));
   document.getElementById('kpi-a-receber-qt').textContent= `${aRec.length} lançamentos`;
@@ -901,6 +998,7 @@ function filtrar(){
   filtros.status    = document.getElementById('f-status').value;
   filtros.categoria = document.getElementById('f-categoria').value;
   filtros.cc        = document.getElementById('f-cc').value;
+  filtros.banco     = (document.getElementById('f-banco')||{}).value||'';
   filtros.de        = document.getElementById('f-de').value;
   filtros.ate       = document.getElementById('f-ate').value;
   pagAtual = 1;
@@ -917,13 +1015,14 @@ function filtrar(){
 
 function limparFiltros(){
   ['f-busca','f-de','f-ate'].forEach(id=>document.getElementById(id).value='');
-  ['f-status','f-categoria','f-cc'].forEach(id=>document.getElementById(id).value='');
-  filtros={busca:'',status:'',categoria:'',cc:'',de:'',ate:''};
+  ['f-status','f-categoria','f-cc','f-banco'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  filtros={busca:'',status:'',categoria:'',cc:'',banco:'',de:'',ate:''};
   filtrar();
 }
 
 function getLancamentosFiltrados(){
   const lancs = DB.lancamentos[EMP.id]||[];
+  const cats  = DB.categorias[EMP.id]||[];
   const hj = hoje();
   return lancs.filter(l=>{
     // Tab
@@ -933,10 +1032,16 @@ function getLancamentosFiltrados(){
     // Status
     const status = !l.dtPagamento ? (l.dtVencimento<hj?'vencido':'pendente') : 'pago';
     if(filtros.status && status!==filtros.status) return false;
-    // Categoria
-    if(filtros.categoria && l.categoria!==filtros.categoria) return false;
+    // Categoria — inclui filhas da categoria selecionada
+    if(filtros.categoria){
+      const filhas = cats.filter(c=>c.pai===filtros.categoria).map(c=>c.id);
+      const idsValidos = [filtros.categoria, ...filhas];
+      if(!idsValidos.includes(l.categoria)) return false;
+    }
     // CC
     if(filtros.cc && l.centroCusto!==filtros.cc) return false;
+    // Banco
+    if(filtros.banco && l.bancoId!==filtros.banco) return false;
     // Datas
     if(filtros.de  && l.dtVencimento < filtros.de)  return false;
     if(filtros.ate && l.dtVencimento > filtros.ate)  return false;
@@ -1035,13 +1140,23 @@ function renderTabela(){
     }).join('');
 
     // Linha de totais
-    const totRec = pag.filter(l=>l.tipo==='receber').reduce((s,l)=>s+l.valor,0);
-    const totPag = pag.filter(l=>l.tipo==='pagar').reduce((s,l)=>s+l.valor,0);
+    const totRec = pag.filter(l=>l.tipo==='receber').reduce((s,l)=>s+Number(l.valor),0);
+    const totPag = pag.filter(l=>l.tipo==='pagar').reduce((s,l)=>s+Number(l.valor),0);
+    const saldoLiq = totRec - totPag;
+    const totAll  = getLancamentosFiltrados();
+    const totRecAll = totAll.filter(l=>l.tipo==='receber').reduce((s,l)=>s+Number(l.valor),0);
+    const totPagAll = totAll.filter(l=>l.tipo==='pagar').reduce((s,l)=>s+Number(l.valor),0);
+    const saldoLiqAll = totRecAll - totPagAll;
+    const mesmaPag = total <= POR_PAG;
     document.getElementById('tfoot-lancs').innerHTML=`<tr class="linha-total">
-      <td colspan="6" style="font-size:12px;color:var(--texto3);">Subtotal da página</td>
-      <td class="right mono">
-        <div style="color:var(--azul);font-size:11px;">+${fmtM(totRec)}</div>
-        <div style="color:var(--vermelho);font-size:11px;">−${fmtM(totPag)}</div>
+      <td colspan="6" style="font-size:11px;color:var(--texto3);">
+        ${mesmaPag ? 'Total' : `Página&nbsp;&nbsp;<span style="color:var(--texto2);font-weight:600;">+${fmtM(totRec)}&nbsp;/&nbsp;−${fmtM(totPag)}</span>`}
+        ${!mesmaPag ? `<br><span style="font-size:10px;">Todos os registros filtrados&nbsp;&nbsp;<span style="color:var(--texto2);font-weight:600;">+${fmtM(totRecAll)}&nbsp;/&nbsp;−${fmtM(totPagAll)}</span></span>` : ''}
+      </td>
+      <td class="right mono" style="vertical-align:middle;">
+        <div style="color:var(--azul);font-size:11px;font-weight:600;">+${fmtM(mesmaPag?totRec:totRecAll)}</div>
+        <div style="color:var(--vermelho);font-size:11px;font-weight:600;">−${fmtM(mesmaPag?totPag:totPagAll)}</div>
+        <div style="border-top:1px solid var(--borda);margin-top:3px;padding-top:3px;font-size:11px;font-weight:700;color:${(mesmaPag?saldoLiq:saldoLiqAll)>=0?'var(--azul)':'var(--vermelho)'};">${(mesmaPag?saldoLiq:saldoLiqAll)>=0?'=&nbsp;+':'=&nbsp;−'}${fmtM(Math.abs(mesmaPag?saldoLiq:saldoLiqAll))}</div>
       </td>
       <td colspan="4"></td>
     </tr>`;
