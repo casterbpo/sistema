@@ -1338,34 +1338,11 @@ async function salvar(){
     else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
     return !error;
   };
-    // Inclui recorrencia apenas se a coluna existir (evita erro 400)
-    // Tente incluir; se falhar, retenta sem ela
-    return payload;
-  };
-
-  const upsertSafe = async (payload) => {
-    let { error } = await supa.from('lancamentos').upsert(payload, { onConflict: 'id' });
-    if (error && (error.code === '42703' || error.message?.includes('recorrencia') || error.message?.includes('column'))) {
-      // Coluna inexistente — retenta sem campos extras
-      delete payload.recorrencia;
-      const r2 = await supa.from('lancamentos').upsert(payload, { onConflict: 'id' });
-      error = r2.error;
-    }
-    if (error) console.warn('Erro ao salvar lançamento no Supabase:', error);
-    return !error;
-  };
 
   try {
-    const ok = await upsertSafe(buildPayload(lanc));
-    // Salva recorrências/parcelas no Supabase também
+    await upsertSafe(lanc);
     const extras = (DB.lancamentos[EMP.id]||[]).filter(l => l !== lanc && l.criadoEm === lanc.criadoEm && !editandoId);
-    for (const e of extras) {
-      await upsertSafe(buildPayload(e));
-    }
-    if (ok) {
-      // Notifica o módulo 1 (painel pai) para atualizar o dashboard
-      try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){}
-    }
+    for (const e of extras) { await upsertSafe(e); }
   } catch(e) { console.warn('Erro ao salvar lançamento no Supabase:',e); }
 
   salvarDB(); fecharModal(); renderKPIs(); filtrar();
