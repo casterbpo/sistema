@@ -529,7 +529,15 @@ async function carregarDB(){
     if(cats.data)   DB.categorias[eid]  =cats.data;
     if(centros.data)DB.centrosCusto[eid]=centros.data;
     if(forn.data)   DB.fornecedores[eid]=forn.data;
-    if(lancs.data)  DB.lancamentos[eid] =lancs.data;
+    if(lancs?.data) DB.lancamentos[eid] = lancs.data.map(l => ({
+  ...l,
+  bancoId:       l.bancoId       ?? l.banco_id,
+  centroCusto:   l.centroCusto   ?? l.centro_custo,
+  dtCompetencia: l.dtCompetencia ?? l.dt_competencia,
+  dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
+  dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
+  criadoEm:      l.criadoEm      ?? l.criado_em
+}));
     localStorage.setItem(CHAVE,JSON.stringify(DB));
   }catch(e){
     console.warn('Supabase indisponível, usando cache local:',e);
