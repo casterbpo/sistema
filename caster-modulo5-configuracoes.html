@@ -4,26 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CasterBPO — Configurações</title>
-<!-- 🔒 GUARD DE SESSÃO — deve ser o primeiro script -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(async () => {
-  const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
-  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // sua chave anon
-  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-  const { data: { session } } = await supa.auth.getSession();
-  if (!session) {
-    window.location.replace('https://casterbpo.github.io/sistema/index.html'); // ajuste para o caminho do seu login
-  }
-})();
-</script>
-<!-- fim do guard -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(async () => {
+  if (window.self === window.top) {
+    const _s = supabase.createClient(
+      'https://mojqonunykhrdmunojzu.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU'
+    );
+    const { data: { session } } = await _s.auth.getSession();
+    if (!session) window.location.replace('https://casterbpo.github.io/sistema/index.html');
+  }
+  if (window.self !== window.top) document.documentElement.style.setProperty('--hide-topbar','none');
+})();
+</script>
 
 <style>
-:root{
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+:root {
+  --hide-topbar: flex;
   --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;--g400:#3d8a5a;--g300:#5aaa76;--g100:#c4e8d0;--g050:#edf7f1;
   --d700:#b37f00;--d600:#c99520;--d500:#d4a832;--d400:#e0bc55;--d300:#e8cc7a;--d050:#fdf8ee;
   --n900:#111418;--n800:#1e2328;--n700:#2d3339;--n600:#414950;--n500:#596168;--n400:#737c84;--n300:#959da4;--n200:#bcc2c7;--n100:#dde1e4;--n050:#f4f5f6;
@@ -234,7 +235,7 @@ input:checked+.slider:before{transform:translateX(16px);}
   }
 </script>
 </head>
-<body style="visibility:hidden;" onload="document.body.style.visibility='visible'">
+<body>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -245,6 +246,7 @@ input:checked+.slider:before{transform:translateX(16px);}
   <div class="topbar-sep"></div>
   <div class="empresa-badge"><span class="dot"></span><span id="badge-empresa">—</span></div>
   <div class="spacer"></div>
+  <div id="sync-status" style="font-size:11px;color:var(--verde-ok);display:flex;align-items:center;gap:4px;opacity:0;transition:opacity 0.4s;margin-right:8px;"></div>
   <nav style="display:flex;gap:2px;">
     <button class="tnav-btn" onclick="ir('caster-modulo1-painel.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
     <button class="tnav-btn" onclick="ir('caster-modulo2-lancamentos.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><span>Lançamentos</span></button>
@@ -286,13 +288,6 @@ input:checked+.slider:before{transform:translateX(16px);}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       Backup e Dados
     </button>
-    <hr class="sidebar-sep">
-    <div style="padding:.5rem 1rem;">
-      <button onclick="sairDoSistema()" style="width:100%;background:var(--g700);border:none;border-radius:var(--r-md);padding:10px 12px;font-size:12px;font-weight:600;font-family:var(--fonte-b);color:var(--d400);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .2s;letter-spacing:.02em;" onmouseover="this.style.background='var(--g600)'" onmouseout="this.style.background='var(--g700)'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sair do sistema
-      </button>
-    </div>
   </div>
 
   <!-- CONTEÚDO -->
@@ -738,9 +733,7 @@ async function sincronizarComSupabase() {
     console.warn('Erro ao sincronizar com Supabase:', err);
   }
 }
-function uid() {
-  return crypto.randomUUID();
-}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function fmtM(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function voltarPainel(){
   if(window.self!==window.top) window.parent.irAba('dashboard', window.parent.document.getElementById('sb-dashboard'));
@@ -762,6 +755,74 @@ function fecharModal(id){document.getElementById(id).classList.remove('aberto');
 
 let EMP=null;
 let editandoBanco=null,editandoCat=null,editandoCC=null,editandoForn=null;
+
+// ══════════════════════════════════════
+// SINCRONIZAÇÃO EM TEMPO REAL
+// ══════════════════════════════════════
+let _realtimeChannel = null;
+let _syncTimeoutId   = null;
+
+function setSyncStatus(estado){
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  const icons = {
+    sincronizando: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;animation:spin 1s linear infinite;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>`,
+    ok:            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;"><polyline points="20 6 9 17 4 12"/></svg>`,
+    erro:          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+  };
+  const cores  = { sincronizando: 'var(--d300)', ok: 'var(--g300)', erro: '#ff8a7a' };
+  const textos = { sincronizando: 'Sincronizando…', ok: 'Sincronizado', erro: 'Offline' };
+  el.style.color   = cores[estado];
+  el.innerHTML     = icons[estado] + `<span>${textos[estado]}</span>`;
+  if(estado === 'ok'){
+    clearTimeout(_syncTimeoutId);
+    _syncTimeoutId = setTimeout(()=>{ el.style.opacity='0'; }, 3000);
+  } else {
+    el.style.opacity = '1';
+  }
+}
+
+async function sincronizarAgora(silencioso=false){
+  if(!EMP) return;
+  if(!silencioso) setSyncStatus('sincronizando');
+  const eid = EMP.id;
+  try{
+    const [bancosR,catsR,ccsR,fornsR] = await Promise.all([
+      supa.from('bancos').select('*').eq('empresa_id',eid),
+      supa.from('categorias').select('*').eq('empresa_id',eid),
+      supa.from('centros_custo').select('*').eq('empresa_id',eid),
+      supa.from('fornecedores').select('*').eq('empresa_id',eid),
+    ]);
+    if(bancosR.data) DB.bancos[eid]       = bancosR.data.map(b=>({...b, limite: b.limite||0}));
+    if(catsR.data)   DB.categorias[eid]   = catsR.data.map(c=>({id:c.id,nome:c.nome,mae:c.mae,pai:c.pai,descricao:c.descricao}));
+    if(ccsR.data)    DB.centrosCusto[eid] = ccsR.data.map(c=>({id:c.id,nome:c.nome,cod:c.cod,resp:c.resp,descricao:c.descricao}));
+    if(fornsR.data)  DB.fornecedores[eid] = fornsR.data.map(f=>({id:f.id,nome:f.nome,tipo:f.tipo,doc:f.doc,email:f.email,tel:f.tel,cidade:f.cidade,obs:f.obs}));
+    salvarDB();
+    // Re-renderiza a aba visível
+    const abaAtiva = document.querySelector('.sidebar-btn.ativo');
+    if(abaAtiva){
+      const nome = abaAtiva.id.replace('cb-','');
+      const renderMap={empresa:renderEmpresa,bancos:renderBancos,categorias:renderCategorias,cc:renderCC,fornecedores:renderFornecedores,backup:renderBackup};
+      if(renderMap[nome]) renderMap[nome]();
+    }
+    setSyncStatus('ok');
+  }catch(e){
+    console.warn('Erro ao sincronizar configurações:',e);
+    setSyncStatus('erro');
+  }
+}
+
+function iniciarRealtime(){
+  if(!EMP) return;
+  if(_realtimeChannel) supa.removeChannel(_realtimeChannel);
+  _realtimeChannel = supa.channel('conf-rt-'+EMP.id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'bancos',filter:`empresa_id=eq.${EMP.id}`}, ()=>sincronizarAgora(true))
+    .on('postgres_changes',{event:'*',schema:'public',table:'categorias',filter:`empresa_id=eq.${EMP.id}`}, ()=>sincronizarAgora(true))
+    .on('postgres_changes',{event:'*',schema:'public',table:'centros_custo',filter:`empresa_id=eq.${EMP.id}`}, ()=>sincronizarAgora(true))
+    .on('postgres_changes',{event:'*',schema:'public',table:'fornecedores',filter:`empresa_id=eq.${EMP.id}`}, ()=>sincronizarAgora(true))
+    .subscribe();
+  setInterval(()=>sincronizarAgora(true), 60000);
+}
 
 async function init() {
   const eid = sessionStorage.getItem('empresa_ativa');
@@ -840,6 +901,7 @@ async function init() {
       document.getElementById('badge-empresa').textContent = EMP.fantasia || EMP.razao;
       renderEmpresa();
     }
+    iniciarRealtime();
 
   } catch (err) {
     console.warn('Erro ao carregar do Supabase, usando cache local:', err);
@@ -1515,13 +1577,6 @@ function mascaraTel(el){
 }
 
 document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('aberto');}));
-
-async function sairDoSistema() {
-  if (!confirm('Deseja sair do sistema?')) return;
-  try { await supa.auth.signOut(); } catch(e) { console.warn('Erro ao fazer logout:', e); }
-  sessionStorage.clear();
-  window.location.replace('https://casterbpo.github.io/sistema/index.html');
-}
 
 const eid=sessionStorage.getItem('empresa_ativa');
 if(!eid&&DB.empresas.length) sessionStorage.setItem('empresa_ativa',DB.empresas[0].id);
