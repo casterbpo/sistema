@@ -667,7 +667,7 @@ th.sort:hover{color:var(--d300) !important;}
       </div>
       <div class="form-row fr-1">
         <div class="form-group">
-          <label class="form-label">Conta utilizada</label>
+          <label class="form-label req">Conta utilizada</label>
           <select class="form-select" id="baixa-banco">
             <option value="">— selecione —</option>
           </select>
@@ -1178,40 +1178,7 @@ function abrirModal(id=null){
   document.getElementById('forn-dl').innerHTML=todosNomes.map(f=>`<option value="${f}">`).join('');
 
   // ── Popula select de Categoria com prefixos hierárquicos ──
-  const getCodCat = (allCats, c) => {
-    const prefMae = c.mae === 'Entradas' ? '1' : '2';
-    if (!c.pai) {
-      const irmaos = allCats.filter(x => x.mae === c.mae && !x.pai);
-      return `${prefMae}.${irmaos.findIndex(x => x.id === c.id) + 1}`;
-    }
-    const pai = allCats.find(x => x.id === c.pai);
-    if (!pai) return prefMae;
-    const codPai = getCodCat(allCats, pai);
-    const filhos = allCats.filter(x => x.pai === c.pai);
-    return `${codPai}.${filhos.findIndex(x => x.id === c.id) + 1}`;
-  };
-  document.getElementById('m-cat').innerHTML =
-    '<option value="">— selecione —</option>' +
-    ['Entradas','Saídas'].map(mae => {
-      const nivel1 = cats.filter(c => c.mae === mae && !c.pai);
-      if(!nivel1.length) return '';
-      return `<optgroup label="${mae}">` +
-        nivel1.map(c => {
-          const cod1 = getCodCat(cats, c);
-          const subs = cats.filter(x => x.pai === c.id);
-          return `<option value="${c.id}">${cod1} ${c.nome}</option>` +
-            subs.map(s => {
-              const cod2 = getCodCat(cats, s);
-              const subs2 = cats.filter(x => x.pai === s.id);
-              return `<option value="${s.id}">&nbsp;&nbsp;↳ ${cod2} ${s.nome}</option>` +
-                subs2.map(s2 => {
-                  const cod3 = getCodCat(cats, s2);
-                  return `<option value="${s2.id}">&nbsp;&nbsp;&nbsp;&nbsp;↳ ${cod3} ${s2.nome}</option>`;
-                }).join('');
-            }).join('');
-        }).join('') +
-      '</optgroup>';
-    }).join('');
+  // (será chamado via filtrarCatsPorTipo ao definir o tipo)
 
   // ── Popula select de Centro de Custo ──
   document.getElementById('m-cc').innerHTML =
@@ -1275,6 +1242,63 @@ function setTipo(tipo){
   } else {
     pagBtn.className='t-pag ativo'; recBtn.className='t-rec inativo';
   }
+  // Filtra categorias compatíveis com o tipo selecionado
+  filtrarCatsPorTipo(tipo);
+}
+
+function filtrarCatsPorTipo(tipo){
+  if(!EMP) return;
+  const cats = DB.categorias[EMP.id]||[];
+  const maeFiltro = tipo === 'receber' ? 'Entradas' : 'Saídas';
+  const getCodCat = (allCats, c) => {
+    const prefMae = c.mae === 'Entradas' ? '1' : '2';
+    if (!c.pai) {
+      const irmaos = allCats.filter(x => x.mae === c.mae && !x.pai);
+      return `${prefMae}.${irmaos.findIndex(x => x.id === c.id) + 1}`;
+    }
+    const pai = allCats.find(x => x.id === c.pai);
+    if (!pai) return prefMae;
+    const codPai = getCodCat(allCats, pai);
+    const filhos = allCats.filter(x => x.pai === c.pai);
+    return `${codPai}.${filhos.findIndex(x => x.id === c.id) + 1}`;
+  };
+  const sel = document.getElementById('m-cat');
+  const valAtual = sel ? sel.value : '';
+  if(!sel) return;
+  // Filtra apenas categorias do grupo correto (e subcategorias herdadas)
+  const catsFiltradas = cats.filter(c => {
+    // Categoria raiz: checa mae diretamente
+    if(!c.pai) return c.mae === maeFiltro;
+    // Subcategoria: sobe até a raiz e verifica mae
+    let cur = c;
+    while(cur.pai){
+      cur = cats.find(x => x.id === cur.pai);
+      if(!cur) return false;
+    }
+    return cur.mae === maeFiltro;
+  });
+  sel.innerHTML = '<option value="">— selecione —</option>' +
+    [maeFiltro].map(mae => {
+      const nivel1 = catsFiltradas.filter(c => c.mae === mae && !c.pai);
+      if(!nivel1.length) return '';
+      return `<optgroup label="${mae}">` +
+        nivel1.map(c => {
+          const cod1 = getCodCat(cats, c);
+          const subs = catsFiltradas.filter(x => x.pai === c.id);
+          return `<option value="${c.id}">${cod1} ${c.nome}</option>` +
+            subs.map(s => {
+              const cod2 = getCodCat(cats, s);
+              const subs2 = catsFiltradas.filter(x => x.pai === s.id);
+              return `<option value="${s.id}">&nbsp;&nbsp;↳ ${cod2} ${s.nome}</option>` +
+                subs2.map(s2 => {
+                  const cod3 = getCodCat(cats, s2);
+                  return `<option value="${s2.id}">&nbsp;&nbsp;&nbsp;&nbsp;↳ ${cod3} ${s2.nome}</option>`;
+                }).join('');
+            }).join('');
+        }).join('') + '</optgroup>';
+    }).join('');
+  // Tenta restaurar valor anterior se ainda válido
+  if(valAtual && catsFiltradas.find(c => c.id === valAtual)) sel.value = valAtual;
 }
 
 async function salvar(){
@@ -1406,6 +1430,7 @@ async function confirmarBaixa(){
   const data  = document.getElementById('baixa-data').value;
   const banco = document.getElementById('baixa-banco').value;
   if(!data){ toast('Informe a data de pagamento','err'); return; }
+  if(!banco){ toast('Selecione a conta utilizada','err'); return; }
   const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===baixandoId);
   if(!l) return;
   l.dtPagamento = data;
