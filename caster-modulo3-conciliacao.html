@@ -521,7 +521,9 @@ async function carregarDB(){
     console.warn('Supabase indisponível, usando cache local:',e);
   }
 }
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function uid() {
+  return crypto.randomUUID();
+}
 function fmtM(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtDt(d){if(!d)return'—';const[y,m,dia]=d.split('-');return`${dia}/${m}/${y}`;}
 function voltarPainel(){

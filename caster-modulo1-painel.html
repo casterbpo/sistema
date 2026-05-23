@@ -1908,7 +1908,7 @@ function salvarDB() {
 
 async function carregarDB() {
   const cache = localStorage.getItem(CHAVE_DB);
-  if (cache) try { DB = JSON.parse(cache); } catch(e) {}
+if (cache) try { DB = { ...JSON.parse(cache), empresas: [] }; } catch(e) {}
   try {
     const eid = sessionStorage.getItem('empresa_ativa');
     const { data: emps } = await supa.from('empresas').select('*');
@@ -1934,7 +1934,7 @@ async function carregarDB() {
 }
 
 function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return crypto.randomUUID();
 }
 
 // ── INICIALIZAÇÃO ──────────────────────────────────────
@@ -1947,7 +1947,7 @@ function init() {
     `${diasSem[hoje.getDay()]}, ${hoje.getDate()} ${meses[hoje.getMonth()]}. ${hoje.getFullYear()}`;
 
   // Seed de demonstração se vazio
-  if (DB.empresas.length === 0) seedDemo();
+  // seedDemo removido
 
   renderPainel();
 }
