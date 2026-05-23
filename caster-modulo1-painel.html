@@ -2247,10 +2247,17 @@ function renderPainel() {
       <div class="empresa-card-rodape">
         <span>${emp.segmento} · ${bancos.length} conta(s) · Saldo: ${fmtK(saldo)}</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button class="btn-excluir-empresa" onclick="event.stopPropagation(); excluirEmpresa('${emp.id}', '${(emp.fantasia||emp.razao).replace(/'/g,"\\'")}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
-            Excluir
-          </button>
+          <div id="excluir-emp-wrap-${emp.id}" style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">
+            <button class="btn-excluir-empresa" onclick="mostrarConfirmExcluirEmp('${emp.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
+              Excluir
+            </button>
+            <div id="confirma-excluir-emp-${emp.id}" style="display:none;align-items:center;gap:6px;background:var(--vermelho-bg);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:5px 10px;">
+              <span style="font-size:11px;color:var(--vermelho);font-weight:500;white-space:nowrap;">Confirmar?</span>
+              <button onclick="excluirEmpresa('${emp.id}', '${(emp.fantasia||emp.razao).replace(/'/g,"\\'")}' )" style="background:var(--vermelho);color:#fff;border:none;border-radius:var(--r-sm);padding:3px 8px;font-size:11px;font-weight:600;font-family:var(--fonte-body);cursor:pointer;white-space:nowrap;">Sim</button>
+              <button onclick="cancelarConfirmExcluirEmp('${emp.id}')" style="background:transparent;color:var(--vermelho);border:none;font-size:11px;cursor:pointer;padding:3px 4px;">Não</button>
+            </div>
+          </div>
           <span class="ver-mais">Abrir <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;"><polyline points="9 18 15 12 9 6"/></svg></span>
         </div>
       </div>
@@ -2923,12 +2930,22 @@ async function salvarLancamento() {
 }
 
 // ── EXCLUIR EMPRESA ────────────────────────────────────
-async function excluirEmpresa(id, nome) {
-  const confirmou = confirm(`Tem certeza que deseja excluir a empresa "${nome}"?\n\nEsta ação é irreversível e removerá todos os dados da empresa (lançamentos, bancos, categorias) do sistema.`);
-  if (!confirmou) return;
-  const confirmou2 = confirm(`Confirma a exclusão definitiva de "${nome}"?`);
-  if (!confirmou2) return;
+function mostrarConfirmExcluirEmp(id) {
+  const btn = document.querySelector(`#excluir-emp-wrap-${id} .btn-excluir-empresa`);
+  const conf = document.getElementById(`confirma-excluir-emp-${id}`);
+  if (btn) btn.style.display = 'none';
+  if (conf) conf.style.display = 'flex';
+}
 
+function cancelarConfirmExcluirEmp(id) {
+  const btn = document.querySelector(`#excluir-emp-wrap-${id} .btn-excluir-empresa`);
+  const conf = document.getElementById(`confirma-excluir-emp-${id}`);
+  if (btn) btn.style.display = 'inline-flex';
+  if (conf) conf.style.display = 'none';
+}
+
+async function excluirEmpresa(id, nome) {
+  cancelarConfirmExcluirEmp(id);
   toast('Excluindo empresa...');
 
   try {
