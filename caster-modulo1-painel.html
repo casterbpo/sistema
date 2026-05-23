@@ -1850,10 +1850,17 @@ body {
       </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between;">
-      <button onclick="excluirLancDetalhe()" style="background:var(--vermelho-bg);color:var(--vermelho);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:8px 14px;font-size:12px;font-weight:500;font-family:var(--fonte-body);cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
-        Excluir
-      </button>
+      <div id="excluir-wrap" style="display:flex;align-items:center;gap:6px;">
+        <button id="btn-excluir-1" onclick="mostrarConfirmExcluir()" style="background:var(--vermelho-bg);color:var(--vermelho);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:8px 14px;font-size:12px;font-weight:500;font-family:var(--fonte-body);cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+          Excluir
+        </button>
+        <div id="confirma-excluir" style="display:none;align-items:center;gap:6px;background:var(--vermelho-bg);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:6px 10px;">
+          <span style="font-size:12px;color:var(--vermelho);font-weight:500;">Confirmar exclusão?</span>
+          <button onclick="excluirLancDetalhe()" style="background:var(--vermelho);color:#fff;border:none;border-radius:var(--r-sm);padding:4px 10px;font-size:12px;font-weight:600;font-family:var(--fonte-body);cursor:pointer;">Sim, excluir</button>
+          <button onclick="cancelarConfirmExcluir()" style="background:transparent;color:var(--vermelho);border:none;font-size:12px;cursor:pointer;padding:4px 6px;">Não</button>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;">
         <button class="btn-secundario" onclick="fecharModal('overlay-detalhe-lanc')">Cancelar</button>
         <button class="btn-primario" onclick="salvarEdicaoLanc()">✓ Salvar alterações</button>
@@ -3015,11 +3022,23 @@ async function salvarEdicaoLanc() {
   toast('Lançamento atualizado com sucesso!');
 }
 
+function mostrarConfirmExcluir() {
+  document.getElementById('btn-excluir-1').style.display = 'none';
+  document.getElementById('confirma-excluir').style.display = 'flex';
+}
+
+function cancelarConfirmExcluir() {
+  const btn = document.getElementById('btn-excluir-1');
+  const conf = document.getElementById('confirma-excluir');
+  if (btn) btn.style.display = 'inline-flex';
+  if (conf) conf.style.display = 'none';
+}
+
 async function excluirLancDetalhe() {
   if (!lancDetalheId || !empresaAtiva) return;
-  if (!confirm('Excluir este lançamento permanentemente?')) return;
 
   const idParaExcluir = lancDetalheId;
+  cancelarConfirmExcluir();
   console.log('[excluir] tentando excluir id:', idParaExcluir);
 
   try {
@@ -3107,6 +3126,7 @@ function mascaraTel(el) {
 
 function fecharModal(id) {
   document.getElementById(id).classList.remove('aberto');
+  if (id === 'overlay-detalhe-lanc') cancelarConfirmExcluir();
 }
 
 function dataHoje() {
