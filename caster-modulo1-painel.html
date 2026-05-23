@@ -1943,7 +1943,7 @@ async function carregarDB() {
       if (cats.data)   DB.categorias[eid]   = cats.data;
       if (centros.data)DB.centrosCusto[eid] = centros.data;
       if (forn.data)   DB.fornecedores[eid] = forn.data;
-      if (lancs.data)  DB.lancamentos[eid]  = lancs.data;
+      if (lancs.data)  DB.lancamentos[eid]  = lancs.data.map(lancFromSupabase);
     }
     localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
   } catch(e) {
@@ -1953,6 +1953,49 @@ async function carregarDB() {
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+
+// ── MAPEAMENTO camelCase <-> snake_case (lancamentos) ──
+function lancToSupabase(l, empresaId) {
+  return {
+    id:              l.id,
+    empresa_id:      empresaId,
+    tipo:            l.tipo,
+    fornecedor:      l.fornecedor,
+    descricao:       l.descricao       || null,
+    categoria_id:    l.categoria       || null,
+    centro_custo_id: l.centroCusto     || null,
+    valor:           l.valor,
+    dt_competencia:  l.dtCompetencia   || null,
+    dt_vencimento:   l.dtVencimento    || null,
+    dt_pagamento:    l.dtPagamento     || null,
+    banco_id:        l.bancoId         || null,
+    documento:       l.documento       || null,
+    obs:             l.obs             || null,
+    conciliado:      l.conciliado      || false,
+    criado_em:       l.criadoEm        || new Date().toISOString(),
+  };
+}
+
+function lancFromSupabase(row) {
+  return {
+    id:            row.id,
+    tipo:          row.tipo,
+    fornecedor:    row.fornecedor,
+    descricao:     row.descricao      || '',
+    categoria:     row.categoria_id   || '',
+    centroCusto:   row.centro_custo_id|| '',
+    valor:         row.valor,
+    dtCompetencia: row.dt_competencia || '',
+    dtVencimento:  row.dt_vencimento  || '',
+    dtPagamento:   row.dt_pagamento   || null,
+    bancoId:       row.banco_id       || '',
+    documento:     row.documento      || '',
+    obs:           row.obs            || '',
+    conciliado:    row.conciliado     || false,
+    criadoEm:      row.criado_em      || '',
+  };
 }
 
 // ── SINCRONIZAÇÃO LIVE COM SUPABASE ────────────────────
@@ -1994,7 +2037,7 @@ async function sincronizarEmpresa(id) {
     if (cats.data)    DB.categorias[id]   = cats.data;
     if (centros.data) DB.centrosCusto[id] = centros.data;
     if (forn.data)    DB.fornecedores[id] = forn.data;
-    if (lancs.data)   DB.lancamentos[id]  = lancs.data;
+    if (lancs.data)   DB.lancamentos[id]  = lancs.data.map(lancFromSupabase);
     localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
     _setSyncStatus('ok');
   } catch(e) {
@@ -2859,7 +2902,7 @@ async function salvarLancamento() {
   // Salva no Supabase e re-sincroniza para garantir dados frescos
   try {
     await supa.from('lancamentos').upsert(
-      { id: lanc.id, empresa_id: empresaAtiva.id, ...lanc },
+      lancToSupabase(lanc, empresaAtiva.id),
       { onConflict: 'id' }
     );
     // Salva fornecedor no Supabase se novo
@@ -3013,7 +3056,7 @@ async function salvarEdicaoLanc() {
   // Salva no Supabase e re-sincroniza
   try {
     const l = lancs[idx];
-    await supa.from('lancamentos').upsert({ id: l.id, empresa_id: empresaAtiva.id, ...l }, { onConflict: 'id' });
+    await supa.from('lancamentos').upsert(lancToSupabase(l, empresaAtiva.id), { onConflict: 'id' });
     await sincronizarEmpresa(empresaAtiva.id);
   } catch(e) { console.warn('Erro ao salvar lançamento no Supabase:', e); _setSyncStatus('erro'); }
 
@@ -3039,59 +3082,22 @@ async function excluirLancDetalhe() {
 
   const idParaExcluir = lancDetalheId;
   cancelarConfirmExcluir();
-  console.log('[excluir] tentando excluir id:', idParaExcluir);
 
-  try {
-    // Verifica se o registro existe no Supabase antes de deletar
-    const { data: encontrado, error: errBusca } = await supa
-      .from('lancamentos')
-      .select('id')
-      .eq('id', idParaExcluir)
-      .maybeSingle();
-
-    console.log('[excluir] id:', idParaExcluir);
-    console.log('[excluir] encontrado no Supabase:', encontrado);
-    console.log('[excluir] erro na busca:', errBusca);
-    alert('DEBUG\nID: ' + idParaExcluir + '\nEncontrado: ' + JSON.stringify(encontrado) + '\nErro busca: ' + JSON.stringify(errBusca));
-
-    if (!encontrado) {
-      console.warn('[excluir] não existe no Supabase, removendo só localmente');
-      DB.lancamentos[empresaAtiva.id] = (DB.lancamentos[empresaAtiva.id]||[]).filter(x=>x.id!==idParaExcluir);
-      salvarDB();
-      fecharModal('overlay-detalhe-lanc');
-      renderDashboard();
-      toast('Lançamento excluído (local).');
-      return;
-    }
-
-    const { data: delData, error: delError, status: delStatus } = await supa
-      .from('lancamentos')
-      .delete()
-      .eq('id', idParaExcluir)
-      .select();
-
-    console.log('[excluir] delete status:', delStatus, 'data:', delData, 'error:', delError);
-    alert('DEBUG DELETE\nStatus: ' + delStatus + '\nData: ' + JSON.stringify(delData) + '\nErro: ' + JSON.stringify(delError));
-
-    if (delError) {
-      toast('Erro ao excluir: ' + delError.message, true);
-      return;
-    }
-  } catch(e) {
-    console.error('Erro ao excluir lançamento:', e);
-    alert('EXCEÇÃO: ' + e.message);
-    toast('Erro ao excluir. Verifique a conexão.', true);
-    return;
-  }
-
-  // Só remove localmente após confirmar exclusão no servidor
+  // Remove localmente sempre (pode ser dado só local)
   DB.lancamentos[empresaAtiva.id] = (DB.lancamentos[empresaAtiva.id]||[]).filter(x=>x.id!==idParaExcluir);
   salvarDB();
   fecharModal('overlay-detalhe-lanc');
-
-  await sincronizarEmpresa(empresaAtiva.id);
   renderDashboard();
   toast('Lançamento excluído.');
+
+  // Tenta excluir no Supabase em background (silencioso se não existir lá)
+  try {
+    await supa.from('lancamentos').delete().eq('id', idParaExcluir);
+    await sincronizarEmpresa(empresaAtiva.id);
+    renderDashboard();
+  } catch(e) {
+    console.warn('Erro ao excluir no Supabase:', e);
+  }
 }
 
 // ── MÁSCARAS ─────────────────────────────────────────────
