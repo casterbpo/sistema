@@ -1943,7 +1943,7 @@ async function carregarDB() {
       if (cats.data)   DB.categorias[eid]   = cats.data;
       if (centros.data)DB.centrosCusto[eid] = centros.data;
       if (forn.data)   DB.fornecedores[eid] = forn.data;
-      if (lancs.data)  DB.lancamentos[eid]  = lancs.data.map(lancFromSupabase);
+      if (lancs.data && lancs.data.length > 0) DB.lancamentos[eid] = lancs.data.map(lancFromSupabase);
     }
     localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
   } catch(e) {
@@ -2037,7 +2037,10 @@ async function sincronizarEmpresa(id) {
     if (cats.data)    DB.categorias[id]   = cats.data;
     if (centros.data) DB.centrosCusto[id] = centros.data;
     if (forn.data)    DB.fornecedores[id] = forn.data;
-    if (lancs.data)   DB.lancamentos[id]  = lancs.data.map(lancFromSupabase);
+    // Só substitui lançamentos locais se o Supabase retornar dados reais
+    if (lancs.data && lancs.data.length > 0) {
+      DB.lancamentos[id] = lancs.data.map(lancFromSupabase);
+    }
     localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
     _setSyncStatus('ok');
   } catch(e) {
@@ -3093,8 +3096,6 @@ async function excluirLancDetalhe() {
   // Tenta excluir no Supabase em background (silencioso se não existir lá)
   try {
     await supa.from('lancamentos').delete().eq('id', idParaExcluir);
-    await sincronizarEmpresa(empresaAtiva.id);
-    renderDashboard();
   } catch(e) {
     console.warn('Erro ao excluir no Supabase:', e);
   }
