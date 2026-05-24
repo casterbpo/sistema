@@ -2298,9 +2298,15 @@ function renderPrevReal(){
   const theadTr=document.getElementById('pr2-thead-tr');
 
   // ── Formatação de célula: valor absoluto, azul=receita vermelho=despesa, neutro=mix ──
-  // eDespVal: true=pagar(vermelho), false=receber(azul), null=sem cor específica
+  // eDespVal: true=pagar(vermelho), false=receber(azul), null=sem cor específica (modo mix/líquido)
   const fmtPR=(val,eDespVal,fsz)=>{
     const s=fsz?`font-size:${fsz};`:'';
+    // Modo mix (eDespVal===null): mostra valor líquido com sinal e cor (vermelho se negativo)
+    if(eDespVal===null){
+      const cor=val<0?'color:var(--vermelho);font-weight:600;':'';
+      const txt=val<0?`\u2212${fmtM(Math.abs(val))}`:fmtM(val);
+      return `<td class="right mono" style="${s}${cor}">${txt}</td>`;
+    }
     const cor=eDespVal===true?'color:var(--vermelho);':eDespVal===false?'color:var(--azul);':'';
     return `<td class="right mono" style="${s}${cor}">${fmtM(Math.abs(val))}</td>`;
   };
