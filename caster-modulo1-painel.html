@@ -1,0 +1,3625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CasterBPO — Painel de Empresas</title>
+<!-- 🔒 GUARD DE SESSÃO — deve ser o primeiro script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  #auth-loading-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #f2f0eb;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+  }
+  #auth-loading-overlay .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid rgba(0,0,0,0.08);
+    border-top-color: #c9a832;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #auth-loading-overlay p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: #959da4;
+  }
+</style>
+<div id="auth-loading-overlay">
+  <div class="spinner"></div>
+  <p>Verificando acesso…</p>
+</div>
+<script>
+(async () => {
+  const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+  const _supaGuard = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  // 1. Sem sessão → login
+  const { data: { session } } = await _supaGuard.auth.getSession();
+  if (!session) {
+    window.location.replace('https://casterbpo.github.io/sistema/index.html');
+    return;
+  }
+
+  // 2. Verifica se o usuário existe na tabela e tem empresa vinculada
+  const { data: usr } = await _supaGuard
+    .from('usuarios').select('papel, empresa_id').eq('id', session.user.id).single();
+
+  // Bloqueia se: sem registro na tabela OU tem registro mas não é admin e não tem empresa
+  const semEmpresa = usr && usr.papel !== 'admin' && !usr.empresa_id;
+  const semRegistro = !usr;
+
+  if (semEmpresa || semRegistro) {
+    // Faz logout antes de redirecionar — evita loop login ↔ painel
+    sessionStorage.setItem('login_aviso', 'sem_empresa');
+    await _supaGuard.auth.signOut();
+    window.location.replace('https://casterbpo.github.io/sistema/index.html');
+    return;
+  }
+
+  // 3. Tudo OK — remove o overlay e deixa o init() continuar
+  document.getElementById('auth-loading-overlay').remove();
+})();
+</script>
+<!-- fim do guard -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ═══════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════ */
+:root {
+  --g900: #0b1f13;
+  --g800: #122b1c;
+  --g700: #1a3d28;
+  --g600: #245336;
+  --g500: #2e6a44;
+  --g400: #3d8a5a;
+  --g300: #5aaa76;
+  --g200: #8dcca4;
+  --g100: #c4e8d0;
+  --g050: #edf7f1;
+
+  --d900: #6b4c00;
+  --d800: #8f6500;
+  --d700: #b37f00;
+  --d600: #c99520;
+  --d500: #d4a832;
+  --d400: #e0bc55;
+  --d300: #e8cc7a;
+  --d200: #f0dba0;
+  --d100: #f7ecc8;
+  --d050: #fdf8ee;
+
+  --n900: #111418;
+  --n800: #1e2328;
+  --n700: #2d3339;
+  --n600: #414950;
+  --n500: #596168;
+  --n400: #737c84;
+  --n300: #959da4;
+  --n200: #bcc2c7;
+  --n100: #dde1e4;
+  --n050: #f4f5f6;
+
+  --vermelho: #c0392b;
+  --vermelho-bg: #fdecea;
+  --azul: #2563eb;
+  --azul-bg: #eff6ff;
+  --amarelo: #d97706;
+  --amarelo-bg: #fffbeb;
+
+  --bg-page: #f2f0eb;
+  --bg-card: #ffffff;
+  --borda: #e4e0d8;
+  --texto: #111418;
+  --texto-2: #596168;
+  --texto-3: #959da4;
+
+  --fonte-display: 'Cormorant Garamond', serif;
+  --fonte-body: 'DM Sans', sans-serif;
+  --fonte-mono: 'DM Mono', monospace;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  --sombra-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --sombra-modal: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--fonte-body);
+  background: var(--bg-page);
+  color: var(--texto);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════
+   UTILITÁRIOS
+═══════════════════════════════════════ */
+.hidden { display: none !important; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.tag-pagar   { background: var(--vermelho-bg); color: var(--vermelho); }
+.tag-receber { background: var(--azul-bg); color: var(--azul); }
+.tag-vencido { background: #fff0f0; color: #991b1b; border: 1px solid #fecaca; }
+.tag-pago    { background: var(--g050); color: var(--g500); }
+.tag-pendente{ background: var(--amarelo-bg); color: var(--amarelo); }
+
+.valor-pos { color: var(--g500); font-weight: 600; }
+.valor-neg { color: var(--vermelho); font-weight: 600; }
+.valor-neu { color: var(--texto-2); }
+
+/* ═══════════════════════════════════════
+   VIEWS
+═══════════════════════════════════════ */
+.view { display: none; min-height: 100vh; }
+.view.ativa { display: block; }
+
+/* ═══════════════════════════════════════
+   TOPBAR GLOBAL
+═══════════════════════════════════════ */
+.topbar {
+  background: var(--g900);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  border-bottom: 1px solid rgba(201,168,76,0.12);
+}
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--d600), var(--d800));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-mark svg { width: 18px; height: 18px; }
+
+.logo-wordmark {
+  font-family: var(--fonte-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--d400);
+  letter-spacing: 0.03em;
+}
+
+.logo-wordmark em {
+  font-style: normal;
+  color: rgba(255,255,255,0.85);
+}
+
+.topbar-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.1);
+}
+
+.topbar-empresa-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.topbar-empresa-badge:hover { background: rgba(255,255,255,0.1); }
+.topbar-empresa-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--g300);
+}
+
+.topbar-spacer { flex: 1; }
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tnav-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  padding: 5px 11px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-family: var(--fonte-body);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tnav-btn:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); }
+.tnav-btn.ativo { background: rgba(201,168,76,0.15); color: var(--d300); }
+
+.tnav-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.topbar-action {
+  background: linear-gradient(135deg, var(--d600), var(--d800));
+  color: var(--g900);
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--fonte-body);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.2s;
+}
+.topbar-action:hover { opacity: 0.88; }
+
+/* LOGOFF BTN TOPBAR */
+.topbar-logoff {
+  background: transparent;
+  border: 1px solid rgba(201,168,76,.2);
+  border-radius: 6px;
+  padding: 5px 11px;
+  color: rgba(255,255,255,.45);
+  font-size: 12px;
+  font-family: var(--fonte-b);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.topbar-logoff:hover {
+  background: rgba(201,168,76,.1);
+  border-color: rgba(201,168,76,.45);
+  color: var(--d300);
+}
+.topbar-logoff svg { width: 14px; height: 14px; }
+
+/* ═══════════════════════════════════════
+   VIEW PAINEL — PÁGINA INICIAL
+═══════════════════════════════════════ */
+#view-painel {
+  background: var(--bg-page);
+}
+
+.painel-hero {
+  background: var(--g900);
+  padding: 2.5rem 2rem 3.5rem;
+  position: relative;
+}
+
+.painel-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.012) 40px,
+    rgba(255,255,255,0.012) 41px
+  );
+}
+
+.painel-hero-inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.painel-hero h1 {
+  font-family: var(--fonte-display);
+  font-size: 2rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+
+.painel-hero h1 em {
+  font-style: italic;
+  color: var(--d400);
+}
+
+.painel-hero-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.5rem;
+}
+
+.painel-hero-stats {
+  display: flex;
+  gap: 2rem;
+  position: relative;
+}
+
+.hero-stat { }
+.hero-stat-val {
+  font-family: var(--fonte-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--d300);
+}
+.hero-stat-lbl {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+.painel-corpo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.painel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+
+.secao-titulo {
+  font-family: var(--fonte-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--n800);
+}
+
+.btn-primario {
+  background: var(--g700);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--fonte-body);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-primario:hover { background: var(--g600); }
+.btn-primario svg { width: 15px; height: 15px; }
+
+.btn-secundario {
+  background: var(--bg-card);
+  color: var(--texto-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--fonte-body);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.btn-secundario:hover { border-color: var(--g400); color: var(--g600); }
+.btn-secundario svg { width: 15px; height: 15px; }
+
+/* GRID DE EMPRESAS */
+.empresas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.empresa-card {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--sombra-card);
+  position: relative;
+}
+.empresa-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  border-color: var(--g200);
+}
+
+.empresa-card-topo {
+  background: linear-gradient(135deg, var(--g800), var(--g900));
+  padding: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.empresa-inicial {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--d500), var(--d700));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fonte-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--g900);
+  flex-shrink: 0;
+}
+
+.empresa-alertas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.alerta-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.alerta-pagar   { background: rgba(192,57,43,0.25); color: #ff8a7a; }
+.alerta-receber { background: rgba(37,99,235,0.25); color: #93c5fd; }
+.alerta-vencido { background: rgba(201,168,76,0.25); color: var(--d300); }
+
+.empresa-card-corpo {
+  padding: 1rem 1.2rem;
+}
+
+.empresa-nome {
+  font-family: var(--fonte-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--n900);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empresa-cnpj {
+  font-family: var(--fonte-mono);
+  font-size: 10px;
+  color: var(--texto-3);
+  margin-bottom: 1rem;
+}
+
+.empresa-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.emp-kpi {
+  background: var(--n050);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+}
+.emp-kpi-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--texto-3);
+  margin-bottom: 3px;
+}
+.emp-kpi-val {
+  font-family: var(--fonte-display);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Variantes de notificação dourada para os quadros */
+.emp-kpi.kpi-pagar   { background: rgba(192,57,43,0.07); border: 1px solid rgba(192,57,43,0.12); }
+.emp-kpi.kpi-receber { background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.12); }
+.emp-kpi.kpi-vencido { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); }
+
+.emp-kpi.kpi-pagar   .emp-kpi-lbl,
+.emp-kpi.kpi-receber .emp-kpi-lbl,
+.emp-kpi.kpi-vencido .emp-kpi-lbl {
+  color: var(--d600);
+  font-weight: 700;
+}
+.emp-kpi.kpi-pagar   .emp-kpi-val { color: var(--d500); font-family: var(--fonte-display); }
+.emp-kpi.kpi-receber .emp-kpi-val { color: var(--d500); font-family: var(--fonte-display); }
+.emp-kpi.kpi-vencido .emp-kpi-val { color: var(--d400); font-family: var(--fonte-display); }
+
+.empresa-card-rodape {
+  padding: 0.7rem 1.2rem;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--texto-3);
+}
+
+.empresa-card-rodape .ver-mais {
+  color: var(--g500);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* CARD ADICIONAR */
+.empresa-card-add {
+  background: transparent;
+  border: 1.5px dashed var(--n100);
+  border-radius: var(--r-lg);
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--texto-3);
+}
+.empresa-card-add:hover {
+  border-color: var(--g300);
+  color: var(--g500);
+  background: var(--g050);
+}
+.empresa-card-add svg { width: 28px; height: 28px; opacity: 0.5; }
+.empresa-card-add span { font-size: 13px; font-weight: 500; }
+
+/* ═══════════════════════════════════════
+   VIEW EMPRESA — DASHBOARD
+═══════════════════════════════════════ */
+#view-empresa { background: var(--bg-page); }
+
+/* Layout sidebar + conteúdo (igual ao módulo 5) */
+.empresa-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: calc(100vh - 52px);
+}
+
+.empresa-sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--borda);
+  padding: 1.2rem 0;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+
+.sidebar-titulo {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--texto-3);
+  padding: 0.5rem 1.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.sidebar-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 1.2rem;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--texto-2);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--fonte-body);
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.sidebar-btn:hover { background: var(--n050); color: var(--n800); }
+.sidebar-btn.ativo {
+  background: var(--g050);
+  color: var(--g700);
+  border-left-color: var(--g500);
+  font-weight: 600;
+}
+.sidebar-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.sidebar-sep { border: none; border-top: 1px solid var(--borda); margin: 0.6rem 0; }
+
+.empresa-conteudo {
+  padding: 1.5rem 2rem;
+  min-width: 0;
+}
+
+.conf-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.conf-header h2 {
+  font-family: var(--fonte-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--n900);
+}
+.conf-header p { font-size: 12px; color: var(--texto-3); margin-top: 2px; }
+
+.dash-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.2rem;
+  align-items: start;
+}
+.dash-principal { min-width: 0; overflow: hidden; }
+.dash-lateral { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+
+/* CABEÇALHO DO DASHBOARD */
+.dash-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.dash-cab-esq h2 {
+  font-family: var(--fonte-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--n900);
+}
+.dash-cab-esq p {
+  font-size: 12px;
+  color: var(--texto-3);
+  margin-top: 2px;
+}
+
+.dash-cab-dir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.periodo-pills {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.periodo-pill {
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--texto-2);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--fonte-body);
+  transition: all 0.15s;
+}
+.periodo-pill.ativo { background: var(--g700); color: #fff; font-weight: 500; }
+
+/* KPI CARDS */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--sombra-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.kpi-card.k-receita::before  { background: var(--g400); }
+.kpi-card.k-despesa::before  { background: var(--vermelho); }
+.kpi-card.k-resultado::before{ background: var(--d500); }
+.kpi-card.k-saldo::before    { background: var(--azul); }
+
+.kpi-icone {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.7rem;
+}
+.k-receita  .kpi-icone { background: var(--g050); color: var(--g500); }
+.k-despesa  .kpi-icone { background: var(--vermelho-bg); color: var(--vermelho); }
+.k-resultado.kpi-icone { background: var(--d050); color: var(--d700); }
+.k-saldo    .kpi-icone { background: var(--azul-bg); color: var(--azul); }
+.kpi-icone svg { width: 16px; height: 16px; }
+
+.kpi-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--texto-3);
+  margin-bottom: 4px;
+}
+
+.kpi-val {
+  font-family: var(--fonte-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--n900);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.kpi-delta {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--texto-3);
+}
+.delta-up   { color: var(--g500); }
+.delta-down { color: var(--vermelho); }
+
+/* GRÁFICOS */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sombra-card);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1rem 1.2rem 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--borda);
+}
+
+.card-titulo {
+  font-family: var(--fonte-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--n900);
+}
+
+.card-sub {
+  font-size: 11px;
+  color: var(--texto-3);
+}
+
+.card-body { padding: 1rem 1.2rem; }
+
+.grafico-wrap {
+  position: relative;
+  height: 200px;
+}
+
+.grafico-wrap-lg {
+  position: relative;
+  height: 240px;
+}
+
+/* LEGENDA CUSTOM */
+.legenda-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0.8rem;
+}
+.legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--texto-2);
+}
+.legenda-cor {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* CALENDÁRIO DE VENCIMENTOS */
+.venc-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.venc-item {
+  display: grid;
+  grid-template-columns: 36px 1fr minmax(90px, auto);;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 1.2rem;
+  border-bottom: 1px solid var(--borda);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.venc-item:last-child { border-bottom: none; }
+.venc-item:hover { background: var(--n050); }
+
+.venc-data {
+  text-align: center;
+  background: var(--n050);
+  border-radius: var(--r-sm);
+  padding: 4px 0;
+}
+.venc-dia { font-family: var(--fonte-display); font-size: 1.1rem; font-weight: 700; color: var(--n800); line-height: 1; }
+.venc-mes { font-size: 9px; color: var(--texto-3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.venc-info { min-width: 0; overflow: hidden; }
+.venc-desc { font-size: 12px; font-weight: 500; color: var(--n800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.venc-forn { font-size: 11px; color: var(--texto-3); }
+
+.venc-valor { font-family: var(--fonte-mono); font-size: 12px; font-weight: 500; text-align: right; }
+
+/* HOJE DESTAQUE */
+.venc-item.hoje {
+  background: #fffbeb;
+  border-left: 3px solid var(--amarelo);
+}
+.venc-item.hoje .venc-data { background: var(--amarelo-bg); }
+.venc-item.hoje .venc-dia { color: var(--amarelo); }
+
+.venc-item.vencido {
+  background: #fff9f9;
+  border-left: 3px solid var(--vermelho);
+}
+.venc-item.vencido .venc-data { background: var(--vermelho-bg); }
+.venc-item.vencido .venc-dia { color: var(--vermelho); }
+
+/* SALDO POR BANCO */
+.banco-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 1.2rem;
+  border-bottom: 1px solid var(--borda);
+}
+.banco-item:last-child { border-bottom: none; }
+
+.banco-esq { display: flex; align-items: center; gap: 10px; }
+.banco-icone {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--g050);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fonte-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--g600);
+}
+.banco-nome { font-size: 12px; font-weight: 500; color: var(--n800); }
+.banco-tipo { font-size: 10px; color: var(--texto-3); }
+.banco-saldo { font-family: var(--fonte-mono); font-size: 13px; font-weight: 500; }
+
+/* ALERTAS DO DIA */
+.alerta-dia {
+  background: linear-gradient(135deg, rgba(11,31,19,0.97), rgba(18,43,28,0.95));
+  border: 1px solid rgba(201,168,76,0.35);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 2px 12px rgba(201,168,76,0.08);
+}
+.alerta-dia svg { width: 18px; height: 18px; color: var(--d400); flex-shrink: 0; margin-top: 1px; }
+.alerta-dia-texto { flex: 1; }
+.alerta-dia-titulo { font-size: 12px; font-weight: 600; color: var(--d300); margin-bottom: 3px; font-family: var(--fonte-display); letter-spacing: 0.03em; }
+.alerta-dia-itens { font-size: 11px; color: var(--d400); }
+
+/* HERO STAT TOOLTIPS */
+.hero-stat {
+  position: relative;
+  cursor: default;
+  padding-bottom: 8px;
+}
+.hero-stat-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--g800);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  min-width: 240px;
+  max-width: 340px;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s, visibility 0.18s;
+  white-space: normal;
+}
+.hero-stat:hover .hero-stat-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+.hero-stat-tooltip-titulo {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--d400);
+  font-weight: 600;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  padding-bottom: 6px;
+}
+.hero-stat-tooltip-item {
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.hero-stat-tooltip-item:last-child { border-bottom: none; }
+.hero-stat-tooltip-item .dot-emp {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hero-stat-tooltip-empty {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+}
+
+/* NOTIFICAÇÃO COM LETRAS DOURADAS */
+.notif-dourada {
+  color: var(--d400) !important;
+  font-family: var(--fonte-display);
+}
+.notif-dourada-sub {
+  color: var(--d300) !important;
+}
+
+/* CAMPO OUTRO SEGMENTO */
+.seg-outro-campo {
+  display: none;
+  margin-top: 8px;
+}
+.seg-outro-campo.visivel { display: block; }
+
+/* BOTÃO EXCLUIR EMPRESA */
+.btn-excluir-empresa {
+  background: transparent;
+  border: 1px solid rgba(192,57,43,0.3);
+  border-radius: var(--r-sm);
+  color: var(--vermelho);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--fonte-body);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-excluir-empresa:hover {
+  background: var(--vermelho-bg);
+  border-color: var(--vermelho);
+}
+.btn-excluir-empresa svg { width: 12px; height: 12px; }
+
+/* BANCO LIMITE BARRA */
+.banco-limite-wrap {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--texto-3);
+}
+.banco-limite-barra {
+  height: 3px;
+  background: var(--n100);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 3px 0;
+}
+.banco-limite-barra-inner {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+/* ═══════════════════════════════════════
+   MODAIS
+═══════════════════════════════════════ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s;
+  backdrop-filter: blur(2px);
+}
+.overlay.aberto { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  width: 520px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra-modal);
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.22s;
+}
+.overlay.aberto .modal { transform: translateY(0) scale(1); }
+
+.modal-header {
+  background: var(--g900);
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+
+.modal-titulo {
+  font-family: var(--fonte-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--d300);
+}
+
+.modal-fechar {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  color: rgba(255,255,255,0.5);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.modal-fechar:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.modal-body { padding: 1.5rem; }
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* FORMULÁRIOS */
+.form-row {
+  display: grid;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.form-row-2 { grid-template-columns: 1fr 1fr; }
+.form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-row-1 { grid-template-columns: 1fr; }
+
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+
+.form-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--texto-3);
+}
+
+.form-input, .form-select, .form-textarea {
+  background: var(--n050);
+  border: 1px solid var(--n100);
+  border-radius: var(--r-md);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: var(--fonte-body);
+  color: var(--texto);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--g400);
+  box-shadow: 0 0 0 3px rgba(61,138,90,0.12);
+  background: var(--bg-card);
+}
+.form-textarea { resize: vertical; min-height: 72px; }
+
+.form-hint { font-size: 11px; color: var(--texto-3); }
+
+.segmento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.seg-btn {
+  padding: 8px 4px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+  font-size: 12px;
+  font-family: var(--fonte-body);
+  color: var(--texto-2);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.seg-btn:hover { border-color: var(--g300); color: var(--g600); }
+.seg-btn.ativo { border-color: var(--g500); background: var(--g050); color: var(--g700); font-weight: 600; }
+
+/* TOAST */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--g900);
+  color: var(--d200);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: var(--r-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  box-shadow: var(--sombra-modal);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.erro { border-color: rgba(192,57,43,0.4); color: #ff8a7a; }
+.toast svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+@keyframes toastIn  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(8px); } }
+
+/* TABELA SIMPLES */
+.tabela-simples {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  table-layout: auto;
+}
+.tabela-simples thead tr {
+  background: var(--g900);
+}
+.tabela-simples thead th {
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(201,168,76,0.65);
+  text-align: left;
+}
+.tabela-simples tbody tr {
+  border-bottom: 1px solid var(--borda);
+  transition: background 0.12s;
+}
+.tabela-simples tbody tr:hover { background: var(--n050); }
+.tabela-simples tbody tr:last-child { border-bottom: none; }
+.tabela-simples tbody td {
+  padding: 9px 12px;
+  color: var(--texto);
+  vertical-align: middle;
+}
+
+/* STEPPER MODAL EMPRESA */
+.stepper {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--borda);
+}
+.step {
+  flex: 1;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-3);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.step.ativo { color: var(--g600); border-bottom-color: var(--g500); }
+.step.completo { color: var(--g400); }
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .empresa-layout { grid-template-columns: 1fr; }
+  .empresa-sidebar { position: static; height: auto; display: flex; flex-wrap: wrap; padding: 0.5rem; gap: 4px; border-right: none; border-bottom: 1px solid var(--borda); }
+  .sidebar-btn { border-radius: var(--r-sm); border: 1px solid var(--borda); border-left: 3px solid transparent; padding: 6px 10px; }
+  .sidebar-titulo { display: none; }
+  .sidebar-sep { display: none; }
+  .dash-layout { grid-template-columns: 1fr; }
+  .dash-lateral { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+@media (max-width: 800px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar-nav .tnav-btn span { display: none; }
+}
+@media (max-width: 560px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .painel-corpo { padding: 1rem; }
+  .painel-hero { padding: 1.5rem 1rem 2.5rem; }
+}
+</style>
+</head>
+<body style="visibility:hidden;" onload="document.body.style.visibility='visible'">
+
+<!-- ═══════════════ VIEW: PAINEL DE EMPRESAS ═══════════════ -->
+<div id="view-painel" class="view">
+
+  <!-- Topbar do painel -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+          <path d="M12 6v2m0 8v2M8 12h2m4 0h2"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <span class="logo-wordmark">Caster<em>BPO</em></span>
+    </div>
+    <div class="topbar-sep"></div>
+    <span style="font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:0.1em; text-transform:uppercase;">Painel de Controle</span>
+    <div class="topbar-spacer"></div>
+    <span style="font-size:11px; color:rgba(255,255,255,0.25);" id="topbar-data"></span>
+    <button class="topbar-logoff" onclick="fazerLogoff()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair
+    </button>
+  </div>
+
+  <!-- Hero -->
+  <div class="painel-hero">
+    <div class="painel-hero-inner">
+      <h1>Olá, <em>gestor.</em></h1>
+      <p class="painel-hero-sub">Selecione uma empresa para acessar o painel financeiro completo.</p>
+      <div class="painel-hero-stats" id="hero-stats">
+        <!-- preenchido por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Corpo -->
+  <div class="painel-corpo">
+    <div class="painel-header-row">
+      <span class="secao-titulo">Empresas cadastradas</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secundario" onclick="abrirModalConvite()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="11" x2="19" y2="17"/><line x1="22" y1="14" x2="16" y2="14"/></svg>
+          Convidar usuário
+        </button>
+        <button class="btn-primario" onclick="abrirModalEmpresa()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nova empresa
+        </button>
+      </div>
+    </div>
+
+    <div class="empresas-grid" id="empresas-grid">
+      <!-- preenchido por JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ VIEW: EMPRESA / DASHBOARD ═══════════════ -->
+<div id="view-empresa" class="view">
+
+  <!-- Topbar da empresa -->
+  <div class="topbar">
+    <div class="topbar-logo" onclick="voltarPainel()" style="cursor:pointer;">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <span class="logo-wordmark">Caster<em>BPO</em></span>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-empresa-badge" onclick="voltarPainel()">
+      <span class="dot"></span>
+      <span id="topbar-empresa-nome">—</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px;opacity:0.5;"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="topbar-spacer"></div>
+    <nav class="topbar-nav">
+      <button class="tnav-btn ativo" id="sb-dashboard" onclick="irAba('dashboard', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="tnav-btn" id="sb-lancamentos" onclick="irAba('lancamentos', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/><polyline points="13 2 13 9 20 9"/></svg>
+        <span>Lançamentos</span>
+      </button>
+      <button class="tnav-btn" id="sb-conciliacao" onclick="irAba('conciliacao', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Conciliação</span>
+      </button>
+      <button class="tnav-btn" id="sb-relatorios" onclick="irAba('relatorios', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Relatórios</span>
+      </button>
+      <button class="tnav-btn" id="sb-configuracoes" onclick="irAba('configuracoes', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Configurações</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Conteúdo por aba -->
+  <div id="aba-dashboard">
+    <div class="dash-layout">
+      <!-- COLUNA PRINCIPAL -->
+      <div class="dash-principal">
+
+        <!-- Cabeçalho -->
+        <div class="dash-cabecalho">
+          <div class="dash-cab-esq">
+            <h2 id="dash-empresa-titulo">—</h2>
+            <p id="dash-empresa-sub">—</p>
+          </div>
+          <div class="dash-cab-dir">
+            <div class="periodo-pills">
+              <button class="periodo-pill" onclick="setPeriodo('mes-ant', this)">Mês ant.</button>
+              <button class="periodo-pill ativo" onclick="setPeriodo('mes-atual', this)">Este mês</button>
+              <button class="periodo-pill" onclick="setPeriodo('ano', this)">Ano</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerta do dia -->
+        <div class="alerta-dia hidden" id="alerta-hoje">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div class="alerta-dia-texto">
+            <div class="alerta-dia-titulo">Atenção: vencimentos hoje</div>
+            <div class="alerta-dia-itens" id="alerta-hoje-itens">—</div>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card k-receita">
+            <div class="kpi-icone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </div>
+            <div class="kpi-lbl">Receitas</div>
+            <div class="kpi-val" id="kpi-receitas">—</div>
+            <div class="kpi-delta"><span id="kpi-rec-delta">—</span></div>
+          </div>
+          <div class="kpi-card k-despesa">
+            <div class="kpi-icone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            </div>
+            <div class="kpi-lbl">Despesas</div>
+            <div class="kpi-val" id="kpi-despesas">—</div>
+            <div class="kpi-delta"><span id="kpi-desp-delta">—</span></div>
+          </div>
+          <div class="kpi-card k-resultado">
+            <div class="kpi-icone" style="background:var(--d050);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--d700)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-lbl">Resultado</div>
+            <div class="kpi-val" id="kpi-resultado">—</div>
+            <div class="kpi-delta"><span id="kpi-res-delta">—</span></div>
+          </div>
+          <div class="kpi-card k-saldo">
+            <div class="kpi-icone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="kpi-lbl">Saldo em caixa/banco</div>
+            <div class="kpi-val" id="kpi-saldo">—</div>
+            <div class="kpi-delta"><span id="kpi-sal-delta" style="color:var(--texto-3);">soma de todas as contas</span></div>
+          </div>
+        </div>
+
+        <!-- Gráfico receitas x despesas -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-header">
+            <div>
+              <div class="card-titulo">Receitas vs Despesas</div>
+              <div class="card-sub">Evolução mensal — <span id="grafico-ano-label">2025</span></div>
+            </div>
+            <div class="legenda-row" style="margin:0;">
+              <div class="legenda-item"><span class="legenda-cor" style="background:#2e6a44;"></span>Receitas</div>
+              <div class="legenda-item"><span class="legenda-cor" style="background:#c0392b;"></span>Despesas</div>
+              <div class="legenda-item"><span class="legenda-cor" style="background:#d4a832; border-radius:50%;"></span>Resultado</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="grafico-wrap-lg">
+              <canvas id="chart-evolucao" role="img" aria-label="Gráfico de receitas e despesas mensais">Receitas e despesas por mês.</canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Últimos lançamentos -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-header">
+            <div class="card-titulo">Lançamentos recentes</div>
+            <button class="btn-secundario" style="font-size:12px; padding:5px 12px;" onclick="irAba('lancamentos', document.getElementById('sb-lancamentos'))">Ver todos →</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="tabela-simples" id="tabela-recentes">
+              <thead><tr>
+                <th>Data</th><th>Descrição</th><th>Fornecedor/Cliente</th>
+                <th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th>
+              </tr></thead>
+              <tbody id="tbody-recentes"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Contas vencidas -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-titulo" style="color:#991b1b;">Contas vencidas</div>
+              <div class="card-sub">Em aberto e com vencimento no passado</div>
+            </div>
+            <span id="badge-vencidas" style="font-size:11px;background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:100px;font-weight:600;display:none;"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="tabela-simples" id="tabela-vencidas">
+              <thead><tr>
+                <th>Vencimento</th><th>Descrição</th><th>Fornecedor/Cliente</th>
+                <th>Categoria</th><th>Tipo</th><th>Valor</th><th>Dias em atraso</th>
+              </tr></thead>
+              <tbody id="tbody-vencidas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUNA LATERAL -->
+      <div class="dash-lateral">
+
+        <!-- Contas a vencer -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-titulo">Próximos vencimentos</div>
+              <div class="card-sub">Próximos 30 dias</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+              <div style="display:flex;gap:12px;align-items:flex-end;">
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                  <span style="font-size:10px;color:var(--azul);font-weight:600;">a receber</span>
+                  <span class="valor-pos" style="font-family:var(--fonte-mono);font-size:13px;color:var(--azul);" id="lat-total-receber">R$ 0</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                  <span style="font-size:10px;color:var(--texto-3);">a pagar</span>
+                  <span class="valor-neg" style="font-family:var(--fonte-mono);font-size:13px;" id="lat-total-pagar">R$ 0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="venc-lista" id="lista-vencimentos">
+            <div style="padding:1.5rem; text-align:center; color:var(--texto-3); font-size:12px;">Nenhum vencimento próximo</div>
+          </div>
+        </div>
+
+        <!-- Saldo por banco/caixa -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-titulo">Saldos</div>
+            <span style="font-size:11px; color:var(--texto-3);">bancos e caixas</span>
+          </div>
+          <div id="lista-bancos">
+            <div style="padding:1.2rem; text-align:center; color:var(--texto-3); font-size:12px;">Cadastre bancos em Configurações</div>
+          </div>
+        </div>
+
+        <!-- Donut categorias -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-titulo">Despesas por categoria</div>
+            <span class="card-sub">este mês</span>
+          </div>
+          <div class="card-body">
+            <div class="grafico-wrap">
+              <canvas id="chart-categorias" role="img" aria-label="Distribuição de despesas por categoria">Despesas por categoria.</canvas>
+            </div>
+            <div class="legenda-row" id="leg-categorias" style="justify-content:center;"></div>
+          </div>
+        </div>
+
+        <!-- Donut receitas por categoria -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-titulo" style="color:var(--g600);">Receitas por categoria</div>
+            <span class="card-sub">este mês</span>
+          </div>
+          <div class="card-body">
+            <div class="grafico-wrap">
+              <canvas id="chart-categorias-rec" role="img" aria-label="Distribuição de receitas por categoria">Receitas por categoria.</canvas>
+            </div>
+            <div class="legenda-row" id="leg-categorias-rec" style="justify-content:center;"></div>
+          </div>
+        </div>
+
+        <!-- Resumo financeiro -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-titulo">Resumo financeiro</div>
+            <span class="card-sub">mês atual</span>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--g050);border-radius:var(--r-md);">
+              <span style="font-size:12px;color:var(--g600);font-weight:500;">A receber (em aberto)</span>
+              <span class="valor-pos" style="font-family:var(--fonte-mono);font-size:13px;" id="res-a-receber">R$ 0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--vermelho-bg);border-radius:var(--r-md);">
+              <span style="font-size:12px;color:var(--vermelho);font-weight:500;">A pagar (em aberto)</span>
+              <span class="valor-neg" style="font-family:var(--fonte-mono);font-size:13px;" id="res-a-pagar">R$ 0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--n050);border-radius:var(--r-md);border-top:2px solid var(--borda);">
+              <span style="font-size:12px;font-weight:600;color:var(--n800);">Posição líquida</span>
+              <span style="font-family:var(--fonte-mono);font-size:13px;font-weight:700;" id="res-posicao">R$ 0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#fff0f0;border-radius:var(--r-md);">
+              <span style="font-size:12px;color:#991b1b;font-weight:500;">Vencidos</span>
+              <span style="color:#991b1b;font-family:var(--fonte-mono);font-size:13px;" id="res-vencidos">R$ 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abas com iframe -->
+<div id="aba-lancamentos" class="hidden">
+  <iframe id="frame-lancamentos" src="" style="width:100%;height:calc(100vh - 52px);border:none;display:block;"></iframe>
+</div>
+<div id="aba-conciliacao" class="hidden">
+  <iframe id="frame-conciliacao" src="" style="width:100%;height:calc(100vh - 52px);border:none;display:block;"></iframe>
+</div>
+<div id="aba-relatorios" class="hidden">
+  <iframe id="frame-relatorios" src="" style="width:100%;height:calc(100vh - 52px);border:none;display:block;"></iframe>
+</div>
+<div id="aba-configuracoes" class="hidden">
+  <iframe id="frame-configuracoes" src="" style="width:100%;height:calc(100vh - 52px);border:none;display:block;"></iframe>
+</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ MODAL: CONVIDAR USUÁRIO ═══════════════ -->
+<div class="overlay" id="overlay-convite">
+  <div class="modal" style="width:460px;">
+    <div class="modal-header">
+      <span class="modal-titulo">Convidar usuário</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-convite')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">E-mail *</label>
+          <input class="form-input" id="convite-email" type="email" placeholder="usuario@empresa.com">
+        </div>
+      </div>
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">Nome (opcional)</label>
+          <input class="form-input" id="convite-nome" placeholder="Nome completo do usuário">
+        </div>
+      </div>
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">Papel *</label>
+          <select class="form-select" id="convite-papel" onchange="toggleEmpresaConvite()">
+            <option value="usuario">Usuário</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row form-row-1" id="convite-empresa-wrap">
+        <div class="form-group">
+          <label class="form-label">Empresa *</label>
+          <select class="form-select" id="convite-empresa">
+            <option value="">— selecione —</option>
+          </select>
+          <span class="form-hint">O usuário só terá acesso à empresa selecionada.</span>
+        </div>
+      </div>
+      <div id="convite-feedback" style="display:none;padding:10px 14px;border-radius:var(--r-md);font-size:13px;margin-top:0.5rem;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secundario" onclick="fecharModal('overlay-convite')">Cancelar</button>
+      <button class="btn-primario" id="btn-enviar-convite" onclick="enviarConvite()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar convite
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: NOVA EMPRESA ═══════════════ -->
+<div class="overlay" id="overlay-empresa">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo">Cadastrar nova empresa</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-empresa')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="stepper">
+        <div class="step ativo" id="step1-label">1. Dados</div>
+        <div class="step" id="step2-label">2. Bancos iniciais</div>
+        <div class="step" id="step3-label">3. Confirmar</div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div id="step1">
+        <div class="form-row form-row-1">
+          <div class="form-group">
+            <label class="form-label">Razão Social *</label>
+            <input class="form-input" id="emp-razao" placeholder="Ex: Empresa Comércio Ltda">
+          </div>
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">CNPJ</label>
+            <input class="form-input" id="emp-cnpj" placeholder="00.000.000/0001-00" maxlength="18" inputmode="numeric" oninput="mascaraCNPJ(this)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome fantasia</label>
+            <input class="form-input" id="emp-fantasia" placeholder="Ex: Empresa XYZ">
+          </div>
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Responsável</label>
+            <input class="form-input" id="emp-responsavel" placeholder="Nome do responsável">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone</label>
+            <input class="form-input" id="emp-telefone" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric" oninput="mascaraTel(this)">
+          </div>
+        </div>
+        <div class="form-row form-row-1">
+          <div class="form-group">
+            <label class="form-label">E-mail</label>
+            <input class="form-input" id="emp-email" type="email" placeholder="contato@empresa.com">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0.8rem;">
+          <label class="form-label">Segmento</label>
+          <div class="segmento-grid">
+            <button class="seg-btn ativo" onclick="setSeg(this,'Comércio')">🛒 Comércio</button>
+            <button class="seg-btn" onclick="setSeg(this,'Serviços')">⚙️ Serviços</button>
+            <button class="seg-btn" onclick="setSeg(this,'Indústria')">🏭 Indústria</button>
+            <button class="seg-btn" onclick="setSeg(this,'Tecnologia')">💻 Tecnologia</button>
+            <button class="seg-btn" onclick="setSeg(this,'Saúde')">🏥 Saúde</button>
+            <button class="seg-btn" onclick="setSeg(this,'Outro')">📦 Outro</button>
+          </div>
+          <div class="seg-outro-campo" id="seg-outro-campo">
+            <input class="form-input" id="seg-outro-desc" placeholder="Descreva o segmento da empresa..." oninput="if(this.value.trim()) segmentoSelecionado = this.value.trim();" style="margin-top:6px;">
+            <span class="form-hint" style="margin-top:4px;display:block;">Descreva brevemente o ramo de atividade.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div id="step2" class="hidden">
+        <p style="font-size:12px;color:var(--texto-3);margin-bottom:1rem;">Cadastre as contas bancárias e caixas desta empresa. <strong style="color:var(--vermelho);">Ao menos 1 conta é obrigatória</strong> para avançar.</p>
+        <div id="bancos-step-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;"></div>
+        <button class="btn-secundario" onclick="addBancoStep()" style="width:100%;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar conta/caixa
+        </button>
+      </div>
+
+      <!-- STEP 3 -->
+      <div id="step3" class="hidden">
+        <div style="background:var(--g050);border:1px solid var(--g100);border-radius:var(--r-lg);padding:1.2rem;margin-bottom:1rem;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--g500);margin-bottom:0.8rem;font-weight:600;">Resumo do cadastro</div>
+          <div id="resumo-empresa" style="font-size:13px;color:var(--n700);line-height:1.8;"></div>
+        </div>
+        <p style="font-size:12px;color:var(--texto-3);">Você poderá editar todas essas informações depois em Configurações.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secundario" id="btn-step-ant" onclick="stepAnt()" style="display:none;">← Anterior</button>
+      <button class="btn-secundario" onclick="fecharModal('overlay-empresa')">Cancelar</button>
+      <button class="btn-primario" id="btn-step-prox" onclick="stepProx()">Próximo →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: LANÇAMENTO / TRANSFERÊNCIA ═══════════════ -->
+<div class="overlay" id="overlay-lancamento">
+  <div class="modal" style="width:600px;">
+    <div class="modal-header">
+      <span class="modal-titulo" id="lanc-modal-titulo">Novo Lançamento</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-lancamento')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- ABAS: LANÇAMENTO | TRANSFERÊNCIA -->
+      <div id="m1-tabs-wrap" style="display:flex;gap:0;margin-bottom:1rem;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;">
+        <button id="m1-tab-lanc" onclick="setM1Tab('lanc')"
+          style="flex:1;padding:9px 12px;font-family:var(--fonte-body);font-size:12px;font-weight:600;border:none;background:#0b1f13;color:#e8cc7a;cursor:pointer;transition:all .2s;">
+          📋 Lançamento
+        </button>
+        <button id="m1-tab-transf" onclick="setM1Tab('transf')"
+          style="flex:1;padding:9px 12px;font-family:var(--fonte-body);font-size:12px;font-weight:600;border:none;background:var(--bg-card);color:var(--texto-3);cursor:pointer;transition:all .2s;border-left:1px solid var(--borda);">
+          ⇄ Transferência entre Contas
+        </button>
+      </div>
+
+      <!-- PAINEL TRANSFERÊNCIA -->
+      <div id="m1-painel-transf" class="hidden">
+        <p style="font-size:12px;color:var(--texto-3);margin-bottom:1rem;">Registre uma movimentação entre contas cadastradas. Ela aparecerá como saída na origem e entrada no destino.</p>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Conta Origem *</label>
+            <select class="form-select" id="tr1-origem"><option value="">— selecione —</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Conta Destino *</label>
+            <select class="form-select" id="tr1-destino"><option value="">— selecione —</option></select>
+          </div>
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Valor (R$) *</label>
+            <input class="form-input" id="tr1-valor" type="number" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data *</label>
+            <input class="form-input" id="tr1-data" type="date">
+          </div>
+        </div>
+        <div class="form-row form-row-1">
+          <div class="form-group">
+            <label class="form-label">Observações</label>
+            <input class="form-input" id="tr1-obs" placeholder="Opcional">
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL LANÇAMENTO -->
+      <div id="m1-painel-lanc">
+      <!-- TIPO -->
+      <div style="display:flex;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;margin-bottom:1rem;">
+        <button id="tipo-btn-rec" onclick="setTipoLanc('receber')"
+          style="flex:1;padding:10px;border:none;background:#eff6ff;color:#1d4ed8;font-weight:600;font-family:var(--fonte-body);font-size:13px;cursor:pointer;border-right:1px solid var(--borda);">
+          ↑ A Receber
+        </button>
+        <button id="tipo-btn-pag" onclick="setTipoLanc('pagar')"
+          style="flex:1;padding:10px;border:none;background:var(--bg-card);color:var(--texto-2);font-family:var(--fonte-body);font-size:13px;cursor:pointer;">
+          ↓ A Pagar
+        </button>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Fornecedor / Cliente *</label>
+          <input class="form-input" id="lanc-forn" placeholder="Nome do fornecedor ou cliente" list="forn-list">
+          <datalist id="forn-list"></datalist>
+        </div>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">CNPJ / CPF</label>
+          <input class="form-input" id="lanc-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraCNPJ(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição / Histórico</label>
+          <input class="form-input" id="lanc-desc" placeholder="Ex: NF-e 001234, Aluguel maio...">
+        </div>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Valor (R$) *</label>
+          <input class="form-input" id="lanc-valor" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nº Documento</label>
+          <input class="form-input" id="lanc-doc" placeholder="NF, boleto, contrato...">
+        </div>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="lanc-cat">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Centro de Custo</label>
+          <select class="form-select" id="lanc-cc">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label class="form-label">Dt. Competência</label>
+          <input class="form-input" id="lanc-competencia" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dt. Vencimento *</label>
+          <input class="form-input" id="lanc-vencimento" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dt. Pagamento</label>
+          <input class="form-input" id="lanc-pagamento" type="date">
+          <span class="form-hint">Deixar vazio = pendente</span>
+        </div>
+      </div>
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">Conta Bancária *</label>
+          <select class="form-select" id="lanc-banco">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" id="lanc-obs" placeholder="Observação interna opcional">
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--borda);margin:0.8rem 0;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--texto-3);margin-bottom:0.6rem;">
+        📎 Anexos
+      </div>
+      <div style="border:2px dashed var(--borda);border-radius:var(--r-md);padding:1.2rem;text-align:center;cursor:pointer;background:var(--n050);" 
+           id="lanc-anexo-drop"
+           onclick="document.getElementById('lanc-anexo-input').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--g400)'"
+           ondragleave="this.style.borderColor='var(--borda)'"
+           ondrop="handleLancAnexoDrop(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.35;margin-bottom:6px;display:block;margin-left:auto;margin-right:auto;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+        <span style="font-size:12px;color:var(--texto-3);">Clique para anexar ou arraste arquivos aqui</span><br>
+        <span style="font-size:10px;color:var(--texto-3);">PDF, imagens, XML, planilhas — máx. 10MB por arquivo</span>
+        <input type="file" id="lanc-anexo-input" multiple accept=".pdf,.png,.jpg,.jpeg,.xml,.xlsx,.xls,.csv,.doc,.docx" style="display:none;" onchange="handleLancAnexoChange(event)">
+      </div>
+      <div id="lanc-anexo-lista" style="margin-top:.5rem;display:flex;flex-direction:column;gap:4px;"></div>
+      </div><!-- /m1-painel-lanc -->
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button id="m1-btn-excluir" onclick="excluirLancDetalhe()" style="display:none;background:var(--vermelho-bg);color:var(--vermelho);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:8px 14px;font-size:12px;font-weight:500;font-family:var(--fonte-body);cursor:pointer;align-items:center;gap:5px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+        Excluir
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secundario" onclick="fecharModal('overlay-lancamento')">Cancelar</button>
+        <button class="btn-primario" id="m1-btn-salvar" onclick="salvarOuTransferirM1()">✓ Salvar lançamento</button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: DETALHE/EDIÇÃO LANÇAMENTO ═══════════════ -->
+<div class="overlay" id="overlay-detalhe-lanc">
+  <div class="modal" style="width:580px;">
+    <div class="modal-header">
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span class="modal-titulo" id="dl-titulo">Detalhes do lançamento</span>
+        <div style="display:flex;gap:6px;">
+          <span id="dl-tipo-badge"></span>
+          <span id="dl-status-badge"></span>
+        </div>
+      </div>
+      <button class="modal-fechar" onclick="fecharModal('overlay-detalhe-lanc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Fornecedor / Cliente *</label>
+          <input class="form-input" id="dl-forn" placeholder="Nome">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor (R$) *</label>
+          <input class="form-input" id="dl-valor" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+      </div>
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">Descrição / Histórico</label>
+          <input class="form-input" id="dl-desc" placeholder="Ex: NF-e 001234, Aluguel maio...">
+        </div>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="dl-cat">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Centro de custo</label>
+          <select class="form-select" id="dl-cc">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label class="form-label">Dt. Competência</label>
+          <input class="form-input" id="dl-competencia" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dt. Vencimento *</label>
+          <input class="form-input" id="dl-vencimento" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dt. Pagamento</label>
+          <input class="form-input" id="dl-pagamento" type="date">
+          <span class="form-hint">Deixe em branco se pendente</span>
+        </div>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Conta bancária</label>
+          <select class="form-select" id="dl-banco">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nº Documento</label>
+          <input class="form-input" id="dl-doc" placeholder="NF, boleto...">
+        </div>
+      </div>
+      <div class="form-row form-row-1">
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" id="dl-obs" placeholder="Observação opcional">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button onclick="excluirLancDetalhe()" style="background:var(--vermelho-bg);color:var(--vermelho);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:8px 14px;font-size:12px;font-weight:500;font-family:var(--fonte-body);cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+        Excluir
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secundario" onclick="fecharModal('overlay-detalhe-lanc')">Cancelar</button>
+        <button class="btn-primario" onclick="salvarEdicaoLanc()">✓ Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ╔══════════════════════════════════════════════════════╗
+//   ESTRUTURA DO BANCO DE DADOS (localStorage)
+//   Chave: caster_bpo_v2
+//   DB = {
+//     empresas: [ { id, razao, fantasia, cnpj, segmento, responsavel, email, criadaEm } ],
+//     bancos:   { [empId]: [ { id, nome, tipo, saldo, banco } ] },
+//     lancamentos: { [empId]: [ { id, tipo('pagar'|'receber'), fornecedor, descricao,
+//                                 categoria, centroCusto, valor, dtCompetencia,
+//                                 dtVencimento, dtPagamento, bancoId, documento,
+//                                 obs, conciliado, criadoEm } ] },
+//     categorias: { [empId]: [ { id, nome, mae('Entradas'|'Saídas') } ] },
+//     centrosCusto: { [empId]: [ { id, nome } ] },
+//     fornecedores: { [empId]: [ string ] }
+//   }
+// ╚══════════════════════════════════════════════════════╝
+
+const CHAVE_DB = 'caster_bpo_v2';
+const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let DB = {
+  empresas: [], bancos: {}, lancamentos: {}, categorias: {},
+  centrosCusto: {}, fornecedores: {}, fornecedoresObj: {}, orcamentos: {}
+};
+let empresaAtiva = null;
+let periodoAtivo = 'mes-atual';
+let tipoLancAtivo = 'receber';
+let stepAtual = 1;
+let segmentoSelecionado = 'Comércio';
+let bancosStep = [];
+let chartEvolucao = null, chartCats = null, chartCatsRec = null;
+
+function estruturaInicial() {
+  return {
+    empresas: [],
+    bancos: {},
+    lancamentos: {},
+    categorias: {},
+    centrosCusto: {},
+    fornecedores: {},
+    fornecedoresObj: {},
+    orcamentos: {}
+  };
+}
+
+function salvarDB() {
+  localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
+}
+
+async function carregarDB() {
+  const cache = localStorage.getItem(CHAVE_DB);
+  if (cache) try {
+    DB = JSON.parse(cache);
+    // Sanitiza cache: fornecedores devem ser sempre strings
+    Object.keys(DB.fornecedores||{}).forEach(k => {
+      DB.fornecedores[k] = (DB.fornecedores[k]||[]).filter(f => typeof f === 'string');
+    });
+  } catch(e) {}
+  try {
+    const eid = sessionStorage.getItem('empresa_ativa');
+    const { data: emps } = await supa.from('empresas').select('*');
+    if (emps && emps.length) DB.empresas = emps;
+    if (eid) {
+      const [bancos, cats, centros, forn, lancs] = await Promise.all([
+        supa.from('bancos').select('*').eq('empresa_id', eid),
+        supa.from('categorias').select('*').eq('empresa_id', eid),
+        supa.from('centros_custo').select('*').eq('empresa_id', eid),
+        supa.from('fornecedores').select('*').eq('empresa_id', eid),
+        supa.from('lancamentos').select('*').eq('empresa_id', eid),
+      ]);
+      if (bancos.data) DB.bancos[eid]       = bancos.data;
+      if (cats.data)   DB.categorias[eid]   = cats.data;
+      if (centros.data)DB.centrosCusto[eid] = centros.data;
+      if (forn.data) {
+        if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
+        DB.fornecedoresObj[eid] = forn.data.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
+        DB.fornecedores[eid] = forn.data.map(f => f.nome);
+      }
+      if(lancs?.data) DB.lancamentos[eid] = lancs.data.map(l => ({
+  ...l,
+  bancoId:       l.bancoId       ?? l.banco_id,
+  centroCusto:   l.centroCusto   ?? l.centro_custo,
+  dtCompetencia: l.dtCompetencia ?? l.dt_competencia,
+  dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
+  dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
+  criadoEm:      l.criadoEm      ?? l.criado_em
+}));
+    }
+    localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
+  } catch(e) {
+    console.warn('Supabase indisponível, usando cache local:', e);
+  }
+}
+
+function uid() {
+  return crypto.randomUUID();
+}
+
+// ── INICIALIZAÇÃO ──────────────────────────────────────
+let usuarioLogado = null; // { id, email, nome, papel, empresa_id }
+
+
+async function fazerLogoff() {
+  if (!confirm("Deseja sair do sistema?")) return;
+  await supa.auth.signOut();
+  sessionStorage.clear();
+  window.top.location.href = "https://casterbpo.github.io/sistema/index.html";
+}
+async function init() {
+  // Preencher data no topbar
+  const hoje = new Date();
+  const diasSem = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  document.getElementById('topbar-data').textContent =
+    `${diasSem[hoje.getDay()]}, ${hoje.getDate()} ${meses[hoje.getMonth()]}. ${hoje.getFullYear()}`;
+
+  // Busca papel e empresa_id do usuário logado
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session) {
+      const { data: usr } = await supa.from('usuarios').select('*').eq('id', session.user.id).single();
+      if (usr) {
+        usuarioLogado = usr;
+        // Atualiza nome no topbar se disponível
+        if (usr.nome) {
+          const heroH1 = document.querySelector('#view-painel .painel-hero h1');
+          if (heroH1) {
+          const hora = new Date().getHours();
+          const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+          heroH1.innerHTML = `${saudacao}, <em>${usr.nome.split(' ')[0]}.</em>`;
+        }
+        }
+      }
+    }
+  } catch(e) {
+    console.warn('Erro ao carregar usuário:', e);
+  }
+
+  // Controle de acesso por papel
+  if (usuarioLogado && usuarioLogado.papel !== 'admin') {
+    // Usuário comum: entra direto na empresa dele, sem painel
+    if (usuarioLogado.empresa_id) {
+      // Garante que a empresa está no DB
+      if (!DB.empresas.find(e => e.id === usuarioLogado.empresa_id)) {
+        const { data: emps } = await supa.from('empresas').select('*');
+        if (emps) DB.empresas = emps;
+      }
+      // Esconde botão voltar e badge de empresa (sem opção de trocar)
+      const badge = document.querySelector('#view-empresa .topbar-empresa-badge');
+      const logoLink = document.querySelector('#view-empresa .topbar-logo');
+      if (badge) badge.style.display = 'none';
+      if (logoLink) logoLink.style.pointerEvents = 'none';
+      // Remove botão "Nova empresa" e excluir dos cards (não será exibido, mas por segurança)
+      sessionStorage.setItem('empresa_ativa', usuarioLogado.empresa_id);
+      await entrarEmpresa(usuarioLogado.empresa_id);
+    } else {
+      // Usuário sem empresa vinculada — o guard já deveria ter redirecionado,
+      // mas como fallback garante que o painel não aparece e volta ao login.
+      sessionStorage.setItem('login_aviso', 'sem_empresa');
+      await supa.auth.signOut();
+      window.location.replace('https://casterbpo.github.io/sistema/index.html');
+      return;
+    }
+    return;
+  }
+
+  // Admin: fluxo normal, sem seed
+  document.getElementById('view-painel').classList.add('ativa');
+  renderPainel();
+}
+
+// seed removido — sistema usa apenas dados reais do Supabase
+
+// ── RENDER PAINEL ──────────────────────────────────────
+function renderPainel() {
+  const grid = document.getElementById('empresas-grid');
+  const hoje = dataHoje();
+
+  // Contagens globais para o hero
+  let empComPagar = 0, empComReceber = 0, empComVencidos = 0;
+  const empPagarList = [], empReceberList = [], empVencidosList = [];
+
+  grid.innerHTML = DB.empresas.map(emp => {
+    const lancs = DB.lancamentos[emp.id] || [];
+
+    const hojePag = lancs.filter(l => l.tipo==='pagar'   && l.dtVencimento===hoje && !l.dtPagamento);
+    const hojeRec = lancs.filter(l => l.tipo==='receber'  && l.dtVencimento===hoje && !l.dtPagamento);
+    const vencidos = lancs.filter(l => !l.dtPagamento && l.dtVencimento < hoje);
+
+    if (hojePag.length)  { empComPagar++;    empPagarList.push({ nome: emp.fantasia||emp.razao, qtd: hojePag.length, total: hojePag.reduce((s,l)=>s+l.valor,0) }); }
+    if (hojeRec.length)  { empComReceber++;  empReceberList.push({ nome: emp.fantasia||emp.razao, qtd: hojeRec.length, total: hojeRec.reduce((s,l)=>s+l.valor,0) }); }
+    if (vencidos.length) { empComVencidos++; empVencidosList.push({ nome: emp.fantasia||emp.razao, qtd: vencidos.length, total: vencidos.reduce((s,l)=>s+l.valor,0) }); }
+
+    const bancos = DB.bancos[emp.id] || [];
+    const saldo = bancos.reduce((s,b) => s+b.saldo, 0);
+
+    return `
+    <div class="empresa-card" onclick="entrarEmpresa('${emp.id}')">
+      <div class="empresa-card-topo">
+        <div class="empresa-inicial">${(emp.fantasia||emp.razao).charAt(0).toUpperCase()}</div>
+        <div class="empresa-alertas">
+          ${hojeRec.length > 0 ? `<div class="alerta-badge alerta-receber">↑ ${hojeRec.length} a receber hoje</div>` : ''}
+          ${hojePag.length > 0 ? `<div class="alerta-badge alerta-pagar">↓ ${hojePag.length} a pagar hoje</div>` : ''}
+          ${vencidos.length > 0 ? `<div class="alerta-badge alerta-vencido">⚠ ${vencidos.length} vencido(s)</div>` : ''}
+        </div>
+      </div>
+      <div class="empresa-card-corpo">
+        <div class="empresa-nome">${emp.fantasia || emp.razao}</div>
+        <div class="empresa-cnpj">${emp.cnpj || 'CNPJ não informado'}</div>
+        <div class="empresa-kpis">
+          <div class="emp-kpi kpi-pagar">
+            <div class="emp-kpi-lbl">A pagar hoje</div>
+            <div class="emp-kpi-val">${hojePag.length}</div>
+          </div>
+          <div class="emp-kpi kpi-receber">
+            <div class="emp-kpi-lbl">A receber hoje</div>
+            <div class="emp-kpi-val">${hojeRec.length}</div>
+          </div>
+          <div class="emp-kpi kpi-vencido">
+            <div class="emp-kpi-lbl">Vencidas</div>
+            <div class="emp-kpi-val">${vencidos.length}</div>
+          </div>
+        </div>
+      </div>
+      <div class="empresa-card-rodape">
+        <span>${emp.segmento} · ${bancos.length} conta(s) · Saldo: ${fmtK(saldo)}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${usuarioLogado && usuarioLogado.papel === 'admin' ? `
+          <button class="btn-excluir-empresa" onclick="event.stopPropagation(); excluirEmpresa('${emp.id}', '${(emp.fantasia||emp.razao).replace(/'/g,"\\'")}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
+            Excluir
+          </button>` : ''}
+          <span class="ver-mais">Abrir <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + (usuarioLogado && usuarioLogado.papel === 'admin' ? `
+    <div class="empresa-card-add" onclick="abrirModalEmpresa()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Adicionar empresa</span>
+    </div>` : '');
+
+  // Hero stats com tooltips de empresas
+  function buildTooltip(titulo, lista, corDot) {
+    if (!lista.length) return `<div class="hero-stat-tooltip-titulo">${titulo}</div><div class="hero-stat-tooltip-empty">Nenhuma hoje</div>`;
+    return `<div class="hero-stat-tooltip-titulo">${titulo}</div>` + lista.map(e =>
+      `<div class="hero-stat-tooltip-item">
+        <span class="dot-emp" style="background:${corDot}"></span>
+        <span>${e.nome} — ${e.qtd} lançamento(s) · ${fmtK(e.total)}</span>
+      </div>`
+    ).join('');
+  }
+
+  document.getElementById('hero-stats').innerHTML = `
+    <div class="hero-stat">
+      <div class="hero-stat-val">${DB.empresas.length}</div>
+      <div class="hero-stat-lbl">Empresas ativas</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">${empComPagar}</div>
+      <div class="hero-stat-lbl">Com contas a pagar hoje</div>
+      <div class="hero-stat-tooltip">${buildTooltip('Contas a pagar hoje', empPagarList, '#ff8a7a')}</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">${empComReceber}</div>
+      <div class="hero-stat-lbl">Com contas a receber hoje</div>
+      <div class="hero-stat-tooltip">${buildTooltip('Contas a receber hoje', empReceberList, '#93c5fd')}</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">${empComVencidos}</div>
+      <div class="hero-stat-lbl">Com contas vencidas</div>
+      <div class="hero-stat-tooltip">${buildTooltip('Contas vencidas', empVencidosList, '#e0bc55')}</div>
+    </div>
+  `;
+}
+
+// ── ENTRAR NA EMPRESA ──────────────────────────────────
+async function sincronizarEmpresa(id) {
+  try {
+    const [bancos, cats, centros, forn, lancs] = await Promise.all([
+      supa.from('bancos').select('*').eq('empresa_id', id),
+      supa.from('categorias').select('*').eq('empresa_id', id),
+      supa.from('centros_custo').select('*').eq('empresa_id', id),
+      supa.from('fornecedores').select('*').eq('empresa_id', id),
+      supa.from('lancamentos').select('*').eq('empresa_id', id),
+    ]);
+    if (bancos.data)  DB.bancos[id]       = bancos.data;
+    if (cats.data)    DB.categorias[id]   = cats.data;
+    if (centros.data) DB.centrosCusto[id] = centros.data;
+    if (forn.data) {
+      if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
+      DB.fornecedoresObj[id] = forn.data.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
+      DB.fornecedores[id] = forn.data.map(f => f.nome);
+    }
+    if (lancs.data)   DB.lancamentos[id]  = lancs.data;
+    salvarDB();
+  } catch(e) {
+    console.warn('Erro ao sincronizar empresa:', e);
+  }
+}
+
+async function sincronizarPainel() {
+  try {
+    const { data: emps } = await supa.from('empresas').select('*');
+    if (emps && emps.length) { DB.empresas = emps; salvarDB(); }
+  } catch(e) {
+    console.warn('Erro ao sincronizar painel:', e);
+  }
+}
+
+async function entrarEmpresa(id) {
+  empresaAtiva = DB.empresas.find(e => e.id === id);
+  sessionStorage.setItem('empresa_ativa', id);
+  document.getElementById('topbar-empresa-nome').textContent = empresaAtiva.fantasia || empresaAtiva.razao;
+  document.getElementById('view-painel').classList.remove('ativa');
+  document.getElementById('view-empresa').classList.add('ativa');
+  irAba('dashboard', document.getElementById('sb-dashboard'));
+
+  // Sincroniza dados frescos do Supabase antes de renderizar
+  await sincronizarEmpresa(id);
+  empresaAtiva = DB.empresas.find(e => e.id === id); // atualiza referência
+  renderDashboard();
+}
+
+async function voltarPainel() {
+  // Usuário comum não pode voltar ao painel
+  if (usuarioLogado && usuarioLogado.papel !== 'admin') return;
+
+  document.getElementById('view-empresa').classList.remove('ativa');
+  document.getElementById('view-painel').classList.add('ativa');
+  empresaAtiva = null;
+
+  // Sincroniza lista de empresas antes de renderizar
+  await sincronizarPainel();
+  renderPainel();
+}
+
+// ── ABAS ──────────────────────────────────────────────
+const ABAS = ['dashboard','lancamentos','conciliacao','relatorios','configuracoes'];
+
+const FRAME_MAP = {
+  lancamentos:  'caster-modulo2-lancamentos.html',
+  conciliacao:  'caster-modulo3-conciliacao.html',
+  relatorios:   'caster-modulo4-relatorios.html',
+  configuracoes:'caster-modulo5-configuracoes.html'
+};
+
+function irAba(aba, btn) {
+  // Reseta o iframe da aba que estava ativa antes
+  ABAS.forEach(a => {
+    const el = document.getElementById('aba-' + a);
+    if (el) {
+      const visivel = a === aba;
+      el.classList.toggle('hidden', !visivel);
+      // Se estava visível e não é a aba atual, reseta o iframe
+      if (!visivel && FRAME_MAP[a]) {
+        const frame = document.getElementById('frame-' + a);
+        if (frame && frame.src) frame.src = '';
+      }
+    }
+  });
+
+  // Carrega o iframe da aba selecionada
+  if (FRAME_MAP[aba]) {
+    const frame = document.getElementById('frame-' + aba);
+    if (frame) frame.src = FRAME_MAP[aba];
+  }
+
+  document.querySelectorAll('.tnav-btn').forEach(b => b.classList.remove('ativo'));
+  if (btn) {
+    btn.classList.add('ativo');
+  } else {
+    const sbBtn = document.getElementById('sb-' + aba);
+    if (sbBtn) sbBtn.classList.add('ativo');
+  }
+
+  // ── RESYNC ao voltar para o dashboard ─────────────────
+  // Sempre que o usuário clicar em Dashboard vindo de outra aba (ex: Lançamentos),
+  // busca os dados mais recentes do Supabase antes de renderizar.
+  if (aba === 'dashboard' && empresaAtiva) {
+    sincronizarEmpresa(empresaAtiva.id).then(() => renderDashboard());
+  }
+}
+function setPeriodo(p, btn) {
+  periodoAtivo = p;
+  document.querySelectorAll('.periodo-pill').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  renderDashboard();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard() {
+  if (!empresaAtiva) return;
+  const emp = empresaAtiva;
+  const lancs = DB.lancamentos[emp.id] || [];
+  const bancos = DB.bancos[emp.id] || [];
+  const cats = DB.categorias[emp.id] || [];
+  const hoje = dataHoje();
+
+  document.getElementById('dash-empresa-titulo').textContent = emp.fantasia || emp.razao;
+  document.getElementById('dash-empresa-sub').textContent = `${emp.segmento} · CNPJ: ${emp.cnpj || '—'}`;
+
+  // Filtro de período
+  const { inicio, fim } = getPeriodoDatas();
+  const lPer = lancs.filter(l => {
+    const d = l.dtVencimento || '';
+    return d >= inicio && d <= fim;
+  });
+
+  const receitas  = lPer.filter(l => l.tipo==='receber' && l.dtPagamento).reduce((s,l)=>s+l.valor,0);
+  const despesas  = lPer.filter(l => l.tipo==='pagar'   && l.dtPagamento).reduce((s,l)=>s+l.valor,0);
+  const resultado = receitas - despesas;
+  const saldoTotal = bancos.reduce((s,b)=>s+b.saldo, 0);
+
+  document.getElementById('kpi-receitas').textContent  = fmtM(receitas);
+  document.getElementById('kpi-despesas').textContent  = fmtM(despesas);
+  document.getElementById('kpi-resultado').textContent = fmtM(resultado);
+  document.getElementById('kpi-saldo').textContent     = fmtM(saldoTotal);
+
+  const resEl = document.getElementById('kpi-resultado');
+  resEl.className = 'kpi-val ' + (resultado >= 0 ? 'valor-pos' : 'valor-neg');
+
+  const deltas = [
+    { id: 'kpi-rec-delta',  val: receitas,  txt: 'total recebido no período' },
+    { id: 'kpi-desp-delta', val: despesas,  txt: 'total pago no período' },
+    { id: 'kpi-res-delta',  val: resultado, txt: resultado >= 0 ? 'resultado positivo ✓' : 'resultado negativo ✗' },
+  ];
+  deltas.forEach(d => {
+    document.getElementById(d.id).textContent = d.txt;
+    document.getElementById(d.id).className = d.val >= 0 ? 'delta-up' : 'delta-down';
+  });
+
+  // Alerta do dia — aparece quando há contas a pagar hoje, a receber hoje OU vencidas
+  const hojePag  = lancs.filter(l => l.dtVencimento === hoje && !l.dtPagamento && l.tipo === 'pagar');
+  const hojeRec  = lancs.filter(l => l.dtVencimento === hoje && !l.dtPagamento && l.tipo === 'receber');
+  const vencidasHoje = lancs.filter(l => !l.dtPagamento && l.dtVencimento < hoje);
+  const alertaEl = document.getElementById('alerta-hoje');
+  if (hojePag.length || hojeRec.length || vencidasHoje.length) {
+    alertaEl.classList.remove('hidden');
+    const partes = [];
+    if (hojePag.length)      partes.push(`${hojePag.length} a pagar hoje (${fmtM(hojePag.reduce((s,l)=>s+l.valor,0))})`);
+    if (hojeRec.length)      partes.push(`${hojeRec.length} a receber hoje (${fmtM(hojeRec.reduce((s,l)=>s+l.valor,0))})`);
+    if (vencidasHoje.length) partes.push(`${vencidasHoje.length} conta(s) vencida(s) em aberto`);
+    document.getElementById('alerta-hoje-itens').textContent = partes.join(' · ');
+  } else {
+    alertaEl.classList.add('hidden');
+  }
+
+  // Resumo lateral
+  const aReceber = lancs.filter(l => l.tipo==='receber' && !l.dtPagamento).reduce((s,l)=>s+l.valor,0);
+  const aPagar   = lancs.filter(l => l.tipo==='pagar'   && !l.dtPagamento).reduce((s,l)=>s+l.valor,0);
+  const vencidos = lancs.filter(l => !l.dtPagamento && l.dtVencimento < hoje).reduce((s,l)=>s+l.valor,0);
+  const posicao  = aReceber - aPagar;
+
+  document.getElementById('res-a-receber').textContent = fmtM(aReceber);
+  document.getElementById('res-a-pagar').textContent   = fmtM(aPagar);
+  document.getElementById('res-vencidos').textContent  = fmtM(vencidos);
+  const posEl = document.getElementById('res-posicao');
+  posEl.textContent = fmtM(posicao);
+  posEl.className = posicao >= 0 ? 'valor-pos' : 'valor-neg';
+
+  // Total a pagar lateral
+  const em30 = new Date(); em30.setDate(em30.getDate()+30);
+  const em30str = em30.toISOString().slice(0,10);
+  const pagProx = lancs.filter(l => l.tipo==='pagar' && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str);
+  document.getElementById('lat-total-pagar').textContent = fmtM(pagProx.reduce((s,l)=>s+l.valor,0));
+
+  const recProx = lancs.filter(l => l.tipo==='receber' && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str);
+  document.getElementById('lat-total-receber').textContent = fmtM(recProx.reduce((s,l)=>s+l.valor,0));
+
+  // Próximos vencimentos — apenas futuras (sem vencidas)
+  const vencList = [...lancs]
+    .filter(l => !l.dtPagamento && l.dtVencimento >= hoje)
+    .sort((a,b) => a.dtVencimento.localeCompare(b.dtVencimento))
+    .slice(0, 10);
+
+  const listaVenc = document.getElementById('lista-vencimentos');
+  if (!vencList.length) {
+    listaVenc.innerHTML = '<div style="padding:1.2rem;text-align:center;color:var(--texto-3);font-size:12px;">Nenhum vencimento pendente</div>';
+  } else {
+    const meses3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    listaVenc.innerHTML = vencList.map(l => {
+      const [y,m,d] = l.dtVencimento.split('-');
+      const cls = l.dtVencimento === hoje ? 'hoje' : '';
+      const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+      return `<div class="venc-item ${cls}" style="cursor:pointer;" onclick="abrirDetalheL('${l.id}')">
+        <div class="venc-data">
+          <div class="venc-dia">${d}</div>
+          <div class="venc-mes">${meses3[parseInt(m)-1]}</div>
+        </div>
+        <div class="venc-info">
+          <div class="venc-desc">${l.descricao || l.fornecedor}</div>
+          <div class="venc-forn">${l.fornecedor} · ${catNome}</div>
+        </div>
+        <div>
+          <div class="venc-valor ${l.tipo==='receber'?'valor-pos':'valor-neg'}">${l.tipo==='receber'?'+':'−'}${fmtM(l.valor)}</div>
+          ${cls==='hoje'?'<div style="font-size:9px;color:var(--d600);text-align:right;margin-top:2px;font-weight:700;">HOJE</div>':''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Tabela contas vencidas
+  const vencidasList = [...lancs]
+    .filter(l => !l.dtPagamento && l.dtVencimento < hoje)
+    .sort((a,b) => a.dtVencimento.localeCompare(b.dtVencimento));
+
+  const tbodyVenc = document.getElementById('tbody-vencidas');
+  const badgeVenc = document.getElementById('badge-vencidas');
+  if (!vencidasList.length) {
+    tbodyVenc.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--texto-3);">Nenhuma conta vencida em aberto ✓</td></tr>';
+    badgeVenc.style.display = 'none';
+  } else {
+    badgeVenc.style.display = '';
+    badgeVenc.textContent = `${vencidasList.length} em atraso`;
+    const hoje_ = new Date(hoje);
+    tbodyVenc.innerHTML = vencidasList.map(l => {
+      const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+      const vencDt = new Date(l.dtVencimento);
+      const diasAtraso = Math.floor((hoje_ - vencDt) / 86400000);
+      return `<tr style="cursor:pointer;" onclick="abrirDetalheL('${l.id}')">
+        <td style="white-space:nowrap;color:#991b1b;font-weight:600;">${fmtDt(l.dtVencimento)}</td>
+        <td>${l.descricao || '—'}</td>
+        <td style="color:var(--texto-2);">${l.fornecedor}</td>
+        <td><span class="tag" style="background:var(--n050);color:var(--texto-2);">${catNome}</span></td>
+        <td><span class="tag ${l.tipo==='receber'?'tag-receber':'tag-pagar'}">${l.tipo==='receber'?'Receber':'Pagar'}</span></td>
+        <td class="${l.tipo==='receber'?'valor-pos':'valor-neg'}" style="font-family:var(--fonte-mono);white-space:nowrap;">${l.tipo==='receber'?'+':'−'}${fmtM(l.valor)}</td>
+        <td><span class="tag tag-vencido">${diasAtraso} dia${diasAtraso!==1?'s':''}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Bancos
+  const listaBancos = document.getElementById('lista-bancos');
+  if (!bancos.length) {
+    listaBancos.innerHTML = '<div style="padding:1.2rem;text-align:center;color:var(--texto-3);font-size:12px;">Cadastre bancos em Configurações</div>';
+  } else {
+    listaBancos.innerHTML = bancos.map(b => {
+      // Saldo calculado com movimentos
+      const movs = lancs.filter(l => l.bancoId === b.id && l.dtPagamento);
+      const saldoCalc = movs.reduce((s,l) => s + (l.tipo==='receber' ? l.valor : -l.valor), b.saldo||0);
+      const saldoDisplay = saldoCalc;
+
+      const limite = b.limite || 0;
+      const limiteUsado = limite > 0 ? Math.max(0, -saldoDisplay) : 0;
+      const limiteDisp = limite - limiteUsado;
+      const pctUsado = limite > 0 ? Math.min(100, (limiteUsado/limite)*100) : 0;
+      const corBarra = pctUsado >= 90 ? 'var(--vermelho)' : pctUsado >= 60 ? 'var(--amarelo)' : 'var(--g400)';
+
+      const limiteHtml = limite > 0 ? `
+        <div class="banco-limite-wrap">
+          <div style="display:flex;justify-content:space-between;">
+            <span>Limite: <strong style="color:var(--texto-2);">${fmtM(limite)}</strong></span>
+            <span>Disponível: <strong style="color:${limiteDisp<=0?'var(--vermelho)':'var(--g500)'};">${fmtM(Math.max(0,limiteDisp))}</strong></span>
+          </div>
+          <div class="banco-limite-barra">
+            <div class="banco-limite-barra-inner" style="width:${pctUsado}%;background:${corBarra};"></div>
+          </div>
+          ${limiteUsado > 0 ? `<span style="color:${corBarra};">Usando ${fmtM(limiteUsado)} (${pctUsado.toFixed(0)}%)</span>` : ''}
+        </div>` : '';
+
+      return `
+      <div class="banco-item">
+        <div class="banco-esq">
+          <div class="banco-icone">${(b.banco||'??').slice(0,2).toUpperCase()}</div>
+          <div>
+            <div class="banco-nome">${b.nome}</div>
+            <div class="banco-tipo">${b.tipo}</div>
+            ${limiteHtml}
+          </div>
+        </div>
+        <div class="banco-saldo ${saldoDisplay>=0?'valor-pos':'valor-neg'}">${fmtM(saldoDisplay)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Tabela lançamentos recentes
+  const recentes = [...lancs].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,8);
+  const tbody = document.getElementById('tbody-recentes');
+  tbody.innerHTML = recentes.map(l => {
+    const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+    const status = l.dtPagamento ? 'pago' : (l.dtVencimento < hoje ? 'vencido' : 'pendente');
+    const tagCls = { pago:'tag-pago', vencido:'tag-vencido', pendente:'tag-pendente' }[status];
+    const tagTxt = { pago:'Pago', vencido:'Vencido', pendente:'Pendente' }[status];
+    return `<tr style="cursor:pointer;" onclick="abrirDetalheL('${l.id}')">
+      <td style="white-space:nowrap;">${fmtDt(l.dtVencimento)}</td>
+      <td>${l.descricao || '—'}</td>
+      <td style="color:var(--texto-2);">${l.fornecedor}</td>
+      <td><span class="tag" style="background:var(--n050);color:var(--texto-2);">${catNome}</span></td>
+      <td><span class="tag ${l.tipo==='receber'?'tag-receber':'tag-pagar'}">${l.tipo==='receber'?'Receber':'Pagar'}</span></td>
+      <td class="${l.tipo==='receber'?'valor-pos':'valor-neg'}" style="font-family:var(--fonte-mono);white-space:nowrap;">${l.tipo==='receber'?'+':'−'}${fmtM(l.valor)}</td>
+      <td><span class="tag ${tagCls}">${tagTxt}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--texto-3);">Nenhum lançamento ainda</td></tr>';
+
+  // ── GRÁFICO EVOLUÇÃO ──────────────────────────────────
+  const mesesLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const anoAtual = new Date().getFullYear();
+  document.getElementById('grafico-ano-label').textContent = anoAtual;
+
+  const recMes = mesesLabels.map((_, i) => {
+    const m = String(i+1).padStart(2,'0');
+    return parseFloat(lancs.filter(l=>l.tipo==='receber'&&l.dtPagamento&&l.dtVencimento?.startsWith(`${anoAtual}-${m}`)).reduce((s,l)=>s+l.valor,0).toFixed(2));
+  });
+  const despMes = mesesLabels.map((_,i) => {
+    const m = String(i+1).padStart(2,'0');
+    return parseFloat(lancs.filter(l=>l.tipo==='pagar'&&l.dtPagamento&&l.dtVencimento?.startsWith(`${anoAtual}-${m}`)).reduce((s,l)=>s+l.valor,0).toFixed(2));
+  });
+  const resMes = recMes.map((r,i) => parseFloat((r - despMes[i]).toFixed(2)));
+
+  if (chartEvolucao) chartEvolucao.destroy();
+  const ctx1 = document.getElementById('chart-evolucao').getContext('2d');
+  chartEvolucao = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: mesesLabels,
+      datasets: [
+        { label: 'Receitas',  data: recMes,  backgroundColor: '#2e6a44', borderRadius: 4, order: 2 },
+        { label: 'Despesas',  data: despMes, backgroundColor: '#c0392b', borderRadius: 4, order: 2 },
+        { label: 'Resultado', data: resMes,  type: 'line', borderColor: '#d4a832', backgroundColor: 'rgba(212,168,50,0.08)', tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#d4a832', order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { color: '#737c84', callback: v => 'R$' + (Math.abs(v)>=1000 ? (v/1000).toFixed(0)+'k' : v) }, grid: { color: '#f0ede7' } },
+        x: { ticks: { color: '#737c84' }, grid: { display: false } }
+      }
+    }
+  });
+
+  // ── GRÁFICO CATEGORIAS ────────────────────────────────
+  const catMap = {};
+  lPer.filter(l => l.tipo==='pagar' && l.dtPagamento).forEach(l => {
+    const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+    catMap[cn] = (catMap[cn]||0) + l.valor;
+  });
+  const catLabels = Object.keys(catMap);
+  const catData   = catLabels.map(c => parseFloat(catMap[c].toFixed(2)));
+  const cores = ['#2e6a44','#c9a832','#c0392b','#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#4f46e5'];
+
+  if (chartCats) chartCats.destroy();
+  const ctx2 = document.getElementById('chart-categorias').getContext('2d');
+  chartCats = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: catLabels,
+      datasets: [{ data: catData, backgroundColor: cores.slice(0, catLabels.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  document.getElementById('leg-categorias').innerHTML = catLabels.map((c,i) =>
+    `<div class="legenda-item">
+      <span class="legenda-cor" style="background:${cores[i]}"></span>
+      <span>${c}</span>
+    </div>`
+  ).join('');
+
+  // ── GRÁFICO RECEITAS POR CATEGORIA ────────────────────
+  const catMapRec = {};
+  lPer.filter(l => l.tipo==='receber' && l.dtPagamento).forEach(l => {
+    const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+    catMapRec[cn] = (catMapRec[cn]||0) + l.valor;
+  });
+  const catLabelsRec = Object.keys(catMapRec);
+  const catDataRec   = catLabelsRec.map(c => parseFloat(catMapRec[c].toFixed(2)));
+  const coresRec = ['#2e6a44','#3d8a5a','#5aaa76','#8dcca4','#0891b2','#059669','#2563eb','#7c3aed','#d4a832','#4f46e5'];
+
+  if (chartCatsRec) chartCatsRec.destroy();
+  const ctx3 = document.getElementById('chart-categorias-rec').getContext('2d');
+  chartCatsRec = new Chart(ctx3, {
+    type: 'doughnut',
+    data: {
+      labels: catLabelsRec,
+      datasets: [{ data: catDataRec, backgroundColor: coresRec.slice(0, catLabelsRec.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  document.getElementById('leg-categorias-rec').innerHTML = catLabelsRec.length
+    ? catLabelsRec.map((c,i) =>
+        `<div class="legenda-item">
+          <span class="legenda-cor" style="background:${coresRec[i]}"></span>
+          <span>${c}</span>
+        </div>`
+      ).join('')
+    : '<span style="font-size:11px;color:var(--texto-3);">Nenhuma receita recebida no período</span>';
+}
+
+// ── PERÍODO ────────────────────────────────────────────
+function getPeriodoDatas() {
+  const hoje = new Date();
+  if (periodoAtivo === 'mes-atual') {
+    const ini = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-01`;
+    const fim = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-31`;
+    return { inicio: ini, fim };
+  }
+  if (periodoAtivo === 'mes-ant') {
+    const dt = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+    const m = String(dt.getMonth()+1).padStart(2,'0');
+    return { inicio: `${dt.getFullYear()}-${m}-01`, fim: `${dt.getFullYear()}-${m}-31` };
+  }
+  // ano
+  return { inicio: `${hoje.getFullYear()}-01-01`, fim: `${hoje.getFullYear()}-12-31` };
+}
+
+// ── MODAL EMPRESA ──────────────────────────────────────
+function abrirModalEmpresa() {
+  stepAtual = 1; bancosStep = [];
+  segmentoSelecionado = 'Comércio';
+  ['emp-razao','emp-cnpj','emp-fantasia','emp-responsavel','emp-email','emp-telefone'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  // Reset segmento
+  document.querySelectorAll('.seg-btn').forEach((b,i) => { b.classList.toggle('ativo', i===0); });
+  const outroField = document.getElementById('seg-outro-campo');
+  const outroDesc  = document.getElementById('seg-outro-desc');
+  if (outroField) outroField.classList.remove('visivel');
+  if (outroDesc)  outroDesc.value = '';
+  atualizarStep();
+  document.getElementById('overlay-empresa').classList.add('aberto');
+}
+
+function atualizarStep() {
+  [1,2,3].forEach(n => {
+    document.getElementById(`step${n}`).classList.toggle('hidden', n !== stepAtual);
+    document.getElementById(`step${n}-label`).classList.toggle('ativo', n === stepAtual);
+    document.getElementById(`step${n}-label`).classList.toggle('completo', n < stepAtual);
+  });
+  document.getElementById('btn-step-ant').style.display = stepAtual > 1 ? '' : 'none';
+  document.getElementById('btn-step-prox').textContent = stepAtual === 3 ? '✓ Criar empresa' : 'Próximo →';
+}
+
+function stepProx() {
+  if (stepAtual === 1) {
+    if (!document.getElementById('emp-razao').value.trim()) { toast('Informe a razão social', true); return; }
+    stepAtual = 2;
+    renderBancosStep();
+  } else if (stepAtual === 2) {
+    const validos = bancosStep.filter(b => b.nome.trim());
+    if (!validos.length) { toast('Cadastre ao menos 1 conta bancária ou caixa antes de continuar', true); return; }
+    stepAtual = 3;
+    renderResumoEmpresa();
+  } else {
+    criarEmpresa();
+    return;
+  }
+  atualizarStep();
+}
+
+function stepAnt() {
+  if (stepAtual > 1) { stepAtual--; atualizarStep(); }
+}
+
+function setSeg(btn, seg) {
+  segmentoSelecionado = seg;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  const outroField = document.getElementById('seg-outro-campo');
+  const outroDesc  = document.getElementById('seg-outro-desc');
+  if (seg === 'Outro') {
+    outroField.classList.add('visivel');
+    outroDesc.focus();
+  } else {
+    outroField.classList.remove('visivel');
+    if (outroDesc) outroDesc.value = '';
+  }
+}
+
+function addBancoStep() {
+  bancosStep.push({ id: uid(), nome: '', tipo: 'Conta Corrente', banco: 'Bradesco', saldo: 0 });
+  renderBancosStep();
+}
+
+function renderBancosStep() {
+  const lista = document.getElementById('bancos-step-lista');
+  lista.innerHTML = bancosStep.map((b, i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px 28px;gap:6px;align-items:center;background:var(--n050);padding:10px;border-radius:var(--r-md);">
+      <input class="form-input" style="font-size:12px;" placeholder="Nome da conta" value="${b.nome}" oninput="bancosStep[${i}].nome=this.value">
+      <select class="form-select" style="font-size:12px;" onchange="bancosStep[${i}].tipo=this.value">
+        <option ${b.tipo==='Conta Corrente'?'selected':''}>Conta Corrente</option>
+        <option ${b.tipo==='Conta Poupança'?'selected':''}>Conta Poupança</option>
+        <option ${b.tipo==='Conta Digital'?'selected':''}>Conta Digital</option>
+        <option ${b.tipo==='Caixa'?'selected':''}>Caixa</option>
+      </select>
+      <select class="form-select" style="font-size:12px;" onchange="bancosStep[${i}].banco=this.value">
+        <option>Bradesco</option><option>Itaú</option><option>Santander</option>
+        <option>Banco do Brasil</option><option>Caixa</option><option>Nubank</option>
+        <option>Sicoob</option><option>Sicredi</option><option>Outro</option>
+      </select>
+      <input class="form-input" style="font-size:12px;" type="number" placeholder="Saldo" value="${b.saldo}" oninput="bancosStep[${i}].saldo=parseFloat(this.value)||0">
+      <button onclick="bancosStep.splice(${i},1);renderBancosStep();" style="background:var(--vermelho-bg);border:none;border-radius:var(--r-sm);color:var(--vermelho);cursor:pointer;font-size:14px;line-height:1;padding:4px 6px;">✕</button>
+    </div>`).join('');
+}
+
+function renderResumoEmpresa() {
+  const razao = document.getElementById('emp-razao').value;
+  const cnpj  = document.getElementById('emp-cnpj').value;
+  const resp  = document.getElementById('emp-responsavel').value;
+  document.getElementById('resumo-empresa').innerHTML = `
+    <strong>${razao}</strong>${cnpj ? ` · ${cnpj}` : ''}<br>
+    Segmento: ${segmentoSelecionado}<br>
+    ${resp ? `Responsável: ${resp}<br>` : ''}
+    Contas cadastradas: ${bancosStep.length}
+  `;
+}
+
+async function criarEmpresa() {
+  const id = uid();
+  const razao = document.getElementById('emp-razao').value.trim();
+  const novaEmpresa = {
+    id, razao,
+    fantasia: document.getElementById('emp-fantasia').value.trim() || razao,
+    cnpj: document.getElementById('emp-cnpj').value.trim(),
+    segmento: segmentoSelecionado,
+    responsavel: document.getElementById('emp-responsavel').value.trim(),
+    email: document.getElementById('emp-email').value.trim(),
+    tel: document.getElementById('emp-telefone').value.trim(),
+    criado_em: new Date().toISOString()
+  };
+  const bancos = bancosStep.map(b => ({ ...b, id: uid(), empresa_id: id }));
+  const categorias = [
+    { id:uid(), empresa_id:id, nome:'Vendas de Produtos', mae:'Entradas' },
+    { id:uid(), empresa_id:id, nome:'Prestação de Serviços', mae:'Entradas' },
+    { id:uid(), empresa_id:id, nome:'Outras Receitas', mae:'Entradas' },
+    { id:uid(), empresa_id:id, nome:'Pessoal e Encargos', mae:'Saídas' },
+    { id:uid(), empresa_id:id, nome:'Fornecedores', mae:'Saídas' },
+    { id:uid(), empresa_id:id, nome:'Impostos e Taxas', mae:'Saídas' },
+    { id:uid(), empresa_id:id, nome:'Administrativo', mae:'Saídas' }
+  ];
+  const centrosCusto = [
+    { id:uid(), empresa_id:id, nome:'Administrativo' },
+    { id:uid(), empresa_id:id, nome:'Comercial' },
+    { id:uid(), empresa_id:id, nome:'Operacional' }
+  ];
+
+  // 1. Salvar empresa e dados relacionados
+  try {
+    const { error: errEmp } = await supa.from('empresas').insert(novaEmpresa);
+    if (errEmp) throw errEmp;
+    if (bancos.length)       await supa.from('bancos').insert(bancos);
+    if (categorias.length)   await supa.from('categorias').insert(categorias);
+    if (centrosCusto.length) await supa.from('centros_custo').insert(centrosCusto);
+  } catch(e) {
+    console.error('Erro ao salvar no Supabase:', e);
+    toast('Erro ao salvar empresa: ' + (e.message || 'verifique a conexão'), true);
+    return;
+  }
+
+  // 2. Vincular ao usuário — erro aqui não cancela a criação
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session) {
+      await supa.from('usuarios').update({ empresa_id: id }).eq('id', session.user.id);
+      sessionStorage.setItem('empresa_ativa', id);
+    }
+  } catch(e) {
+    console.warn('Não foi possível vincular usuário:', e);
+  }
+
+  DB.empresas.push(novaEmpresa);
+  DB.bancos[id]       = bancos;
+  DB.lancamentos[id]  = [];
+  DB.fornecedores[id] = [];
+  DB.categorias[id]   = categorias;
+  DB.centrosCusto[id] = centrosCusto;
+  salvarDB();
+  fecharModal('overlay-empresa');
+  renderPainel();
+  toast(`Empresa "${razao}" criada com sucesso!`);
+}
+
+// ── MODAL LANÇAMENTO ────────────────────────────────────
+let lancAnexosPendentes = [];
+let lancEditandoId = null;
+let m1TabAtual = 'lanc'; // 'lanc' | 'transf'
+
+function setM1Tab(tab) {
+  m1TabAtual = tab;
+  const isTransf = tab === 'transf';
+  document.getElementById('m1-painel-lanc').classList.toggle('hidden', isTransf);
+  document.getElementById('m1-painel-transf').classList.toggle('hidden', !isTransf);
+  const tLanc  = document.getElementById('m1-tab-lanc');
+  const tTransf = document.getElementById('m1-tab-transf');
+  if (isTransf) {
+    tTransf.style.background = '#0b1f13'; tTransf.style.color = '#e8cc7a';
+    tLanc.style.background = 'var(--bg-card)'; tLanc.style.color = 'var(--texto-3)';
+    document.getElementById('lanc-modal-titulo').textContent = 'Nova Transferência';
+    document.getElementById('m1-btn-salvar').textContent = '⇄ Confirmar transferência';
+  } else {
+    tLanc.style.background = '#0b1f13'; tLanc.style.color = '#e8cc7a';
+    tTransf.style.background = 'var(--bg-card)'; tTransf.style.color = 'var(--texto-3)';
+    document.getElementById('lanc-modal-titulo').textContent = lancEditandoId ? 'Editar Lançamento' : 'Novo Lançamento';
+    document.getElementById('m1-btn-salvar').textContent = '✓ Salvar lançamento';
+  }
+}
+
+function salvarOuTransferirM1() {
+  if (m1TabAtual === 'transf') salvarTransferenciaM1();
+  else salvarLancamento();
+}
+
+async function salvarTransferenciaM1() {
+  if (!empresaAtiva) return;
+  const origemId  = document.getElementById('tr1-origem').value;
+  const destinoId = document.getElementById('tr1-destino').value;
+  const valor     = parseFloat(document.getElementById('tr1-valor').value);
+  const data      = document.getElementById('tr1-data').value;
+  const obs       = document.getElementById('tr1-obs').value.trim();
+
+  if (!origemId || !destinoId) { toast('Selecione as contas de origem e destino', true); return; }
+  if (origemId === destinoId)  { toast('Origem e destino devem ser contas diferentes', true); return; }
+  if (!valor || valor <= 0)    { toast('Informe um valor válido', true); return; }
+  if (!data)                   { toast('Informe a data da transferência', true); return; }
+
+  const bancos  = DB.bancos[empresaAtiva.id] || [];
+  const bOrigem = bancos.find(b => b.id === origemId);
+  const bDest   = bancos.find(b => b.id === destinoId);
+  const desc    = `Transferência: ${bOrigem?.nome || 'Conta'} → ${bDest?.nome || 'Conta'}`;
+
+  const sidaId   = uid();
+  const entradaId = uid();
+
+  const saida = {
+    id: sidaId, tipo: 'pagar', fornecedor: 'Transferência entre contas',
+    cnpj: '', descricao: desc, categoria: '', centroCusto: '',
+    valor, dtCompetencia: data, dtVencimento: data, dtPagamento: data,
+    bancoId: origemId, documento: '', obs, anexos: [], recorrencia: 'nenhuma',
+    conciliado: false, criadoEm: new Date().toISOString(), isTransferencia: true,
+    parId: sidaId + '_entrada'
+  };
+  const entrada = {
+    id: entradaId, tipo: 'receber', fornecedor: 'Transferência entre contas',
+    cnpj: '', descricao: desc, categoria: '', centroCusto: '',
+    valor, dtCompetencia: data, dtVencimento: data, dtPagamento: data,
+    bancoId: destinoId, documento: '', obs, anexos: [], recorrencia: 'nenhuma',
+    conciliado: false, criadoEm: new Date().toISOString(), isTransferencia: true,
+    parId: sidaId + '_saida'
+  };
+
+  if (!DB.lancamentos[empresaAtiva.id]) DB.lancamentos[empresaAtiva.id] = [];
+  DB.lancamentos[empresaAtiva.id].unshift(saida, entrada);
+  salvarDB();
+  fecharModal('overlay-lancamento');
+  renderDashboard();
+  toast(`Transferência de ${fmtM(valor)} registrada com sucesso!`);
+
+  const upsertT = async (l) => {
+    try {
+      await supa.rpc('upsert_lancamento', {
+        p_id: l.id, p_empresa_id: empresaAtiva.id, p_tipo: l.tipo,
+        p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+        p_categoria: null, p_centro_custo: null,
+        p_banco_id: l.bancoId || null, p_cnpj: null,
+        p_dt_competencia: l.dtCompetencia || null,
+        p_dt_vencimento: l.dtVencimento || null,
+        p_dt_pagamento: l.dtPagamento || null,
+        p_valor: l.valor, p_documento: null,
+        p_conciliado: false, p_obs: l.obs || null,
+        p_recorrencia: 'nenhuma'
+      });
+    } catch(e) { console.warn('Erro ao salvar transferência:', e); }
+  };
+  await upsertT(saida);
+  await upsertT(entrada);
+  try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_) {}
+}
+
+function getCodCat(allCats, c) {
+  const prefMae = c.mae === 'Entradas' ? '1' : '2';
+  if (!c.pai) {
+    const irmaos = allCats.filter(x => x.mae === c.mae && !x.pai);
+    return `${prefMae}.${irmaos.findIndex(x => x.id === c.id) + 1}`;
+  }
+  const pai = allCats.find(x => x.id === c.pai);
+  if (!pai) return prefMae;
+  const codPai = getCodCat(allCats, pai);
+  const filhos = allCats.filter(x => x.pai === c.pai);
+  return `${codPai}.${filhos.findIndex(x => x.id === c.id) + 1}`;
+}
+
+function popularCatSelect(selId, cats, maeFiltro) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  // Se maeFiltro não informado, mostra todas (para filtros de dashboard etc.)
+  const grupos = maeFiltro ? [maeFiltro] : ['Entradas', 'Saídas'];
+  const catsFiltradas = maeFiltro
+    ? cats.filter(c => {
+        if (!c.pai) return c.mae === maeFiltro;
+        let cur = c;
+        while (cur.pai) {
+          cur = cats.find(x => x.id === cur.pai);
+          if (!cur) return false;
+        }
+        return cur.mae === maeFiltro;
+      })
+    : cats;
+  sel.innerHTML = '<option value="">— selecione —</option>' +
+    grupos.map(mae => {
+      const nivel1 = catsFiltradas.filter(c => c.mae === mae && !c.pai);
+      if (!nivel1.length) return '';
+      return `<optgroup label="${mae}">` +
+        nivel1.map(c => {
+          const cod1 = getCodCat(cats, c);
+          const subs = catsFiltradas.filter(x => x.pai === c.id);
+          return `<option value="${c.id}">${cod1} ${c.nome}</option>` +
+            subs.map(s => {
+              const cod2 = getCodCat(cats, s);
+              const subs2 = catsFiltradas.filter(x => x.pai === s.id);
+              return `<option value="${s.id}">&nbsp;&nbsp;↳ ${cod2} ${s.nome}</option>` +
+                subs2.map(s2 => {
+                  const cod3 = getCodCat(cats, s2);
+                  return `<option value="${s2.id}">&nbsp;&nbsp;&nbsp;&nbsp;↳ ${cod3} ${s2.nome}</option>`;
+                }).join('');
+            }).join('');
+        }).join('') + '</optgroup>';
+    }).join('');
+}
+
+function renderLancAnexos() {
+  const lista = document.getElementById('lanc-anexo-lista');
+  if (!lista) return;
+  lista.innerHTML = lancAnexosPendentes.map((a, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-sm);font-size:12px;">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.nome}</span>
+      <span style="font-size:10px;color:var(--texto-3);">${(a.size/1024).toFixed(0)}KB</span>
+      <button onclick="lancAnexosPendentes.splice(${i},1);renderLancAnexos();" style="background:transparent;border:none;color:var(--texto-3);cursor:pointer;font-size:14px;">✕</button>
+    </div>`).join('');
+}
+
+function handleLancAnexoChange(e) {
+  Array.from(e.target.files).forEach(f => {
+    if (f.size > 10*1024*1024) { toast('Arquivo muito grande (máx 10MB)', true); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      lancAnexosPendentes.push({ nome: f.name, size: f.size, tipo: f.type, dataUrl: ev.target.result });
+      renderLancAnexos();
+    };
+    reader.readAsDataURL(f);
+  });
+  e.target.value = '';
+}
+
+function handleLancAnexoDrop(e) {
+  e.preventDefault();
+  document.getElementById('lanc-anexo-drop').style.borderColor = 'var(--borda)';
+  const files = Array.from(e.dataTransfer.files);
+  files.forEach(f => {
+    if (f.size > 10*1024*1024) { toast('Arquivo muito grande (máx 10MB)', true); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      lancAnexosPendentes.push({ nome: f.name, size: f.size, tipo: f.type, dataUrl: ev.target.result });
+      renderLancAnexos();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function abrirModalLancamento(id = null) {
+  if (!empresaAtiva) return;
+  lancEditandoId = id;
+  m1TabAtual = 'lanc';
+  setM1Tab('lanc');
+
+  // Oculta aba de transferência no modo edição
+  const tabsWrap = document.getElementById('m1-tabs-wrap');
+  if (tabsWrap) tabsWrap.style.display = id ? 'none' : 'flex';
+  const btnExcluir = document.getElementById('m1-btn-excluir');
+  if (btnExcluir) btnExcluir.style.display = id ? 'inline-flex' : 'none';
+
+  const cats   = DB.categorias[empresaAtiva.id] || [];
+  const ccs    = DB.centrosCusto[empresaAtiva.id] || [];
+  const bancos = DB.bancos[empresaAtiva.id] || [];
+  const fornsObj = (DB.fornecedoresObj||{})[empresaAtiva.id]||[];
+  const nomesObj = fornsObj.map(f=>f.nome).filter(Boolean);
+  const fornsStr = (DB.fornecedores[empresaAtiva.id]||[]).filter(f=>typeof f==='string');
+  const todosForns = [...new Set([...nomesObj, ...fornsStr])].sort();
+  document.getElementById('forn-list').innerHTML = todosForns.map(f => `<option value="${f}">`).join('');
+
+  // Popula selects de transferência com contas cadastradas
+  const opcoesBancos = '<option value="">— selecione —</option>' +
+    bancos.filter(b => b.ativo !== false).map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+  document.getElementById('tr1-origem').innerHTML  = opcoesBancos;
+  document.getElementById('tr1-destino').innerHTML = opcoesBancos;
+  document.getElementById('tr1-valor').value = '';
+  document.getElementById('tr1-data').value  = dataHoje();
+  document.getElementById('tr1-obs').value   = '';
+
+  // Categorias (filtradas por tipo via setTipoLanc abaixo)
+  popularCatSelect('lanc-cat', cats);
+
+  // Centro de custo
+  document.getElementById('lanc-cc').innerHTML =
+    '<option value="">— selecione —</option>' +
+    ccs.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+
+  // Bancos
+  document.getElementById('lanc-banco').innerHTML =
+    '<option value="">— selecione —</option>' +
+    bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+
+  if (id) {
+    const l = (DB.lancamentos[empresaAtiva.id] || []).find(x => x.id === id);
+    if (!l) return;
+    setTipoLanc(l.tipo);
+    document.getElementById('lanc-forn').value        = l.fornecedor || '';
+    document.getElementById('lanc-cnpj').value        = l.cnpj || '';
+    document.getElementById('lanc-desc').value        = l.descricao || '';
+    document.getElementById('lanc-valor').value       = l.valor || '';
+    document.getElementById('lanc-doc').value         = l.documento || '';
+    document.getElementById('lanc-cat').value         = l.categoria || '';
+    document.getElementById('lanc-cc').value          = l.centroCusto || '';
+    document.getElementById('lanc-competencia').value = l.dtCompetencia || '';
+    document.getElementById('lanc-vencimento').value  = l.dtVencimento || '';
+    document.getElementById('lanc-pagamento').value   = l.dtPagamento || '';
+    document.getElementById('lanc-banco').value       = l.bancoId || '';
+    document.getElementById('lanc-obs').value         = l.obs || '';
+    lancAnexosPendentes = (l.anexos || []).map(a => ({...a}));
+  } else {
+    setTipoLanc('receber');
+    ['lanc-forn','lanc-cnpj','lanc-desc','lanc-valor','lanc-doc','lanc-obs'].forEach(id => { document.getElementById(id).value = ''; });
+    ['lanc-cat','lanc-cc','lanc-banco'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('lanc-competencia').value = dataHoje();
+    document.getElementById('lanc-vencimento').value  = dataHoje();
+    document.getElementById('lanc-pagamento').value   = '';
+    lancAnexosPendentes = [];
+  }
+
+  renderLancAnexos();
+  document.getElementById('overlay-lancamento').classList.add('aberto');
+}
+
+function setTipoLanc(tipo) {
+  tipoLancAtivo = tipo;
+  const recBtn = document.getElementById('tipo-btn-rec');
+  const pagBtn = document.getElementById('tipo-btn-pag');
+  if (tipo === 'receber') {
+    recBtn.style.cssText = 'flex:1;padding:10px;border:none;background:#eff6ff;color:#1d4ed8;font-weight:600;font-family:var(--fonte-body);font-size:13px;cursor:pointer;border-right:1px solid var(--borda);';
+    pagBtn.style.cssText = 'flex:1;padding:10px;border:none;background:var(--bg-card);color:var(--texto-2);font-family:var(--fonte-body);font-size:13px;cursor:pointer;';
+  } else {
+    pagBtn.style.cssText = 'flex:1;padding:10px;border:none;background:var(--vermelho-bg);color:var(--vermelho);font-weight:600;font-family:var(--fonte-body);font-size:13px;cursor:pointer;';
+    recBtn.style.cssText = 'flex:1;padding:10px;border:none;background:var(--bg-card);color:var(--texto-2);font-family:var(--fonte-body);font-size:13px;cursor:pointer;border-right:1px solid var(--borda);';
+  }
+  // Atualiza select de categorias filtrando pelo tipo
+  if (empresaAtiva) {
+    const cats = DB.categorias[empresaAtiva.id] || [];
+    const maeFiltro = tipo === 'receber' ? 'Entradas' : 'Saídas';
+    const selCat = document.getElementById('lanc-cat');
+    const valAtual = selCat ? selCat.value : '';
+    popularCatSelect('lanc-cat', cats, maeFiltro);
+    // Restaura valor se ainda válido após filtro
+    if (valAtual && selCat) {
+      const catsFiltradas = cats.filter(c => {
+        if (!c.pai) return c.mae === maeFiltro;
+        let cur = c;
+        while (cur.pai) { cur = cats.find(x => x.id === cur.pai); if (!cur) return false; }
+        return cur.mae === maeFiltro;
+      });
+      if (catsFiltradas.find(c => c.id === valAtual)) selCat.value = valAtual;
+    }
+  }
+}
+
+async function salvarLancamento() {
+  const forn  = document.getElementById('lanc-forn').value.trim();
+  const valor = parseFloat(document.getElementById('lanc-valor').value);
+  const venc  = document.getElementById('lanc-vencimento').value;
+  const banco = document.getElementById('lanc-banco').value;
+
+  if (!forn || !valor || !venc) { toast('Preencha fornecedor/cliente, valor e vencimento', true); return; }
+  if (!banco) { toast('Selecione a conta bancária', true); return; }
+
+  const lanc = {
+    id: lancEditandoId || uid(),
+    tipo: tipoLancAtivo,
+    fornecedor: forn,
+    cnpj: document.getElementById('lanc-cnpj').value.trim(),
+    descricao: document.getElementById('lanc-desc').value.trim(),
+    categoria: document.getElementById('lanc-cat').value,
+    centroCusto: document.getElementById('lanc-cc').value,
+    valor,
+    dtCompetencia: document.getElementById('lanc-competencia').value,
+    dtVencimento: venc,
+    dtPagamento: document.getElementById('lanc-pagamento').value || null,
+    bancoId: banco,
+    documento: document.getElementById('lanc-doc').value.trim(),
+    obs: document.getElementById('lanc-obs').value.trim(),
+    anexos: lancAnexosPendentes.map(a => ({nome: a.nome, size: a.size, tipo: a.tipo, dataUrl: a.dataUrl})),
+    conciliado: false,
+    criadoEm: lancEditandoId
+      ? ((DB.lancamentos[empresaAtiva.id]||[]).find(l=>l.id===lancEditandoId)||{}).criadoEm || new Date().toISOString()
+      : new Date().toISOString()
+  };
+
+  if (!DB.lancamentos[empresaAtiva.id]) DB.lancamentos[empresaAtiva.id] = [];
+  if (lancEditandoId) {
+    const idx = DB.lancamentos[empresaAtiva.id].findIndex(l => l.id === lancEditandoId);
+    if (idx >= 0) DB.lancamentos[empresaAtiva.id][idx] = lanc;
+  } else {
+    DB.lancamentos[empresaAtiva.id].unshift(lanc);
+  }
+
+  // Salvar fornecedor novo — sincroniza com tabela fornecedores no Supabase
+  if (!DB.fornecedores[empresaAtiva.id]) DB.fornecedores[empresaAtiva.id] = [];
+  if (!DB.fornecedoresObj) DB.fornecedoresObj = {};
+  if (!DB.fornecedoresObj[empresaAtiva.id]) DB.fornecedoresObj[empresaAtiva.id] = [];
+  const jaExiste = (DB.fornecedoresObj[empresaAtiva.id]||[]).some(f=>f.nome===forn) || DB.fornecedores[empresaAtiva.id].includes(forn);
+  if (!jaExiste) {
+    DB.fornecedores[empresaAtiva.id].push(forn);
+    const novoForn = { id: uid(), nome: forn, tipo: tipoLancAtivo==='receber' ? 'cliente' : 'fornecedor', doc: document.getElementById('lanc-cnpj').value.trim()||null, email: null, tel: null, cidade: null, obs: null };
+    DB.fornecedoresObj[empresaAtiva.id].push(novoForn);
+    try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: empresaAtiva.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
+  }
+
+  // Salvar no Supabase
+  try {
+    await supa.rpc('upsert_lancamento', {
+      p_id: lanc.id, p_empresa_id: empresaAtiva.id, p_tipo: lanc.tipo,
+      p_fornecedor: lanc.fornecedor, p_descricao: lanc.descricao || null,
+      p_categoria: lanc.categoria || null,
+      p_centro_custo: lanc.centroCusto || null,
+      p_banco_id: lanc.bancoId || null,
+      p_cnpj: lanc.cnpj || null,
+      p_dt_competencia: lanc.dtCompetencia || null,
+      p_dt_vencimento: lanc.dtVencimento || null,
+      p_dt_pagamento: lanc.dtPagamento || null,
+      p_valor: lanc.valor, p_documento: lanc.documento || null,
+      p_conciliado: lanc.conciliado || false, p_obs: lanc.obs || null,
+      p_recorrencia: 'nenhuma'
+    });
+  } catch(e) {
+    console.warn('Erro ao salvar lançamento no Supabase:', e);
+  }
+
+  salvarDB();
+  fecharModal('overlay-lancamento');
+  renderDashboard();
+  toast('Lançamento salvo com sucesso!');
+}
+
+// ── CONVIDAR USUÁRIO ───────────────────────────────────
+function toggleEmpresaConvite() {
+  const papel = document.getElementById('convite-papel').value;
+  const wrap  = document.getElementById('convite-empresa-wrap');
+  const sel   = document.getElementById('convite-empresa');
+  if (papel === 'admin') {
+    wrap.style.display = 'none';
+    sel.value = '';
+  } else {
+    wrap.style.display = '';
+  }
+}
+
+function abrirModalConvite() {
+  // Preenche select de empresas
+  const sel = document.getElementById('convite-empresa');
+  sel.innerHTML = '<option value="">— selecione —</option>' +
+    DB.empresas.map(e => `<option value="${e.id}">${e.fantasia || e.razao}</option>`).join('');
+  document.getElementById('convite-email').value = '';
+  document.getElementById('convite-nome').value  = '';
+  document.getElementById('convite-papel').value = 'usuario';
+  toggleEmpresaConvite();
+  const fb = document.getElementById('convite-feedback');
+  fb.style.display = 'none';
+  fb.textContent = '';
+  // Garante que o botão sempre esteja habilitado ao abrir o modal
+  const btn = document.getElementById('btn-enviar-convite');
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar convite';
+  document.getElementById('overlay-convite').classList.add('aberto');
+}
+
+async function enviarConvite() {
+  const email     = document.getElementById('convite-email').value.trim();
+  const nome      = document.getElementById('convite-nome').value.trim();
+  const empresaId = document.getElementById('convite-empresa').value;
+  const papel     = document.getElementById('convite-papel').value;
+  const fb        = document.getElementById('convite-feedback');
+  const btn       = document.getElementById('btn-enviar-convite');
+
+  if (!email) {
+    fb.style.display = 'block';
+    fb.style.background = 'var(--vermelho-bg)';
+    fb.style.color = 'var(--vermelho)';
+    fb.textContent = 'Preencha o e-mail do usuário.';
+    return;
+  }
+  if (papel === 'usuario' && !empresaId) {
+    fb.style.display = 'block';
+    fb.style.background = 'var(--vermelho-bg)';
+    fb.style.color = 'var(--vermelho)';
+    fb.textContent = 'Selecione uma empresa para o usuário.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  fb.style.display = 'none';
+
+  try {
+    const redirectTo = 'https://casterbpo.github.io/sistema/index.html';
+    const { error } = await supa.auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: { empresa_id: empresaId, papel, nome: nome || null }
+    });
+
+    // inviteUserByEmail requer service_role — no frontend com anon key,
+    // usamos a Edge Function do Supabase para delegar o convite.
+    // Fallback: chamada via REST para a função inviteUserByEmail
+    if (error && error.message && error.message.includes('not allowed')) {
+      throw new Error('use_edge_function');
+    }
+    if (error) throw error;
+
+    fb.style.display = 'block';
+    fb.style.background = 'var(--g050)';
+    fb.style.color = 'var(--g600)';
+    fb.innerHTML = `✓ Convite enviado para <strong>${email}</strong>. O usuário receberá o link por e-mail.`;
+    btn.textContent = '✓ Enviado!';
+    setTimeout(() => {
+      fecharModal('overlay-convite');
+      // Restaura o botão após fechar para evitar modal congelado numa reabertura
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar convite';
+      fb.style.display = 'none';
+    }, 2500);
+  } catch(e) {
+    if (e.message === 'use_edge_function') {
+      // Chama a Edge Function dedicada
+      try {
+        const { data: { session } } = await supa.auth.getSession();
+        const resp = await fetch(`${SUPA_URL}/functions/v1/invite-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || SUPA_KEY}`
+          },
+          body: JSON.stringify({ email, empresa_id: empresaId, papel, nome: nome || null,
+            redirect_to: 'https://casterbpo.github.io/sistema/index.html' })
+        });
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || 'Erro ao enviar convite');
+        fb.style.display = 'block';
+        fb.style.background = 'var(--g050)';
+        fb.style.color = 'var(--g600)';
+        fb.innerHTML = `✓ Convite enviado para <strong>${email}</strong>.`;
+        btn.textContent = '✓ Enviado!';
+        setTimeout(() => fecharModal('overlay-convite'), 2500);
+        return;
+      } catch(ef) {
+        fb.style.display = 'block';
+        fb.style.background = 'var(--vermelho-bg)';
+        fb.style.color = 'var(--vermelho)';
+        fb.textContent = 'Para enviar convites, crie a Edge Function "invite-user" no Supabase. Veja o arquivo SQL/Edge entregue junto.';
+      }
+    } else {
+      fb.style.display = 'block';
+      fb.style.background = 'var(--vermelho-bg)';
+      fb.style.color = 'var(--vermelho)';
+      fb.textContent = 'Erro: ' + (e.message || 'tente novamente');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar convite';
+  }
+}
+
+// ── EXCLUIR EMPRESA ────────────────────────────────────
+async function excluirEmpresa(id, nome) {
+  const confirmou = confirm(`Tem certeza que deseja excluir a empresa "${nome}"?\n\nEsta ação é irreversível e removerá todos os dados da empresa do sistema.`);
+  if (!confirmou) return;
+  const confirmou2 = confirm(`Confirma a exclusão definitiva de "${nome}"?`);
+  if (!confirmou2) return;
+
+  toast('Excluindo empresa...');
+
+  try {
+    await supa.from('lancamentos').delete().eq('empresa_id', id);
+    await supa.from('bancos').delete().eq('empresa_id', id);
+    await supa.from('categorias').delete().eq('empresa_id', id);
+    await supa.from('centros_custo').delete().eq('empresa_id', id);
+    await supa.from('fornecedores').delete().eq('empresa_id', id);
+    const { error } = await supa.from('empresas').delete().eq('id', id);
+    if (error) throw error;
+  } catch(e) {
+    console.error('Erro ao excluir no Supabase:', e);
+    toast('Erro ao excluir: ' + (e.message || 'tente novamente'), true);
+    return; // Não remove localmente se falhou no servidor
+  }
+
+  DB.empresas = DB.empresas.filter(e => e.id !== id);
+  delete DB.lancamentos[id];
+  delete DB.bancos[id];
+  delete DB.categorias[id];
+  delete DB.centrosCusto[id];
+  delete DB.fornecedores[id];
+  salvarDB();
+  renderPainel();
+  toast(`Empresa "${nome}" excluída com sucesso.`);
+}
+
+// ── DETALHE / EDIÇÃO DE LANÇAMENTO ─────────────────────
+let lancDetalheId = null;
+
+function abrirDetalheL(id) {
+  if (!empresaAtiva) return;
+  // Abre o modal de edição diretamente
+  abrirModalLancamento(id);
+}
+
+async function excluirLancDetalhe() {
+  if (!lancEditandoId || !empresaAtiva) return;
+  if (!confirm('Excluir este lançamento permanentemente?')) return;
+  const idParaExcluir = lancEditandoId;
+  DB.lancamentos[empresaAtiva.id] = (DB.lancamentos[empresaAtiva.id]||[]).filter(x=>x.id!==idParaExcluir);
+  salvarDB();
+  fecharModal('overlay-lancamento');
+  renderDashboard();
+  toast('Lançamento excluído.');
+  try {
+    const { error } = await supa.from('lancamentos').delete().eq('id', idParaExcluir);
+    if (error) console.warn('Erro ao excluir lançamento no Supabase:', error);
+    else { try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){} }
+  } catch(e) { console.warn('Erro ao excluir lançamento no Supabase:', e); }
+}
+
+// ── MÁSCARAS ─────────────────────────────────────────────
+function mascaraCNPJ(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length <= 11) {
+    v = v.replace(/(\d{3})(\d)/, '$1.$2');
+    v = v.replace(/(\d{3})(\d)/, '$1.$2');
+    v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  } else {
+    v = v.replace(/(\d{2})(\d)/, '$1.$2');
+    v = v.replace(/(\d{3})(\d)/, '$1.$2');
+    v = v.replace(/(\d{3})(\d)/, '$1/$2');
+    v = v.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  }
+  el.value = v;
+}
+
+function mascaraTel(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length <= 10) {
+    v = v.replace(/(\d{2})(\d)/, '($1) $2');
+    v = v.replace(/(\d{4})(\d{1,4})$/, '$1-$2');
+  } else {
+    v = v.replace(/(\d{2})(\d)/, '($1) $2');
+    v = v.replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+  }
+  el.value = v;
+}
+
+
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('aberto');
+}
+
+function dataHoje() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function fmtM(v) {
+  const abs = Math.abs(v);
+  return 'R$ ' + abs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtK(v) {
+  if (v >= 1000000) return 'R$ ' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000)    return 'R$ ' + (v/1000).toFixed(0) + 'k';
+  return fmtM(v);
+}
+
+function fmtDt(d) {
+  if (!d) return '—';
+  const [y,m,dia] = d.split('-');
+  return `${dia}/${m}/${y}`;
+}
+
+function toast(msg, erro = false) {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast' + (erro ? ' erro' : '');
+  t.innerHTML = erro
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${msg}`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// Fechar modais clicando fora
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('aberto'); });
+});
+
+// ── SINCRONIZAÇÃO AUTOMÁTICA ───────────────────────────
+// 1) Escuta mensagens dos iframes (módulo 2, 3, 4, 5)
+//    Quando qualquer módulo salva/exclui, avisa o painel para re-sincronizar.
+window.addEventListener('message', async (ev) => {
+  // Aceita apenas mensagens dos iframes filhos (mesma origem ou GitHub Pages)
+  const tiposAceitos = ['lancamento_salvo', 'lancamento_excluido', 'banco_atualizado', 'dados_atualizados'];
+  if (!ev.data || !tiposAceitos.includes(ev.data.tipo)) return;
+
+  if (empresaAtiva) {
+    await sincronizarEmpresa(empresaAtiva.id);
+    renderDashboard();
+  }
+});
+
+// 2) Polling silencioso: a cada 30s, busca dados frescos do Supabase
+//    enquanto uma empresa estiver aberta na aba Dashboard.
+setInterval(async () => {
+  if (empresaAtiva && document.getElementById('view-empresa').classList.contains('ativa')) {
+    await sincronizarEmpresa(empresaAtiva.id);
+    renderDashboard();
+  }
+}, 30_000);
+
+// 3) Ao trocar de aba DE VOLTA para o dashboard, resincroniza imediatamente
+function irAbaComSync(aba, btn) {
+  const eraLancamentos = !document.getElementById('aba-dashboard')?.classList.contains('hidden') === false;
+  irAba(aba, btn);
+  // Se voltou para o dashboard e tem empresa ativa, busca dados frescos
+  if (aba === 'dashboard' && empresaAtiva) {
+    sincronizarEmpresa(empresaAtiva.id).then(() => renderDashboard());
+  }
+}
+
+// ── START ──────────────────────────────────────────────
+carregarDB().then(() => init());
+</script>
+</body>
+</html>
