@@ -592,6 +592,12 @@ body {
 .empresa-card-add svg { width: 28px; height: 28px; opacity: 0.5; }
 .empresa-card-add span { font-size: 13px; font-weight: 500; }
 
+/* LOGOFF */
+#cb-logoff{background:var(--g800);color:var(--d400)!important;border-left:3px solid var(--d600)!important;font-weight:600;margin:0 .6rem .6rem;width:calc(100% - 1.2rem);border-radius:var(--r-sm);}
+#cb-logoff:hover{background:var(--g700);color:var(--d300)!important;}
+#cb-logoff svg{stroke:var(--d400);}
+</style>
+
 /* ═══════════════════════════════════════
    VIEW EMPRESA — DASHBOARD
 ═══════════════════════════════════════ */
@@ -1329,6 +1335,11 @@ body {
     <span style="font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:0.1em; text-transform:uppercase;">Painel de Controle</span>
     <div class="topbar-spacer"></div>
     <span style="font-size:11px; color:rgba(255,255,255,0.25);" id="topbar-data"></span>
+  </div>
+  <button class="conf-btn" id="cb-logoff" onclick="fazerLogoff()" style="color:var(--d400);border-left-color:transparent;margin-top:auto;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair do Sistema
+    </button>
   </div>
 
   <!-- Hero -->
@@ -2117,6 +2128,13 @@ function uid() {
 // ── INICIALIZAÇÃO ──────────────────────────────────────
 let usuarioLogado = null; // { id, email, nome, papel, empresa_id }
 
+async function fazerLogoff(){
+  if(!confirm('Deseja sair do sistema?')) return;
+  await supa.auth.signOut();
+  sessionStorage.clear();
+  window.top.location.href = 'https://casterbpo.github.io/sistema/index.html';
+}
+  
 async function init() {
   // Preencher data no topbar
   const hoje = new Date();
