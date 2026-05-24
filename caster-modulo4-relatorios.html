@@ -2286,10 +2286,10 @@ function renderPrevReal(){
   const chartLabels=visao==='categorias'?catsFilt.map(c=>c.nome):dadosMes.map(d=>d.lbl);
   const chartPrev=visao==='categorias'
     ?catsFilt.map(c=>somaAbs(allLancs.filter(l=>l.categoria===c.id&&l.dtVencimento>=iniData&&l.dtVencimento<=fimData)))
-    :dadosMes.map(d=>tipo==='pagar'?d.prevPag:d.prevRec);
+    :dadosMes.map(d=>tipo==='pagar'?d.prevPag:tipo==='receber'?d.prevRec:(d.prevRec-d.prevPag));
   const chartReal=visao==='categorias'
     ?catsFilt.map(c=>somaAbs(allLancs.filter(l=>l.categoria===c.id&&l.dtPagamento>=iniData&&l.dtPagamento<=fimData)))
-    :dadosMes.map(d=>tipo==='pagar'?d.realPag:d.realRec);
+    :dadosMes.map(d=>tipo==='pagar'?d.realPag:tipo==='receber'?d.realRec:(d.realRec-d.realPag));
   if(ctxPR&&chartLabels.length)chartPR=new Chart(ctxPR,{type:'bar',data:{labels:chartLabels,datasets:[
     {label:'Previsto',data:chartPrev,backgroundColor:'rgba(37,99,235,.3)',borderColor:'#2563eb',borderWidth:2,borderRadius:4},
     {label:'Realizado',data:chartReal,backgroundColor:'#2e6a44',borderRadius:4}
