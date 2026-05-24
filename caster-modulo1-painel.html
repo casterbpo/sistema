@@ -1950,10 +1950,17 @@ body {
       <div id="lanc-anexo-lista" style="margin-top:.5rem;display:flex;flex-direction:column;gap:4px;"></div>
       </div><!-- /m1-painel-lanc -->
     </div>
-    <div class="modal-footer">
-      <button class="btn-secundario" onclick="fecharModal('overlay-lancamento')">Cancelar</button>
-      <button class="btn-primario" id="m1-btn-salvar" onclick="salvarOuTransferirM1()">✓ Salvar lançamento</button>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button id="m1-btn-excluir" onclick="excluirLancDetalhe()" style="display:none;background:var(--vermelho-bg);color:var(--vermelho);border:1px solid rgba(192,57,43,0.3);border-radius:var(--r-md);padding:8px 14px;font-size:12px;font-weight:500;font-family:var(--fonte-body);cursor:pointer;align-items:center;gap:5px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+        Excluir
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secundario" onclick="fecharModal('overlay-lancamento')">Cancelar</button>
+        <button class="btn-primario" id="m1-btn-salvar" onclick="salvarOuTransferirM1()">✓ Salvar lançamento</button>
+      </div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -2105,7 +2112,13 @@ function salvarDB() {
 
 async function carregarDB() {
   const cache = localStorage.getItem(CHAVE_DB);
-  if (cache) try { DB = JSON.parse(cache); } catch(e) {}
+  if (cache) try {
+    DB = JSON.parse(cache);
+    // Sanitiza cache: fornecedores devem ser sempre strings
+    Object.keys(DB.fornecedores||{}).forEach(k => {
+      DB.fornecedores[k] = (DB.fornecedores[k]||[]).filter(f => typeof f === 'string');
+    });
+  } catch(e) {}
   try {
     const eid = sessionStorage.getItem('empresa_ativa');
     const { data: emps } = await supa.from('empresas').select('*');
@@ -2121,7 +2134,11 @@ async function carregarDB() {
       if (bancos.data) DB.bancos[eid]       = bancos.data;
       if (cats.data)   DB.categorias[eid]   = cats.data;
       if (centros.data)DB.centrosCusto[eid] = centros.data;
-      if (forn.data)   DB.fornecedores[eid] = forn.data;
+      if (forn.data) {
+        if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
+        DB.fornecedoresObj[eid] = forn.data.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
+        DB.fornecedores[eid] = forn.data.map(f => f.nome);
+      }
       if(lancs?.data) DB.lancamentos[eid] = lancs.data.map(l => ({
   ...l,
   bancoId:       l.bancoId       ?? l.banco_id,
@@ -2172,8 +2189,8 @@ async function init() {
           const heroH1 = document.querySelector('#view-painel .painel-hero h1');
           if (heroH1) {
           const hora = new Date().getHours();
-          const saudacao = hora < 6 ? 'Boa madrugada' : hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
-          heroH1.innerHTML = `${saudacao}, <em>${usr.nome.split(' ')[0]} </em>`;
+          const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+          heroH1.innerHTML = `${saudacao}, <em>${usr.nome.split(' ')[0]}.</em>`;
         }
         }
       }
@@ -2333,7 +2350,11 @@ async function sincronizarEmpresa(id) {
     if (bancos.data)  DB.bancos[id]       = bancos.data;
     if (cats.data)    DB.categorias[id]   = cats.data;
     if (centros.data) DB.centrosCusto[id] = centros.data;
-    if (forn.data)    DB.fornecedores[id] = forn.data;
+    if (forn.data) {
+      if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
+      DB.fornecedoresObj[id] = forn.data.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
+      DB.fornecedores[id] = forn.data.map(f => f.nome);
+    }
     if (lancs.data)   DB.lancamentos[id]  = lancs.data;
     salvarDB();
   } catch(e) {
@@ -3077,14 +3098,17 @@ function abrirModalLancamento(id = null) {
   // Oculta aba de transferência no modo edição
   const tabsWrap = document.getElementById('m1-tabs-wrap');
   if (tabsWrap) tabsWrap.style.display = id ? 'none' : 'flex';
+  const btnExcluir = document.getElementById('m1-btn-excluir');
+  if (btnExcluir) btnExcluir.style.display = id ? 'inline-flex' : 'none';
 
   const cats   = DB.categorias[empresaAtiva.id] || [];
   const ccs    = DB.centrosCusto[empresaAtiva.id] || [];
   const bancos = DB.bancos[empresaAtiva.id] || [];
-  const forns  = DB.fornecedores[empresaAtiva.id] || [];
-
-  // Fornecedores datalist
-  document.getElementById('forn-list').innerHTML = forns.map(f => `<option value="${f}">`).join('');
+  const fornsObj = (DB.fornecedoresObj||{})[empresaAtiva.id]||[];
+  const nomesObj = fornsObj.map(f=>f.nome).filter(Boolean);
+  const fornsStr = (DB.fornecedores[empresaAtiva.id]||[]).filter(f=>typeof f==='string');
+  const todosForns = [...new Set([...nomesObj, ...fornsStr])].sort();
+  document.getElementById('forn-list').innerHTML = todosForns.map(f => `<option value="${f}">`).join('');
 
   // Popula selects de transferência com contas cadastradas
   const opcoesBancos = '<option value="">— selecione —</option>' +
@@ -3209,9 +3233,17 @@ async function salvarLancamento() {
     DB.lancamentos[empresaAtiva.id].unshift(lanc);
   }
 
-  // Salvar fornecedor se novo
+  // Salvar fornecedor novo — sincroniza com tabela fornecedores no Supabase
   if (!DB.fornecedores[empresaAtiva.id]) DB.fornecedores[empresaAtiva.id] = [];
-  if (!DB.fornecedores[empresaAtiva.id].includes(forn)) DB.fornecedores[empresaAtiva.id].push(forn);
+  if (!DB.fornecedoresObj) DB.fornecedoresObj = {};
+  if (!DB.fornecedoresObj[empresaAtiva.id]) DB.fornecedoresObj[empresaAtiva.id] = [];
+  const jaExiste = (DB.fornecedoresObj[empresaAtiva.id]||[]).some(f=>f.nome===forn) || DB.fornecedores[empresaAtiva.id].includes(forn);
+  if (!jaExiste) {
+    DB.fornecedores[empresaAtiva.id].push(forn);
+    const novoForn = { id: uid(), nome: forn, tipo: tipoLancAtivo==='receber' ? 'cliente' : 'fornecedor', doc: document.getElementById('lanc-cnpj').value.trim()||null, email: null, tel: null, cidade: null, obs: null };
+    DB.fornecedoresObj[empresaAtiva.id].push(novoForn);
+    try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: empresaAtiva.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
+  }
 
   // Salvar no Supabase
   try {
