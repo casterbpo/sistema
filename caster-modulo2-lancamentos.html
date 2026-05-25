@@ -533,6 +533,17 @@ th.sort:hover{color:var(--d300) !important;}
         </div>
         <div class="form-row fr-1">
           <div class="form-group">
+            <label class="form-label">Dt. Pagamento</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input class="form-input" id="tr-pagamento" type="date" style="flex:1;">
+              <button type="button" onclick="document.getElementById('tr-pagamento').value=hoje()" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Preencher com hoje">Hoje</button>
+              <button type="button" onclick="document.getElementById('tr-pagamento').value=''" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Limpar = pendente">✕</button>
+            </div>
+            <span class="form-hint">Vazio = pendente</span>
+          </div>
+        </div>
+        <div class="form-row fr-1">
+          <div class="form-group">
             <label class="form-label">Observações</label>
             <input class="form-input" id="tr-obs" placeholder="Opcional">
           </div>
@@ -599,8 +610,12 @@ th.sort:hover{color:var(--d300) !important;}
         </div>
         <div class="form-group">
           <label class="form-label">Dt. Pagamento/Receb.</label>
-          <input class="form-input" id="m-pag" type="date">
-          <span class="form-hint">Deixar vazio = pendente</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="form-input" id="m-pag" type="date" style="flex:1;">
+            <button type="button" onclick="document.getElementById('m-pag').value=hoje()" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Preencher com hoje">Hoje</button>
+            <button type="button" onclick="document.getElementById('m-pag').value=''" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Limpar = pendente">✕</button>
+          </div>
+          <span class="form-hint">Vazio = pendente</span>
         </div>
       </div>
       <div class="form-row fr-1">
@@ -851,6 +866,7 @@ async function salvarTransferencia(){
   const valor = parseFloat(document.getElementById('tr-valor').value);
   const data = document.getElementById('tr-data').value;
   const obs = document.getElementById('tr-obs').value.trim();
+  const dtPag = document.getElementById('tr-pagamento').value || null;
   if(!origemId || !destinoId){ toast('Selecione as contas de origem e destino','err'); return; }
   if(origemId === destinoId){ toast('Origem e destino devem ser contas diferentes','err'); return; }
   if(!valor || valor <= 0){ toast('Informe um valor válido','err'); return; }
@@ -864,7 +880,7 @@ async function salvarTransferencia(){
   const saida = {
     id: saidaId, tipo:'pagar', fornecedor:'Transferência entre contas',
     cnpj:'', descricao, categoria:'', centroCusto:'',
-    valor, dtCompetencia:data, dtVencimento:data, dtPagamento:data,
+    valor, dtCompetencia:data, dtVencimento:data, dtPagamento:dtPag,
     bancoId:origemId, documento:'', obs, anexos:[], recorrencia:'nenhuma',
     conciliado:false, criadoEm:new Date().toISOString(), isTransferencia:true, parId: saidaId+'_entrada'
   };
@@ -873,7 +889,7 @@ async function salvarTransferencia(){
   const entrada = {
     id: entradaId, tipo:'receber', fornecedor:'Transferência entre contas',
     cnpj:'', descricao, categoria:'', centroCusto:'',
-    valor, dtCompetencia:data, dtVencimento:data, dtPagamento:data,
+    valor, dtCompetencia:data, dtVencimento:data, dtPagamento:dtPag,
     bancoId:destinoId, documento:'', obs, anexos:[], recorrencia:'nenhuma',
     conciliado:false, criadoEm:new Date().toISOString(), isTransferencia:true, parId: saidaId+'_saida'
   };
