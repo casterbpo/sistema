@@ -1425,7 +1425,7 @@ function ir(url){
   } else window.location.href=url;
 }
 
-function hoje(){return new Date().toISOString().slice(0,10);}
+function hoje(){const d=new Date();const pad=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 
 let EMP=null;
 let chartDreEv=null,chartDreCat=null,chartFluxo=null,chartPR=null;
