@@ -2712,8 +2712,9 @@ function renderContasGrid(){
     const corSaldo=saldoReal<0?'var(--vermelho)':'var(--verde-ok)';
     const limDisp=limite>0?Math.max(0,limite+saldoReal):0;
     const dispTotal=saldoReal+limite;
+    const limEsgotado=dispTotal<0;
     const dispHtml=limite>0
-      ? `<div style="font-size:10px;color:var(--texto3);margin-top:2px;">${dispTotal<0?`<span style="color:var(--vermelho);font-weight:600;">Limite de ${fmtM(limite)} esgotado</span>`:`+Limite disponível: <span style="font-weight:600;">${fmtM(limite)}</span>`}</div><div style="font-size:10px;margin-top:1px;">Saldo disponível: <span style="font-weight:600;color:${dispTotal>=0?'var(--verde-ok)':'var(--vermelho)'};">${fmtSaldo(dispTotal)}</span></div>`
+      ? '<div style="font-size:10px;color:'+(limEsgotado?'var(--vermelho)':'var(--texto3)')+';margin-top:2px;">'+(limEsgotado?'Limite de '+fmtM(limite)+' esgotado':'+Limite disponível: <span style="font-weight:600;">'+fmtM(limite)+'</span>')+'</div><div style="font-size:10px;margin-top:1px;">Saldo disponível: <span style="font-weight:600;color:'+(dispTotal>=0?'var(--verde-ok)':'var(--vermelho)')+';">'+fmtSaldo(dispTotal)+'</span></div>'
       : '';
     return`<div class="conta-sel-card ${contaAtivaId===b.id?'ativa':''}" style="${ocultar?'display:none;':''}" onclick="selecionarConta('${b.id}')">
       <div class="cs-banco">${b.banco||'Conta'}</div>
