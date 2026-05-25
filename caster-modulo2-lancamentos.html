@@ -155,7 +155,7 @@ input[type=checkbox]{width:15px;height:15px;accent-color:var(--g500);cursor:poin
 .btn-s:hover{border-color:var(--g400);color:var(--g600);}
 .btn-s svg{width:14px;height:14px;}
 .btn-s.danger:hover{border-color:var(--vermelho);color:var(--vermelho);}
-.btn-icon{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);padding:4px 7px;font-size:11px;cursor:pointer;color:var(--texto3);transition:all .15s;display:inline-flex;align-items:center;gap:3px;font-family:var(--fonte-b);}
+.btn-icon{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);padding:4px 7px;font-size:11px;cursor:pointer;color:var(--texto3);transition:all .15s;display:inline-flex;align-items:center;gap:3px;font-family:var(--fonte-b);white-space:nowrap;}
 .btn-icon:hover{border-color:var(--g400);color:var(--g600);}
 .btn-icon.del:hover{border-color:var(--vermelho);color:var(--vermelho);}
 .btn-icon.baixa:hover{border-color:var(--verde-ok);color:var(--verde-ok);}
@@ -1300,8 +1300,18 @@ async function baixarLote(){
   }
 }
 async function excluirLote(){
-  if(!confirm(`Excluir ${selecionados.size} lançamentos? Esta ação não pode ser desfeita.`)) return;
-  const ids = [...selecionados];
+  if(!confirm(`Excluir ${selecionados.size} lançamento(s) selecionado(s)? Transferências terão ambos os lançamentos excluídos. Esta ação não pode ser desfeita.`)) return;
+  const idsSel = [...selecionados];
+  const lancs = DB.lancamentos[EMP.id]||[];
+  const ids = [...idsSel];
+  idsSel.forEach(id => {
+    const l = lancs.find(x => x.id === id);
+    if (l?.isTransferencia) {
+      const par = lancs.find(x => x.id !== id && x.isTransferencia &&
+        x.descricao === l.descricao && x.valor === l.valor && x.dtVencimento === l.dtVencimento);
+      if (par && !ids.includes(par.id)) ids.push(par.id);
+    }
+  });
   try {
     const { error } = await supa.from('lancamentos').delete().in('id', ids);
     if (error) { console.warn('Erro ao excluir lote no Supabase:', error); toast('Erro ao excluir no servidor. Tente novamente.','err'); return; }
@@ -1635,13 +1645,24 @@ function abrirDel(id){
 function fecharDel(){ document.getElementById('overlay-del').classList.remove('aberto'); deletandoId=null; }
 async function confirmarDel(){
   const id = deletandoId;
-  DB.lancamentos[EMP.id]=(DB.lancamentos[EMP.id]||[]).filter(l=>l.id!==id);
+  const lancAtual = (DB.lancamentos[EMP.id]||[]).find(x => x.id === id);
+  const idsExcluir = [id];
+  if (lancAtual?.isTransferencia) {
+    const par = (DB.lancamentos[EMP.id]||[]).find(x =>
+      x.id !== id && x.isTransferencia &&
+      x.descricao === lancAtual.descricao && x.valor === lancAtual.valor &&
+      x.dtVencimento === lancAtual.dtVencimento
+    );
+    if (par) idsExcluir.push(par.id);
+  }
+  DB.lancamentos[EMP.id]=(DB.lancamentos[EMP.id]||[]).filter(l=>!idsExcluir.includes(l.id));
   salvarDB(); fecharDel(); renderKPIs(); filtrar();
-  toast('Lançamento excluído','ok');
+  toast(idsExcluir.length > 1 ? 'Transferência excluída (ambos os lançamentos).' : 'Lançamento excluído.','ok');
   try {
-    const { error: eDel } = await supa.from('lancamentos').delete().eq('id', id);
-    if (eDel) console.warn('Erro ao excluir do Supabase:', eDel);
-    else { try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){} }
+    for (const eid of idsExcluir) {
+      await supa.from('lancamentos').delete().eq('id', eid);
+    }
+    try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){}
   } catch(e){ console.warn('Erro ao excluir do Supabase:', e); }
 }
 
