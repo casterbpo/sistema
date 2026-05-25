@@ -3534,17 +3534,33 @@ function abrirDetalheL(id) {
 
 async function excluirLancDetalhe() {
   if (!lancEditandoId || !empresaAtiva) return;
-  if (!confirm('Excluir este lançamento permanentemente?')) return;
+  const lancAtual = (DB.lancamentos[empresaAtiva.id]||[]).find(x => x.id === lancEditandoId);
+  const isTransf = lancAtual?.isTransferencia;
+  const msg = isTransf
+    ? 'Esta é uma transferência. Excluir este lançamento também excluirá o par correspondente. Confirmar?'
+    : 'Excluir este lançamento permanentemente?';
+  if (!confirm(msg)) return;
   const idParaExcluir = lancEditandoId;
-  DB.lancamentos[empresaAtiva.id] = (DB.lancamentos[empresaAtiva.id]||[]).filter(x=>x.id!==idParaExcluir);
+  const idsExcluir = [idParaExcluir];
+  if (isTransf) {
+    // Encontra o par: outro lançamento de transferência com mesmo valor/data/descricao
+    const par = (DB.lancamentos[empresaAtiva.id]||[]).find(x =>
+      x.id !== idParaExcluir && x.isTransferencia &&
+      x.descricao === lancAtual.descricao && x.valor === lancAtual.valor &&
+      x.dtVencimento === lancAtual.dtVencimento
+    );
+    if (par) idsExcluir.push(par.id);
+  }
+  DB.lancamentos[empresaAtiva.id] = (DB.lancamentos[empresaAtiva.id]||[]).filter(x => !idsExcluir.includes(x.id));
   salvarDB();
   fecharModal('overlay-lancamento');
   renderDashboard();
-  toast('Lançamento excluído.');
+  toast(isTransf && idsExcluir.length > 1 ? 'Transferência excluída (ambos os lançamentos).' : 'Lançamento excluído.');
   try {
-    const { error } = await supa.from('lancamentos').delete().eq('id', idParaExcluir);
-    if (error) console.warn('Erro ao excluir lançamento no Supabase:', error);
-    else { try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){} }
+    for (const id of idsExcluir) {
+      await supa.from('lancamentos').delete().eq('id', id);
+    }
+    try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){}
   } catch(e) { console.warn('Erro ao excluir lançamento no Supabase:', e); }
 }
 
