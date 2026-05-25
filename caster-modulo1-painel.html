@@ -2559,7 +2559,6 @@ function renderDashboard() {
 
   // Total a pagar lateral
   const em30 = new Date(); em30.setDate(em30.getDate()+30);
-  const em30 = new Date(); em30.setDate(em30.getDate()+30);
 const pad = n => String(n).padStart(2,'0');
 const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getDate())}`;
   const pagProx = lancs.filter(l => l.tipo==='pagar' && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str);
