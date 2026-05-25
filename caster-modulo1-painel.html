@@ -2559,7 +2559,9 @@ function renderDashboard() {
 
   // Total a pagar lateral
   const em30 = new Date(); em30.setDate(em30.getDate()+30);
-  const em30str = em30.toISOString().slice(0,10);
+  const em30 = new Date(); em30.setDate(em30.getDate()+30);
+const pad = n => String(n).padStart(2,'0');
+const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getDate())}`;
   const pagProx = lancs.filter(l => l.tipo==='pagar' && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str);
   document.getElementById('lat-total-pagar').textContent = fmtK(pagProx.reduce((s,l)=>s+l.valor,0));
 
@@ -3568,7 +3570,9 @@ function fecharModal(id) {
 }
 
 function dataHoje() {
-  return new Date().toISOString().slice(0,10);
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
 function fmtM(v) {
