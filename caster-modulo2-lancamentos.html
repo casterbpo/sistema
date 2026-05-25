@@ -946,7 +946,7 @@ async function carregarDB(){
   localStorage.setItem(CHAVE, JSON.stringify(DB));
 }
 function uid(){ return crypto.randomUUID(); }
-function hoje(){ return new Date().toISOString().slice(0,10); }
+function hoje(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function fmtM(v){ return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDt(d){ if(!d) return '—'; const [y,m,dia]=d.split('-'); return `${dia}/${m}/${y}`; }
 
