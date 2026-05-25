@@ -1870,7 +1870,16 @@ body {
             <input class="form-input" id="tr1-data" type="date">
           </div>
         </div>
-        <div class="form-row form-row-1">
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Dt. Pagamento</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input class="form-input" id="tr1-pagamento" type="date" style="flex:1;">
+              <button type="button" onclick="document.getElementById('tr1-pagamento').value=dataHoje()" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-body);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto-2);cursor:pointer;" title="Preencher com hoje">Hoje</button>
+              <button type="button" onclick="document.getElementById('tr1-pagamento').value=''" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-body);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto-2);cursor:pointer;" title="Limpar = pendente">✕</button>
+            </div>
+            <span class="form-hint">Vazio = pendente</span>
+          </div>
           <div class="form-group">
             <label class="form-label">Observações</label>
             <input class="form-input" id="tr1-obs" placeholder="Opcional">
@@ -1943,8 +1952,12 @@ body {
         </div>
         <div class="form-group">
           <label class="form-label">Dt. Pagamento</label>
-          <input class="form-input" id="lanc-pagamento" type="date">
-          <span class="form-hint">Deixar vazio = pendente</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="form-input" id="lanc-pagamento" type="date" style="flex:1;">
+            <button type="button" onclick="document.getElementById('lanc-pagamento').value=dataHoje()" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-body);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto-2);cursor:pointer;" title="Preencher com hoje">Hoje</button>
+            <button type="button" onclick="document.getElementById('lanc-pagamento').value=''" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-body);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto-2);cursor:pointer;" title="Limpar = pendente">✕</button>
+          </div>
+          <span class="form-hint">Vazio = pendente</span>
         </div>
       </div>
       <div class="form-row form-row-1">
@@ -3018,6 +3031,7 @@ async function salvarTransferenciaM1() {
   const valor     = parseFloat(document.getElementById('tr1-valor').value);
   const data      = document.getElementById('tr1-data').value;
   const obs       = document.getElementById('tr1-obs').value.trim();
+  const dtPag     = document.getElementById('tr1-pagamento').value || null;
 
   if (!origemId || !destinoId) { toast('Selecione as contas de origem e destino', true); return; }
   if (origemId === destinoId)  { toast('Origem e destino devem ser contas diferentes', true); return; }
@@ -3035,7 +3049,7 @@ async function salvarTransferenciaM1() {
   const saida = {
     id: sidaId, tipo: 'pagar', fornecedor: 'Transferência entre contas',
     cnpj: '', descricao: desc, categoria: '', centroCusto: '',
-    valor, dtCompetencia: data, dtVencimento: data, dtPagamento: data,
+    valor, dtCompetencia: data, dtVencimento: data, dtPagamento: dtPag,
     bancoId: origemId, documento: '', obs, anexos: [], recorrencia: 'nenhuma',
     conciliado: false, criadoEm: new Date().toISOString(), isTransferencia: true,
     parId: sidaId + '_entrada'
@@ -3043,7 +3057,7 @@ async function salvarTransferenciaM1() {
   const entrada = {
     id: entradaId, tipo: 'receber', fornecedor: 'Transferência entre contas',
     cnpj: '', descricao: desc, categoria: '', centroCusto: '',
-    valor, dtCompetencia: data, dtVencimento: data, dtPagamento: data,
+    valor, dtCompetencia: data, dtVencimento: data, dtPagamento: dtPag,
     bancoId: destinoId, documento: '', obs, anexos: [], recorrencia: 'nenhuma',
     conciliado: false, criadoEm: new Date().toISOString(), isTransferencia: true,
     parId: sidaId + '_saida'
