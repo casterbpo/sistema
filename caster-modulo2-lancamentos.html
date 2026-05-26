@@ -914,7 +914,8 @@ async function salvarTransferencia(){
         p_dt_competencia:l.dtCompetencia||null, p_dt_vencimento:l.dtVencimento||null,
         p_dt_pagamento:l.dtPagamento||null,
         p_valor:l.valor, p_documento:null,
-        p_conciliado:false, p_obs:l.obs||null, p_recorrencia:'nenhuma'
+        p_conciliado:false, p_obs:l.obs||null, p_recorrencia:'nenhuma',
+        p_serie_id: null
       });
     } catch(e){ console.warn('Erro ao salvar transferência:', e); }
   };
@@ -1326,11 +1327,13 @@ async function baixarLote(){
         p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
         p_categoria: l.categoria || null, p_centro_custo: l.centroCusto || null,
         p_banco_id: l.bancoId || null,
+        p_cnpj: l.cnpj || null,
         p_dt_competencia: l.dtCompetencia||null, p_dt_vencimento: l.dtVencimento||null,
         p_dt_pagamento: l.dtPagamento||null,
         p_valor: l.valor, p_documento: l.documento || null,
         p_conciliado: l.conciliado||false, p_obs: l.obs || null,
-        p_recorrencia: l.recorrencia||'nenhuma'
+        p_recorrencia: l.recorrencia||'nenhuma',
+        p_serie_id: l.serie_id || null
       });
     } catch(e){ console.warn('Erro ao baixar lote no Supabase:', e); }
   }
@@ -1789,11 +1792,14 @@ async function confirmarBaixa(){
       p_categoria: l.categoria || null,
       p_centro_custo: l.centroCusto || null,
       p_banco_id: l.bancoId || null,
+      p_cnpj: l.cnpj || null,
       p_dt_competencia: l.dtCompetencia || null,
       p_dt_vencimento: l.dtVencimento || null,
       p_dt_pagamento: l.dtPagamento || null,
       p_valor: l.valor, p_documento: l.documento || null,
-      p_conciliado: l.conciliado || false, p_obs: l.obs || null
+      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
+      p_recorrencia: l.recorrencia || 'nenhuma',
+      p_serie_id: l.serie_id || null
     });
     if (eBaixa) console.warn('Erro ao atualizar baixa no Supabase:', eBaixa);
     else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
