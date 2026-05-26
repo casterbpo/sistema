@@ -472,25 +472,58 @@ body {
 
 .empresa-card-topo {
   background: linear-gradient(135deg, var(--g800), var(--g900));
-  padding: 1.2rem;
+  padding: 1.2rem 1.2rem 1rem;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+}
+
+.empresa-topo-esq {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .empresa-inicial {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   background: linear-gradient(135deg, var(--d500), var(--d700));
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--fonte-display);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--g900);
   flex-shrink: 0;
+}
+
+.empresa-topo-info { min-width: 0; }
+.empresa-topo-nome {
+  font-family: var(--fonte-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.empresa-topo-cnpj {
+  font-family: var(--fonte-mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+.empresa-topo-seg {
+  font-size: 10px;
+  color: var(--d300);
+  margin-top: 3px;
+  font-weight: 500;
 }
 
 .empresa-alertas {
@@ -498,6 +531,7 @@ body {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .alerta-badge {
@@ -2315,9 +2349,13 @@ function renderPainel() {
     return `
     <div class="empresa-card" onclick="entrarEmpresa('${emp.id}')">
       <div class="empresa-card-topo">
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div class="empresa-topo-esq">
           <div class="empresa-inicial">${(emp.fantasia||emp.razao).charAt(0).toUpperCase()}</div>
-          <span style="font-family:var(--fonte-display);font-size:1rem;font-weight:700;color:var(--d400);letter-spacing:.02em;text-shadow:0 0 12px rgba(201,168,76,.25);">${(emp.fantasia||emp.razao).split(' ')[0]}</span>
+          <div class="empresa-topo-info">
+            <div class="empresa-topo-nome">${(emp.fantasia||emp.razao).split(' ')[0]}</div>
+            <div class="empresa-topo-cnpj">${emp.cnpj || 'CNPJ não informado'}</div>
+            <div class="empresa-topo-seg">${emp.segmento || ''}</div>
+          </div>
         </div>
         <div class="empresa-alertas">
           ${hojeRec.length > 0 ? `<div class="alerta-badge alerta-receber">↑ ${hojeRec.length} a receber hoje</div>` : ''}
@@ -2326,8 +2364,7 @@ function renderPainel() {
         </div>
       </div>
       <div class="empresa-card-corpo">
-        <div class="empresa-nome">${emp.fantasia || emp.razao}</div>
-        <div class="empresa-cnpj">${emp.cnpj || 'CNPJ não informado'}</div>
+
         <div class="empresa-kpis">
           <div class="emp-kpi kpi-pagar">
             <div class="emp-kpi-lbl">A pagar hoje</div>
