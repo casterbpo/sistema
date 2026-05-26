@@ -908,17 +908,17 @@ async function salvarTransferencia(){
   // Supabase upsert ambos
   const upsertSafe = async (l) => {
     try {
-      await supa.from('lancamentos').upsert({
-        id:l.id, empresa_id:EMP.id, tipo:l.tipo,
-        fornecedor:l.fornecedor, descricao:l.descricao||null,
-        categoria:null, centro_custo:null,
-        banco_id:l.bancoId||null, cnpj:null,
-        dt_competencia:l.dtCompetencia||null, dt_vencimento:l.dtVencimento||null,
-        dt_pagamento:l.dtPagamento||null,
-        valor:l.valor, documento:null,
-        conciliado:false, obs:l.obs||null, recorrencia:'nenhuma',
-        serie_id: null
-      }, { onConflict: 'id' });
+      await supa.rpc('upsert_lancamento', {
+        p_id:l.id, p_empresa_id:EMP.id, p_tipo:l.tipo,
+        p_fornecedor:l.fornecedor, p_descricao:l.descricao||null,
+        p_categoria:null, p_centro_custo:null,
+        p_banco_id:l.bancoId||null, p_cnpj:null,
+        p_dt_competencia:l.dtCompetencia||null, p_dt_vencimento:l.dtVencimento||null,
+        p_dt_pagamento:l.dtPagamento||null,
+        p_valor:l.valor, p_documento:null,
+        p_conciliado:false, p_obs:l.obs||null, p_recorrencia:'nenhuma',
+        p_serie_id: null
+      });
     } catch(e){ console.warn('Erro ao salvar transferência:', e); }
   };
   await upsertSafe(saida);
@@ -1325,19 +1325,18 @@ async function baixarLote(){
   toast(`${n} lançamento(s) baixados com data de hoje`,'ok');
   for (const l of aUpsert) {
     try {
-      await supa.from('lancamentos').upsert({
-        id: l.id, empresa_id: EMP.id, tipo: l.tipo,
-        fornecedor: l.fornecedor, descricao: l.descricao || null,
-        categoria: l.categoria || null, centro_custo: l.centroCusto || null,
-        banco_id: l.bancoId || null,
-        cnpj: l.cnpj || null,
-        dt_competencia: l.dtCompetencia||null, dt_vencimento: l.dtVencimento||null,
-        dt_pagamento: l.dtPagamento||null,
-        valor: l.valor, documento: l.documento || null,
-        conciliado: l.conciliado||false, obs: l.obs || null,
-        recorrencia: l.recorrencia||'nenhuma',
-        serie_id: l.serie_id || null
-      }, { onConflict: 'id' });
+      await supa.rpc('upsert_lancamento', {
+        p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
+        p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+        p_categoria: l.categoria || null, p_centro_custo: l.centroCusto || null,
+        p_banco_id: l.bancoId || null, p_cnpj: l.cnpj || null,
+        p_dt_competencia: l.dtCompetencia||null, p_dt_vencimento: l.dtVencimento||null,
+        p_dt_pagamento: l.dtPagamento||null,
+        p_valor: l.valor, p_documento: l.documento || null,
+        p_conciliado: l.conciliado||false, p_obs: l.obs || null,
+        p_recorrencia: l.recorrencia||'nenhuma',
+        p_serie_id: l.serie_id || null
+      });
     } catch(e){ console.warn('Erro ao baixar lote no Supabase:', e); }
   }
 }
@@ -1652,35 +1651,34 @@ async function salvar(){
     try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: EMP.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
   }
 
-  // Salva lançamento diretamente na tabela (insert/upsert por id — sem RPC)
-  const upsertNaTabela = async (l) => {
-    const row = {
-      id: l.id, empresa_id: EMP.id, tipo: l.tipo,
-      fornecedor: l.fornecedor, descricao: l.descricao || null,
-      categoria: l.categoria || null,
-      centro_custo: l.centroCusto || null,
-      banco_id: l.bancoId || null,
-      cnpj: l.cnpj || null,
-      dt_competencia: l.dtCompetencia || null,
-      dt_vencimento: l.dtVencimento || null,
-      dt_pagamento: l.dtPagamento || null,
-      valor: l.valor, documento: l.documento || null,
-      conciliado: l.conciliado || false, obs: l.obs || null,
-      recorrencia: l.recorrencia || 'nenhuma',
-      serie_id: l.serie_id || null
-    };
-    const { error } = await supa.from('lancamentos').upsert(row, { onConflict: 'id' });
+  // Salva via RPC (escreve em lancamentos_raw, lê via view lancamentos)
+  const upsertRPC = async (l) => {
+    const { error } = await supa.rpc('upsert_lancamento', {
+      p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
+      p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+      p_categoria: l.categoria || null,
+      p_centro_custo: l.centroCusto || null,
+      p_banco_id: l.bancoId || null,
+      p_cnpj: l.cnpj || null,
+      p_dt_competencia: l.dtCompetencia || null,
+      p_dt_vencimento: l.dtVencimento || null,
+      p_dt_pagamento: l.dtPagamento || null,
+      p_valor: l.valor, p_documento: l.documento || null,
+      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
+      p_recorrencia: l.recorrencia || 'nenhuma',
+      p_serie_id: l.serie_id || null
+    });
     if (error) console.warn('Erro ao salvar lançamento no Supabase:', error);
     else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
     return !error;
   };
 
   try {
-    await upsertNaTabela(lanc);
+    await upsertRPC(lanc);
     // Salva todas as parcelas extras geradas
     if(!editandoId){
       const extras = (DB.lancamentos[EMP.id]||[]).filter(l => l !== lanc && l._batchId === lanc.id);
-      for (const e of extras) { await upsertNaTabela(e); }
+      for (const e of extras) { await upsertRPC(e); }
     }
   } catch(e) { console.warn('Erro ao salvar lançamento no Supabase:',e); }
 
@@ -1764,21 +1762,20 @@ async function confirmarBaixa(){
   salvarDB(); fecharBaixa(); renderKPIs(); filtrar();
   toast(`Baixa registrada em ${fmtDt(data)}`,'ok');
   try {
-    const { error: eBaixa } = await supa.from('lancamentos').upsert({
-      id: l.id, empresa_id: EMP.id, tipo: l.tipo,
-      fornecedor: l.fornecedor, descricao: l.descricao || null,
-      categoria: l.categoria || null,
-      centro_custo: l.centroCusto || null,
-      banco_id: l.bancoId || null,
-      cnpj: l.cnpj || null,
-      dt_competencia: l.dtCompetencia || null,
-      dt_vencimento: l.dtVencimento || null,
-      dt_pagamento: l.dtPagamento || null,
-      valor: l.valor, documento: l.documento || null,
-      conciliado: l.conciliado || false, obs: l.obs || null,
-      recorrencia: l.recorrencia || 'nenhuma',
-      serie_id: l.serie_id || null
-    }, { onConflict: 'id' });
+    const { error: eBaixa } = await supa.rpc('upsert_lancamento', {
+      p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
+      p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+      p_categoria: l.categoria || null,
+      p_centro_custo: l.centroCusto || null,
+      p_banco_id: l.bancoId || null, p_cnpj: l.cnpj || null,
+      p_dt_competencia: l.dtCompetencia || null,
+      p_dt_vencimento: l.dtVencimento || null,
+      p_dt_pagamento: l.dtPagamento || null,
+      p_valor: l.valor, p_documento: l.documento || null,
+      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
+      p_recorrencia: l.recorrencia || 'nenhuma',
+      p_serie_id: l.serie_id || null
+    });
     if (eBaixa) console.warn('Erro ao atualizar baixa no Supabase:', eBaixa);
     else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
   } catch(e){ console.warn('Erro ao atualizar baixa no Supabase:', e); }
