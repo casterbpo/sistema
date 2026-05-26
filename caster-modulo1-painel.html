@@ -3338,7 +3338,6 @@ function trocarM1Parcela(id) {
   fecharModal('overlay-lancamento');
   setTimeout(() => abrirModalLancamento(id), 80);
 }
-  function setTipoLanc(tipo) {
   tipoLancAtivo = tipo;
   const recBtn = document.getElementById('tipo-btn-rec');
   const pagBtn = document.getElementById('tipo-btn-pag');
@@ -3367,7 +3366,7 @@ function trocarM1Parcela(id) {
       if (catsFiltradas.find(c => c.id === valAtual)) selCat.value = valAtual;
     }
   }
-} 
+}
 
 async function salvarLancamento() {
   const forn  = document.getElementById('lanc-forn').value.trim();
@@ -3417,7 +3416,7 @@ async function salvarLancamento() {
     DB.fornecedores[empresaAtiva.id].push(forn);
     const novoForn = { id: uid(), nome: forn, tipo: tipoLancAtivo==='receber' ? 'cliente' : 'fornecedor', doc: document.getElementById('lanc-cnpj').value.trim()||null, email: null, tel: null, cidade: null, obs: null };
     DB.fornecedoresObj[empresaAtiva.id].push(novoForn);
-    try { await supa.from('fornecedores').upsert({ ... }, { onConflict: 'nome,empresa_id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
+    try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: empresaAtiva.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'nome,empresa_id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
   }
 
   // Salvar no Supabase
