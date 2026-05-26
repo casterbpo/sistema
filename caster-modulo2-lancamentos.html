@@ -694,6 +694,8 @@ th.sort:hover{color:var(--d300) !important;}
       </div>
       </div><!-- /painel-lanc -->
     </div>
+    <!-- Painel de série — aparece ao editar lançamentos de uma recorrência -->
+    <div id="serie-painel" style="display:none;padding:.8rem 1.5rem;border-top:1px solid var(--borda);background:var(--n050);"></div>
     <div class="modal-footer">
       <button class="btn-s" onclick="fecharModal()">Cancelar</button>
       <button class="btn-p" id="btn-salvar-modal" onclick="salvarOuTransferir()">✓ Salvar lançamento</button>
@@ -947,8 +949,24 @@ async function carregarDB(){
   if(centros?.data)        DB.centrosCusto[eid]  = centros.data;
   if(forn?.data){
     if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
-    DB.fornecedoresObj[eid] = forn.data.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
-    DB.fornecedores[eid] = forn.data.map(f => f.nome);
+    // Deduplica pelo nome (case-insensitive) — mantém o primeiro registro de cada nome
+    const vistos = new Map();
+    forn.data.forEach(f => {
+      const chave = f.nome.toLowerCase();
+      if(!vistos.has(chave)) vistos.set(chave, f);
+    });
+    const fornUnicos = [...vistos.values()];
+    DB.fornecedoresObj[eid] = fornUnicos.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
+    DB.fornecedores[eid] = fornUnicos.map(f => f.nome);
+    // Remove duplicatas do Supabase silenciosamente (mantém o primeiro, deleta os extras)
+    const idsExtras = forn.data.filter(f => {
+      const chave = f.nome.toLowerCase();
+      return vistos.get(chave).id !== f.id;
+    }).map(f => f.id);
+    if(idsExtras.length) supa.from('fornecedores').delete().in('id', idsExtras).then(({error}) => {
+      if(error) console.warn('Erro ao limpar fornecedores duplicados:', error);
+      else console.log(`${idsExtras.length} fornecedor(es) duplicado(s) removido(s) do Supabase`);
+    });
   }
   if(lancs?.data) DB.lancamentos[eid] = lancs.data.map(l => ({
   ...l,
@@ -957,7 +975,8 @@ async function carregarDB(){
   dtCompetencia: l.dtCompetencia ?? l.dt_competencia,
   dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
   dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
-  criadoEm:      l.criadoEm      ?? l.criado_em
+  criadoEm:      l.criadoEm      ?? l.criado_em,
+  serie_id:      l.serie_id      ?? null
 }));
   localStorage.setItem(CHAVE, JSON.stringify(DB));
 }
@@ -1198,6 +1217,7 @@ function renderTabela(){
         <td class="center">
           <div style="display:flex;gap:4px;justify-content:center;">
             ${!l.dtPagamento?`<button class="btn-icon baixa" onclick="abrirBaixa('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Baixa</button>`:''}
+            <button class="btn-icon" onclick="repetirLancamento('${l.id}')" title="Repetir este lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>Repetir</button>
             <button class="btn-icon" onclick="editar('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
             <button class="btn-icon del" onclick="abrirDel('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Excluir</button>
           </div>
@@ -1386,11 +1406,86 @@ function abrirModal(id=null){
 
   anexosPendentes = id ? (((DB.lancamentos[EMP.id]||[]).find(x=>x.id===id)||{}).anexos||[]).map(a=>({...a})) : [];
   renderAnexos();
+  renderSeriePainel(id);
   document.getElementById('overlay-lanc').classList.add('aberto');
 }
 
 function editar(id){ abrirModal(id); }
 function fecharModal(){ document.getElementById('overlay-lanc').classList.remove('aberto'); }
+
+// Repetir lançamento existente — abre o modal como novo, preenchido, com recorrência ativa
+function repetirLancamento(id){
+  const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===id);
+  if(!l) return;
+  // Abre modal como novo lançamento (sem editandoId)
+  abrirModal(null);
+  // Aguarda o modal abrir (DOM já está sincronizado — abrirModal é síncrono)
+  setTipo(l.tipo);
+  document.getElementById('m-forn').value  = l.fornecedor||'';
+  document.getElementById('m-cnpj').value  = l.cnpj||'';
+  document.getElementById('m-desc').value  = l.descricao||'';
+  document.getElementById('m-valor').value = l.valor||'';
+  document.getElementById('m-doc').value   = l.documento||'';
+  document.getElementById('m-cat').value   = l.categoria||'';
+  document.getElementById('m-cc').value    = l.centroCusto||'';
+  document.getElementById('m-banco').value = l.bancoId||'';
+  document.getElementById('m-obs').value   = l.obs||'';
+  document.getElementById('m-comp').value  = hoje();
+  document.getElementById('m-venc').value  = hoje();
+  document.getElementById('m-pag').value   = '';
+  // Ativa repetição automática mensal por padrão (pode mudar antes de salvar)
+  setRecorrTipo('auto');
+  document.getElementById('m-recorr').value = 'mensal';
+  document.getElementById('m-recorr-qt').value = '12';
+  document.getElementById('modal-titulo').textContent = 'Repetir Lançamento';
+}
+
+// Painel de série — lançamentos irmãos do mesmo serie_id
+function renderSeriePainel(lancId){
+  const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===lancId);
+  const painel = document.getElementById('serie-painel');
+  if(!painel) return;
+  if(!l || !l.serie_id){
+    painel.innerHTML = '';
+    painel.style.display = 'none';
+    return;
+  }
+  const irmaos = (DB.lancamentos[EMP.id]||[])
+    .filter(x => x.serie_id === l.serie_id)
+    .sort((a,b) => (a.dtVencimento||'').localeCompare(b.dtVencimento||''));
+  if(irmaos.length <= 1){
+    painel.innerHTML = '';
+    painel.style.display = 'none';
+    return;
+  }
+  const hj = hoje();
+  painel.style.display = 'block';
+  painel.innerHTML = `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:.5rem;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+      Série — ${irmaos.length} parcela${irmaos.length!==1?'s':''} vinculadas
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;">
+      ${irmaos.map((x,i) => {
+        const status = !x.dtPagamento ? (x.dtVencimento<hj?'vencido':'pendente') : 'pago';
+        const cor = status==='pago'?'var(--verde-ok)':status==='vencido'?'var(--vermelho)':'var(--texto3)';
+        const atual = x.id === lancId;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--r-sm);background:${atual?'var(--g050)':'var(--n050)'};border:1px solid ${atual?'var(--g300)':'var(--borda)'};cursor:${atual?'default':'pointer'};" ${atual?'':'onclick="trocarParcelaSerie(\''+x.id+'\')"'}>
+          <span style="font-size:10px;font-weight:700;color:var(--texto3);min-width:20px;">${i+1}ª</span>
+          <span style="font-family:var(--fonte-mono);font-size:11px;flex:1;">${fmtDt(x.dtVencimento)}</span>
+          <span style="font-size:11px;font-weight:600;color:${x.tipo==='receber'?'var(--azul)':'var(--vermelho)'};">${x.tipo==='receber'?'+':'−'}${fmtM(x.valor)}</span>
+          <span style="font-size:10px;color:${cor};font-weight:600;">${status==='pago'?'✓ Pago':status==='vencido'?'Vencido':'Pendente'}</span>
+          ${atual?'<span style="font-size:10px;background:var(--g500);color:#fff;padding:1px 6px;border-radius:100px;">Atual</span>':''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function trocarParcelaSerie(id){
+  // Fecha o modal atual e reabre com o lançamento selecionado
+  fecharModal();
+  setTimeout(() => abrirModal(id), 80);
+}
 
 function setTipo(tipo){
   tipoAtual = tipo;
@@ -1486,8 +1581,15 @@ async function salvar(){
     anexos: anexosPendentes.map(a=>({nome:a.nome,size:a.size,tipo:a.tipo,dataUrl:a.dataUrl})),
     recorrencia: document.getElementById('m-recorr-tipo').value==='auto' ? document.getElementById('m-recorr').value : (document.getElementById('m-recorr-tipo').value==='custom' ? 'custom' : 'nenhuma'),
     conciliado: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).conciliado||false : false,
-    criadoEm: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).criadoEm||new Date().toISOString() : new Date().toISOString()
+    criadoEm: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).criadoEm||new Date().toISOString() : new Date().toISOString(),
+    // serie_id agrupa parcelas de uma mesma recorrência; mantém o existente se for edição
+    serie_id: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).serie_id||null : null
   };
+  // Se é novo lançamento com recorrência, gera um serie_id compartilhado
+  const tipoRepCheck = document.getElementById('m-recorr-tipo').value;
+  if(!editandoId && (tipoRepCheck==='auto' || tipoRepCheck==='custom')){
+    lanc.serie_id = uid();
+  }
 
   if(!DB.lancamentos[EMP.id]) DB.lancamentos[EMP.id]=[];
   if(editandoId){
@@ -1531,7 +1633,8 @@ async function salvar(){
       p_dt_pagamento: l.dtPagamento || null,
       p_valor: l.valor, p_documento: l.documento || null,
       p_conciliado: l.conciliado || false, p_obs: l.obs || null,
-      p_recorrencia: l.recorrencia || 'nenhuma'
+      p_recorrencia: l.recorrencia || 'nenhuma',
+      p_serie_id: l.serie_id || null
       // _batchId é apenas controle interno, não vai ao Supabase
     });
     if (error) console.warn('Erro ao salvar lançamento no Supabase:', error);
@@ -1553,7 +1656,8 @@ async function salvar(){
       dt_pagamento: null,
       valor: l.valor, documento: l.documento || null,
       conciliado: false, obs: l.obs || null,
-      recorrencia: 'nenhuma'
+      recorrencia: 'nenhuma',
+      serie_id: l.serie_id || null
     };
     const { error } = await supa.from('lancamentos').upsert(row, { onConflict: 'id' });
     if (error) console.warn('Erro ao salvar parcela no Supabase:', error);
@@ -1602,7 +1706,7 @@ function gerarRecorrencias(base, qt=12, criadoEm=null){
       const dt = new Date(baseY+i, baseM-1, baseD);
       novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
     }
-    const copia = {...base, id:uid(), dtVencimento:novaData, dtPagamento:null, conciliado:false, recorrencia:'nenhuma', criadoEm:ts, _batchId:base.id};
+    const copia = {...base, id:uid(), dtVencimento:novaData, dtPagamento:null, conciliado:false, recorrencia:'nenhuma', criadoEm:ts, _batchId:base.id, serie_id:base.serie_id||null};
     DB.lancamentos[EMP.id].push(copia);
   }
 }
@@ -1613,7 +1717,7 @@ function gerarParcelasCustom(base, criadoEm=null){
   rows.forEach((inp) => {
     const dt = inp.value;
     if(!dt) return;
-    const copia = {...base, id:uid(), dtVencimento:dt, dtPagamento:null, conciliado:false, recorrencia:'nenhuma', criadoEm:ts, _batchId:base.id};
+    const copia = {...base, id:uid(), dtVencimento:dt, dtPagamento:null, conciliado:false, recorrencia:'nenhuma', criadoEm:ts, _batchId:base.id, serie_id:base.serie_id||null};
     DB.lancamentos[EMP.id].push(copia);
   });
 }
