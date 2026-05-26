@@ -704,10 +704,7 @@ async function upsertCCSupa(c, eid) {
 }
 
 async function upsertFornSupa(f, eid) {
-  const { error } = await supa.from('fornecedores').upsert({
-    id: f.id, empresa_id: eid, nome: f.nome, tipo: f.tipo,
-    doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs
-  }, { onConflict: 'id' });
+  const { error } = await supa.from('fornecedores').upsert({ ... }, { onConflict: 'nome,empresa_id' });
   if (error) console.warn('Erro Supabase fornecedores:', error);
 }
 function uid(){ return crypto.randomUUID(); }
