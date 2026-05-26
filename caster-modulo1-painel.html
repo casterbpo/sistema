@@ -3338,6 +3338,9 @@ function trocarM1Parcela(id) {
   fecharModal('overlay-lancamento');
   setTimeout(() => abrirModalLancamento(id), 80);
 }
+  function setTipoLanc(tipo) {
+  tipoLancAtivo = tipo;
+  const recBtn = document.getElementById('tipo-btn-rec');
   tipoLancAtivo = tipo;
   const recBtn = document.getElementById('tipo-btn-rec');
   const pagBtn = document.getElementById('tipo-btn-pag');
@@ -3366,6 +3369,7 @@ function trocarM1Parcela(id) {
       if (catsFiltradas.find(c => c.id === valAtual)) selCat.value = valAtual;
     }
   }
+} 
 
 async function salvarLancamento() {
   const forn  = document.getElementById('lanc-forn').value.trim();
