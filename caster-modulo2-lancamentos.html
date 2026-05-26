@@ -1648,7 +1648,7 @@ async function salvar(){
     if(!DB.fornecedores[EMP.id].includes(forn)) DB.fornecedores[EMP.id].push(forn);
     const novoForn = { id: uid(), nome: forn, tipo: tipoAtual==='receber' ? 'cliente' : 'fornecedor', doc: document.getElementById('m-cnpj').value.trim()||null, email: null, tel: null, cidade: null, obs: null };
     DB.fornecedoresObj[EMP.id].push(novoForn);
-    try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: EMP.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
+    try { await supa.from('fornecedores').upsert({ ... }, { onConflict: 'nome,empresa_id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
   }
 
   // Salva via RPC (escreve em lancamentos_raw, lê via view lancamentos)
