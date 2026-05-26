@@ -631,6 +631,7 @@ th.sort:hover{color:var(--d300) !important;}
         </div>
       </div>
       <hr class="form-divider">
+      <div id="secao-recorr">
       <div class="form-secao" style="margin-bottom:.6rem;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
         Repetições
@@ -672,6 +673,7 @@ th.sort:hover{color:var(--d300) !important;}
         <div id="custom-parcelas-wrap"></div>
         <button type="button" class="btn-s" style="font-size:11px;padding:5px 12px;margin-top:.4rem;" onclick="adicionarParcelaCustom()">+ Adicionar parcela</button>
       </div>
+      </div><!-- /secao-recorr -->
       <!-- hidden input para modo sem repetição -->
       <input type="hidden" id="m-recorr-tipo" value="nenhuma">
       <div class="form-row fr-1">
@@ -906,17 +908,17 @@ async function salvarTransferencia(){
   // Supabase upsert ambos
   const upsertSafe = async (l) => {
     try {
-      await supa.rpc('upsert_lancamento', {
-        p_id:l.id, p_empresa_id:EMP.id, p_tipo:l.tipo,
-        p_fornecedor:l.fornecedor, p_descricao:l.descricao||null,
-        p_categoria:l.categoria||null, p_centro_custo:l.centroCusto||null,
-        p_banco_id:l.bancoId||null, p_cnpj:null,
-        p_dt_competencia:l.dtCompetencia||null, p_dt_vencimento:l.dtVencimento||null,
-        p_dt_pagamento:l.dtPagamento||null,
-        p_valor:l.valor, p_documento:null,
-        p_conciliado:false, p_obs:l.obs||null, p_recorrencia:'nenhuma',
-        p_serie_id: null
-      });
+      await supa.from('lancamentos').upsert({
+        id:l.id, empresa_id:EMP.id, tipo:l.tipo,
+        fornecedor:l.fornecedor, descricao:l.descricao||null,
+        categoria:null, centro_custo:null,
+        banco_id:l.bancoId||null, cnpj:null,
+        dt_competencia:l.dtCompetencia||null, dt_vencimento:l.dtVencimento||null,
+        dt_pagamento:l.dtPagamento||null,
+        valor:l.valor, documento:null,
+        conciliado:false, obs:l.obs||null, recorrencia:'nenhuma',
+        serie_id: null
+      }, { onConflict: 'id' });
     } catch(e){ console.warn('Erro ao salvar transferência:', e); }
   };
   await upsertSafe(saida);
@@ -1206,15 +1208,16 @@ function renderTabela(){
       const tagCls = {pago:'tag-pago',vencido:'tag-vencido',pendente:'tag-pendente'}[status];
       const tagTxt = {pago:l.tipo==='receber'?'Recebido':'Pago',vencido:'Vencido',pendente:'Pendente'}[status];
       // Calcula o número da parcela
-      let parcelaHtml = '<span style="color:var(--texto3);">—</span>';
+      let parcelaHtml;
       if(l.serie_id){
         const serie = (DB.lancamentos[EMP.id]||[])
           .filter(x => x.serie_id === l.serie_id)
           .sort((a,b) => (a.dtVencimento||'').localeCompare(b.dtVencimento||''));
         const idxParc = serie.findIndex(x => x.id === l.id);
-        if(idxParc >= 0){
-          parcelaHtml = `<span style="font-size:10px;font-weight:700;background:rgba(201,168,76,0.12);color:var(--d700);padding:2px 7px;border-radius:100px;white-space:nowrap;">${idxParc+1}/${serie.length}</span>`;
-        }
+        const tot = serie.length;
+        parcelaHtml = `<span style="font-size:10px;font-weight:700;background:rgba(201,168,76,0.12);color:var(--d700);padding:2px 7px;border-radius:100px;white-space:nowrap;">${idxParc>=0?idxParc+1:1}/${tot}</span>`;
+      } else {
+        parcelaHtml = '<span style="font-size:10px;color:var(--texto3);padding:2px 7px;">1/1</span>';
       }
       return `<tr class="${rowCls}" data-id="${l.id}">
         <td class="center cb-wrap"><input type="checkbox" ${selecionados.has(l.id)?'checked':''} onchange="toggleSel('${l.id}',this)"></td>
@@ -1322,19 +1325,19 @@ async function baixarLote(){
   toast(`${n} lançamento(s) baixados com data de hoje`,'ok');
   for (const l of aUpsert) {
     try {
-      await supa.rpc('upsert_lancamento', {
-        p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
-        p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
-        p_categoria: l.categoria || null, p_centro_custo: l.centroCusto || null,
-        p_banco_id: l.bancoId || null,
-        p_cnpj: l.cnpj || null,
-        p_dt_competencia: l.dtCompetencia||null, p_dt_vencimento: l.dtVencimento||null,
-        p_dt_pagamento: l.dtPagamento||null,
-        p_valor: l.valor, p_documento: l.documento || null,
-        p_conciliado: l.conciliado||false, p_obs: l.obs || null,
-        p_recorrencia: l.recorrencia||'nenhuma',
-        p_serie_id: l.serie_id || null
-      });
+      await supa.from('lancamentos').upsert({
+        id: l.id, empresa_id: EMP.id, tipo: l.tipo,
+        fornecedor: l.fornecedor, descricao: l.descricao || null,
+        categoria: l.categoria || null, centro_custo: l.centroCusto || null,
+        banco_id: l.bancoId || null,
+        cnpj: l.cnpj || null,
+        dt_competencia: l.dtCompetencia||null, dt_vencimento: l.dtVencimento||null,
+        dt_pagamento: l.dtPagamento||null,
+        valor: l.valor, documento: l.documento || null,
+        conciliado: l.conciliado||false, obs: l.obs || null,
+        recorrencia: l.recorrencia||'nenhuma',
+        serie_id: l.serie_id || null
+      }, { onConflict: 'id' });
     } catch(e){ console.warn('Erro ao baixar lote no Supabase:', e); }
   }
 }
@@ -1388,6 +1391,10 @@ function abrirModal(id=null){
     '<option value="">— selecione —</option>' +
     bancos.filter(b => b.ativo !== false).map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
 
+  // Mostra ou oculta seção de repetições: só aparece ao criar, não ao editar
+  const secaoRecorr = document.getElementById('secao-recorr');
+  if(secaoRecorr) secaoRecorr.style.display = id ? 'none' : '';
+
   if(id){
     const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===id);
     if(!l) return;
@@ -1404,14 +1411,7 @@ function abrirModal(id=null){
     document.getElementById('m-pag').value   = l.dtPagamento||'';
     document.getElementById('m-banco').value = l.bancoId||'';
     document.getElementById('m-obs').value   = l.obs||'';
-    const recVal = l.recorrencia||'nenhuma';
-    if(recVal==='nenhuma'||recVal==='custom'){
-      setRecorrTipo(recVal==='custom'?'nenhuma':recVal);
-      document.getElementById('m-recorr').value='mensal';
-    } else {
-      setRecorrTipo('auto');
-      document.getElementById('m-recorr').value=recVal;
-    }
+    setRecorrTipo('nenhuma');
   } else {
     setTipo('receber');
     ['m-forn','m-cnpj','m-desc','m-valor','m-doc','m-obs'].forEach(id=>document.getElementById(id).value='');
@@ -1652,31 +1652,8 @@ async function salvar(){
     try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: EMP.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
   }
 
-  // Salva lançamento principal via RPC
-  const upsertSafe = async (l) => {
-    const { error } = await supa.rpc('upsert_lancamento', {
-      p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
-      p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
-      p_categoria: l.categoria || null,
-      p_centro_custo: l.centroCusto || null,
-      p_banco_id: l.bancoId || null,
-      p_cnpj: l.cnpj || null,
-      p_dt_competencia: l.dtCompetencia || null,
-      p_dt_vencimento: l.dtVencimento || null,
-      p_dt_pagamento: l.dtPagamento || null,
-      p_valor: l.valor, p_documento: l.documento || null,
-      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
-      p_recorrencia: l.recorrencia || 'nenhuma',
-      p_serie_id: l.serie_id || null
-      // _batchId é apenas controle interno, não vai ao Supabase
-    });
-    if (error) console.warn('Erro ao salvar lançamento no Supabase:', error);
-    else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
-    return !error;
-  };
-
-  // Salva parcelas extras diretamente na tabela (mais robusto que RPC para lotes)
-  const inserirParcelaSupa = async (l) => {
+  // Salva lançamento diretamente na tabela (insert/upsert por id — sem RPC)
+  const upsertNaTabela = async (l) => {
     const row = {
       id: l.id, empresa_id: EMP.id, tipo: l.tipo,
       fornecedor: l.fornecedor, descricao: l.descricao || null,
@@ -1686,23 +1663,24 @@ async function salvar(){
       cnpj: l.cnpj || null,
       dt_competencia: l.dtCompetencia || null,
       dt_vencimento: l.dtVencimento || null,
-      dt_pagamento: null,
+      dt_pagamento: l.dtPagamento || null,
       valor: l.valor, documento: l.documento || null,
-      conciliado: false, obs: l.obs || null,
-      recorrencia: 'nenhuma',
+      conciliado: l.conciliado || false, obs: l.obs || null,
+      recorrencia: l.recorrencia || 'nenhuma',
       serie_id: l.serie_id || null
     };
     const { error } = await supa.from('lancamentos').upsert(row, { onConflict: 'id' });
-    if (error) console.warn('Erro ao salvar parcela no Supabase:', error);
+    if (error) console.warn('Erro ao salvar lançamento no Supabase:', error);
+    else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
     return !error;
   };
 
   try {
-    await upsertSafe(lanc);
+    await upsertNaTabela(lanc);
     // Salva todas as parcelas extras geradas
     if(!editandoId){
       const extras = (DB.lancamentos[EMP.id]||[]).filter(l => l !== lanc && l._batchId === lanc.id);
-      for (const e of extras) { await inserirParcelaSupa(e); }
+      for (const e of extras) { await upsertNaTabela(e); }
     }
   } catch(e) { console.warn('Erro ao salvar lançamento no Supabase:',e); }
 
@@ -1786,21 +1764,21 @@ async function confirmarBaixa(){
   salvarDB(); fecharBaixa(); renderKPIs(); filtrar();
   toast(`Baixa registrada em ${fmtDt(data)}`,'ok');
   try {
-    const { error: eBaixa } = await supa.rpc('upsert_lancamento', {
-      p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
-      p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
-      p_categoria: l.categoria || null,
-      p_centro_custo: l.centroCusto || null,
-      p_banco_id: l.bancoId || null,
-      p_cnpj: l.cnpj || null,
-      p_dt_competencia: l.dtCompetencia || null,
-      p_dt_vencimento: l.dtVencimento || null,
-      p_dt_pagamento: l.dtPagamento || null,
-      p_valor: l.valor, p_documento: l.documento || null,
-      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
-      p_recorrencia: l.recorrencia || 'nenhuma',
-      p_serie_id: l.serie_id || null
-    });
+    const { error: eBaixa } = await supa.from('lancamentos').upsert({
+      id: l.id, empresa_id: EMP.id, tipo: l.tipo,
+      fornecedor: l.fornecedor, descricao: l.descricao || null,
+      categoria: l.categoria || null,
+      centro_custo: l.centroCusto || null,
+      banco_id: l.bancoId || null,
+      cnpj: l.cnpj || null,
+      dt_competencia: l.dtCompetencia || null,
+      dt_vencimento: l.dtVencimento || null,
+      dt_pagamento: l.dtPagamento || null,
+      valor: l.valor, documento: l.documento || null,
+      conciliado: l.conciliado || false, obs: l.obs || null,
+      recorrencia: l.recorrencia || 'nenhuma',
+      serie_id: l.serie_id || null
+    }, { onConflict: 'id' });
     if (eBaixa) console.warn('Erro ao atualizar baixa no Supabase:', eBaixa);
     else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
   } catch(e){ console.warn('Erro ao atualizar baixa no Supabase:', e); }
