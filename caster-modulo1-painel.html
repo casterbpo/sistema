@@ -1800,7 +1800,7 @@ body {
             <input class="form-input" id="emp-cnpj" placeholder="00.000.000/0001-00" maxlength="18" inputmode="numeric" oninput="mascaraCNPJ(this)">
           </div>
           <div class="form-group">
-            <label class="form-label">Nome fantasia</label>
+            <label class="form-label">Nome fantasia *</label>
             <input class="form-input" id="emp-fantasia" placeholder="Ex: Empresa XYZ">
           </div>
         </div>
@@ -2352,7 +2352,7 @@ function renderPainel() {
         <div class="empresa-topo-esq">
           <div class="empresa-inicial">${(emp.fantasia||emp.razao).charAt(0).toUpperCase()}</div>
           <div class="empresa-topo-info">
-            <div class="empresa-topo-nome">${(emp.fantasia||emp.razao).split(' ')[0]}</div>
+            <div class="empresa-topo-nome">${emp.fantasia||emp.razao}</div>
             <div class="empresa-topo-cnpj">${emp.cnpj || 'CNPJ não informado'}</div>
             <div class="empresa-topo-seg">${emp.segmento || ''}</div>
           </div>
@@ -2927,6 +2927,7 @@ function atualizarStep() {
 function stepProx() {
   if (stepAtual === 1) {
     if (!document.getElementById('emp-razao').value.trim()) { toast('Informe a razão social', true); return; }
+    if (!document.getElementById('emp-fantasia').value.trim()) { toast('Informe o nome fantasia', true); return; }
     stepAtual = 2;
     renderBancosStep();
   } else if (stepAtual === 2) {
@@ -3003,7 +3004,7 @@ async function criarEmpresa() {
   const razao = document.getElementById('emp-razao').value.trim();
   const novaEmpresa = {
     id, razao,
-    fantasia: document.getElementById('emp-fantasia').value.trim() || razao,
+    fantasia: document.getElementById('emp-fantasia').value.trim(),
     cnpj: document.getElementById('emp-cnpj').value.trim(),
     segmento: segmentoSelecionado,
     responsavel: document.getElementById('emp-responsavel').value.trim(),
