@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CasterBPO — Conciliação Bancária</title>
+<!-- 🔒 GUARD DE SESSÃO — deve ser o primeiro script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(async () => {
+  const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // sua chave anon
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) {
+    window.location.replace('https://casterbpo.github.io/sistema/index.html'); // ajuste para o caminho do seu login
+  }
+})();
+</script>
+<!-- fim do guard -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+if(window.self!==window.top){document.write('<style>.topbar{display:none!important;}.layout{min-height:100vh!important;}</style>');}
+</script>
+<style>
+:root{
+  --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;--g400:#3d8a5a;--g300:#5aaa76;--g050:#edf7f1;
+  --d700:#b37f00;--d600:#c99520;--d500:#d4a832;--d400:#e0bc55;--d300:#e8cc7a;
+  --n900:#111418;--n800:#1e2328;--n700:#2d3339;--n500:#596168;--n400:#737c84;--n300:#959da4;--n200:#bcc2c7;--n100:#dde1e4;--n050:#f4f5f6;
+  --vermelho:#c0392b;--verm-bg:#fdecea;--verm-leve:#fff0f0;
+  --azul:#2563eb;--azul-bg:#eff6ff;--azul-leve:#dbeafe;
+  --amarelo:#d97706;--amar-bg:#fffbeb;
+  --verde-ok:#16a34a;--verde-bg:#f0fdf4;
+  --roxo:#7c3aed;--roxo-bg:#ede9fe;
+  --bg:#f2f0eb;--bg-card:#fff;--borda:#e4e0d8;--texto:#111418;--texto2:#596168;--texto3:#959da4;
+  --fonte-d:'Cormorant Garamond',serif;--fonte-b:'DM Sans',sans-serif;--fonte-m:'DM Mono',monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-modal:0 8px 40px rgba(0,0,0,.18);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--fonte-b);background:var(--bg);color:var(--texto);font-size:14px;line-height:1.5;min-height:100vh;}
+.hidden{display:none!important;}
+
+/* Oculta topbar quando dentro de iframe */
+body.embed .topbar { display: none !important; }
+body.embed .page, body.embed .conteudo { padding-top: 0; }
+
+/* TOPBAR */
+<div class="topbar" id="topbar-mod">
+.topbar{background:var(--g900);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:80;border-bottom:1px solid rgba(201,168,76,.12);}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--d600),var(--d700));display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:18px;height:18px;}
+.logo-wordmark{font-family:var(--fonte-d);font-size:1.15rem;font-weight:700;color:var(--d400);letter-spacing:.03em;}
+.logo-wordmark em{font-style:normal;color:rgba(255,255,255,.85);}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.1);}
+.empresa-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-sm);padding:4px 10px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;}
+.empresa-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--g300);}
+.spacer{flex:1;}
+.tnav-btn{background:transparent;border:none;color:rgba(255,255,255,.45);padding:5px 11px;border-radius:var(--r-sm);font-size:12px;font-family:var(--fonte-b);font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.tnav-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);}
+.tnav-btn.ativo{background:rgba(201,168,76,.15);color:var(--d300);}
+.tnav-btn svg{width:14px;height:14px;}
+
+/* LAYOUT */
+.page{max-width:1400px;margin:0 auto;padding:1.5rem 2rem;}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.page-header h1{font-family:var(--fonte-d);font-size:1.6rem;font-weight:600;color:var(--n900);}
+.page-header p{font-size:12px;color:var(--texto3);margin-top:2px;}
+
+/* STATUS BAR */
+.status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.5rem;}
+.status-card{background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);padding:1rem 1.1rem;box-shadow:var(--shadow);display:flex;align-items:center;gap:.8rem;}
+.status-icone{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.status-icone svg{width:18px;height:18px;}
+.s-info{}
+.s-val{font-family:var(--fonte-d);font-size:1.4rem;font-weight:700;}
+.s-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);margin-top:1px;}
+
+/* STEPPER */
+.stepper-bar{display:flex;align-items:center;margin-bottom:1.5rem;gap:0;}
+.step-item{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;border-radius:var(--r-md);font-size:12px;font-weight:500;color:var(--texto3);cursor:default;}
+.step-item.ativo{background:var(--bg-card);border:1px solid var(--borda);color:var(--g700);box-shadow:var(--shadow);}
+.step-item.completo{color:var(--verde-ok);}
+.step-dot{width:22px;height:22px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.step-seta{color:var(--n200);margin:0 4px;font-size:14px;}
+
+/* PAINEL DOIS LADOS */
+.concilia-layout{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.card{background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:.9rem 1.2rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;}
+.card-titulo{font-family:var(--fonte-d);font-size:1rem;font-weight:600;color:var(--n900);}
+.card-sub{font-size:11px;color:var(--texto3);}
+
+/* UPLOAD */
+.upload-area{border:2px dashed var(--n100);border-radius:var(--r-lg);padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;margin:1rem 1.2rem;}
+.upload-area:hover,.upload-area.dragover{border-color:var(--g400);background:var(--g050);}
+.upload-icone{font-size:2.5rem;margin-bottom:.8rem;}
+.upload-titulo{font-weight:600;color:var(--n800);margin-bottom:.3rem;}
+.upload-sub{font-size:12px;color:var(--texto3);}
+.upload-sub strong{color:var(--g600);}
+.bancos-lista{display:flex;flex-direction:column;gap:8px;padding:1rem 1.2rem;}
+.banco-seletor{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--borda);border-radius:var(--r-md);cursor:pointer;transition:all .15s;}
+.banco-seletor:hover{border-color:var(--g300);}
+.banco-seletor.sel{border-color:var(--g500);background:var(--g050);}
+.banco-icone-sq{width:32px;height:32px;border-radius:8px;background:var(--g050);display:flex;align-items:center;justify-content:center;font-family:var(--fonte-d);font-size:.85rem;font-weight:700;color:var(--g600);}
+
+/* LISTA EXTRATO */
+.extrato-lista{max-height:420px;overflow-y:auto;}
+.extrato-item{display:grid;grid-template-columns:90px 1fr auto 60px;align-items:center;gap:8px;padding:9px 1.2rem;border-bottom:1px solid var(--borda);font-size:12px;transition:background .12s;}
+.extrato-item:hover{background:var(--n050);}
+.extrato-item:last-child{border-bottom:none;}
+.extrato-item.conciliado-item{background:var(--verde-bg);opacity:.7;}
+.extrato-item.selecionado-item{background:var(--azul-leve);}
+.ext-data{font-family:var(--fonte-m);font-size:11px;color:var(--texto3);}
+.ext-desc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ext-valor{font-family:var(--fonte-m);font-weight:600;white-space:nowrap;text-align:right;}
+.ext-status{display:flex;justify-content:flex-end;}
+
+/* LISTA LANÇAMENTOS */
+.lanc-lista{max-height:420px;overflow-y:auto;}
+.lanc-item{display:grid;grid-template-columns:90px 1fr auto 80px;align-items:center;gap:8px;padding:9px 1.2rem;border-bottom:1px solid var(--borda);font-size:12px;cursor:pointer;transition:all .15s;}
+.lanc-item:hover{background:var(--n050);}
+.lanc-item:last-child{border-bottom:none;}
+.lanc-item.conciliado-item{background:var(--verde-bg);opacity:.7;cursor:default;}
+.lanc-item.selecionado-item{background:var(--azul-leve);border-left:3px solid var(--azul);}
+.lanc-item.match-item{background:var(--roxo-bg);border-left:3px solid var(--roxo);}
+
+/* BOTÃO CONCILIAR */
+.btn-conciliar{background:linear-gradient(135deg,var(--g600),var(--g800));color:#fff;border:none;border-radius:var(--r-md);padding:9px 18px;font-size:13px;font-weight:600;font-family:var(--fonte-b);cursor:pointer;display:flex;align-items:center;gap:6px;margin:.8rem auto;transition:all .2s;}
+.btn-conciliar:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(30,61,40,.3);}
+.btn-conciliar:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* BOTÕES */
+.btn-p{background:var(--g700);color:#fff;border:none;border-radius:var(--r-md);padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+.btn-p:hover{background:var(--g600);}
+.btn-s{background:var(--bg-card);color:var(--texto2);border:1px solid var(--borda);border-radius:var(--r-md);padding:8px 14px;font-size:13px;font-weight:500;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+.btn-s:hover{border-color:var(--g400);color:var(--g600);}
+.btn-s svg,.btn-p svg{width:14px;height:14px;}
+.btn-icon{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);padding:3px 7px;font-size:11px;cursor:pointer;color:var(--texto3);transition:all .15s;display:inline-flex;align-items:center;gap:3px;font-family:var(--fonte-b);}
+.btn-icon:hover{border-color:var(--g400);color:var(--g600);}
+.btn-icon.danger:hover{border-color:var(--vermelho);color:var(--vermelho);}
+.btn-icon svg{width:11px;height:11px;}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;}
+.tag-conc{background:var(--verde-bg);color:var(--verde-ok);}
+.tag-pend{background:var(--amar-bg);color:var(--amarelo);}
+.tag-match{background:var(--roxo-bg);color:var(--roxo);}
+.tag-auto{background:var(--azul-bg);color:var(--azul);}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(2px);}
+.overlay.aberto{opacity:1;pointer-events:all;}
+.modal{background:var(--bg-card);border-radius:var(--r-xl);width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-modal);transform:translateY(12px) scale(.98);transition:transform .22s;}
+.overlay.aberto .modal{transform:translateY(0) scale(1);}
+.modal-header{background:var(--g900);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-radius:var(--r-xl) var(--r-xl) 0 0;}
+.modal-titulo{font-family:var(--fonte-d);font-size:1.1rem;font-weight:600;color:var(--d300);}
+.modal-fechar{background:rgba(255,255,255,.08);border:none;width:28px;height:28px;border-radius:50%;color:rgba(255,255,255,.5);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-fechar:hover{background:rgba(255,255,255,.15);color:#fff;}
+.modal-body{padding:1.5rem;}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--borda);display:flex;justify-content:flex-end;gap:8px;}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:.8rem;}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);}
+.form-input,.form-select{background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-md);padding:9px 12px;font-size:13px;font-family:var(--fonte-b);color:var(--texto);outline:none;transition:border-color .15s;width:100%;}
+.form-input:focus,.form-select:focus{border-color:var(--g400);}
+.fr-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+
+/* TABELA CONCILIADOS */
+.tabela-conc{width:100%;border-collapse:collapse;font-size:12px;}
+.tabela-conc thead tr{background:var(--g900);}
+.tabela-conc thead th{padding:8px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(201,168,76,.65);text-align:left;}
+.tabela-conc tbody tr{border-bottom:1px solid var(--borda);}
+.tabela-conc tbody tr:hover{background:var(--n050);}
+.tabela-conc tbody td{padding:9px 12px;}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--g900)!important;color:var(--d300)!important;border:1px solid rgba(201,168,76,.35);border-radius:var(--r-md);padding:10px 16px;font-size:13px;box-shadow:var(--shadow-modal);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;display:flex;align-items:center;gap:8px;}
+.toast.ok{border-color:rgba(22,163,74,.4);color:#86efac;}
+.toast.err{border-color:rgba(192,57,43,.4);color:#ff8a7a;}
+.toast svg{width:15px;height:15px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;}}
+
+/* DIVIDER */
+.divider-center{text-align:center;padding:1rem;color:var(--texto3);font-size:12px;border-bottom:1px solid var(--borda);}
+
+/* MATCH HIGHLIGHT */
+.match-badge{display:inline-flex;align-items:center;gap:4px;background:var(--roxo-bg);color:var(--roxo);border-radius:100px;padding:2px 8px;font-size:10px;font-weight:600;}
+
+/* BUSCA LANÇAMENTOS */
+.busca-lanc{width:100%;background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-md);padding:7px 11px;font-size:12px;font-family:var(--fonte-b);color:var(--texto);outline:none;transition:border-color .15s;}
+.busca-lanc:focus{border-color:var(--g400);}
+
+/* MODAL REVISÃO AUTO-MATCH */
+.modal-revisao{width:680px;}
+.rev-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
+.rev-card{background:var(--n050);border-radius:var(--r-md);padding:.75rem 1rem;text-align:center;}
+.rev-val{font-family:var(--fonte-d);font-size:1.5rem;font-weight:700;line-height:1;}
+.rev-lbl{font-size:10px;color:var(--texto3);margin-top:3px;text-transform:uppercase;letter-spacing:.07em;}
+.rev-filtros{display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;}
+.rev-fbtn{border:1px solid var(--borda);background:var(--bg-card);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:500;cursor:pointer;color:var(--texto2);transition:all .15s;font-family:var(--fonte-b);}
+.rev-fbtn.ativo{background:var(--roxo-bg);border-color:var(--roxo);color:var(--roxo);}
+.rev-fbtn.f-ok.ativo{background:var(--verde-bg);border-color:var(--verde-ok);color:var(--verde-ok);}
+.rev-fbtn.f-warn.ativo{background:var(--amar-bg);border-color:var(--amarelo);color:var(--amarelo);}
+.rev-pairs{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;padding-right:2px;}
+.rev-pair{border:1px solid var(--borda);border-radius:var(--r-md);padding:.75rem 1rem;display:flex;flex-direction:column;gap:6px;transition:border-color .15s;border-left:3px solid var(--borda);}
+.rev-pair.conf-ok{border-left-color:var(--verde-ok);}
+.rev-pair.conf-warn{border-left-color:var(--amarelo);}
+.rev-pair.est-aprov{background:var(--verde-bg);}
+.rev-pair.est-rej{opacity:.45;border-left-color:var(--vermelho);}
+.rev-cols{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:8px;}
+.rev-side{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.rev-side-lbl{font-size:10px;color:var(--texto3);text-transform:uppercase;letter-spacing:.06em;}
+.rev-side-desc{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--texto);}
+.rev-side-meta{font-size:11px;color:var(--texto3);font-family:var(--fonte-m);}
+.rev-score{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px;}
+.rev-bar{width:44px;height:5px;background:var(--n100);border-radius:3px;overflow:hidden;}
+.rev-fill{height:100%;border-radius:3px;}
+.rev-pct{font-size:10px;font-family:var(--fonte-m);color:var(--texto3);}
+.rev-motivo{font-size:11px;color:var(--texto3);flex:1;}
+.rev-actions{display:flex;gap:5px;justify-content:flex-end;padding-top:5px;border-top:1px solid var(--borda);}
+.rev-btn{border:1px solid var(--borda);background:var(--bg-card);border-radius:var(--r-sm);padding:4px 10px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--texto2);transition:all .15s;font-family:var(--fonte-b);}
+.rev-btn:hover{border-color:var(--g400);}
+.rev-btn.aprov{color:var(--verde-ok);border-color:#bbf7d0;}
+.rev-btn.aprov:hover{background:var(--verde-bg);}
+.rev-btn.rej{color:var(--vermelho);border-color:#fecaca;}
+.rev-btn.rej:hover{background:var(--verm-bg);}
+.rev-footer-info{font-size:12px;color:var(--texto3);}
+.diff-ok{background:var(--verde-bg);color:var(--verde-ok);padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;}
+.diff-warn{background:var(--amar-bg);color:var(--amarelo);padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;}
+.est-chip{padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;}
+.est-chip-aprov{background:var(--verde-bg);color:var(--verde-ok);}
+.est-chip-rej{background:var(--verm-bg);color:var(--vermelho);}
+
+@media(max-width:900px){.concilia-layout{grid-template-columns:1fr;}.status-bar{grid-template-columns:1fr 1fr;}.modal-revisao{width:95vw;}}
+body.embed .topbar { display: none !important; }
+body.embed { min-height: unset; overflow-x: hidden; }
+</style>
+<script>
+  if (window.self !== window.top) {
+    document.documentElement.style.setProperty('--hide-topbar', 'none');
+  }
+</script>
+<style>
+  :root { --hide-topbar: flex; }
+  .topbar { display: var(--hide-topbar) !important; }
+</style>
+</head>
+<body style="visibility:hidden;" onload="document.body.style.visibility='visible'">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="voltarPainel()">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
+    <span class="logo-wordmark">Caster<em>BPO</em></span>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="empresa-badge" onclick="voltarPainel()">
+    <span class="dot"></span><span id="badge-empresa">—</span>
+  </div>
+  <div class="spacer"></div>
+  <nav style="display:flex;gap:2px;">
+    <button class="tnav-btn" onclick="ir('caster-modulo1-painel.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
+    <button class="tnav-btn" onclick="ir('caster-modulo2-lancamentos.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><span>Lançamentos</span></button>
+    <button class="tnav-btn ativo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span>Conciliação</span></button>
+    <button class="tnav-btn" onclick="ir('caster-modulo4-relatorios.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Relatórios</span></button>
+    <button class="tnav-btn" onclick="ir('caster-modulo5-configuracoes.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Configurações</span></button>
+  </nav>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Conciliação Bancária</h1>
+      <p id="sub-emp">Importe extratos e concilie com os lançamentos do sistema</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-p" onclick="exportarConciliacao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+        Exportar conciliados
+      </button>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-bar">
+    <div class="status-card">
+      <div class="status-icone" style="background:var(--azul-bg);color:var(--azul);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+      </div>
+      <div class="s-info">
+        <div class="s-val" id="st-extrato" style="color:var(--azul)">0</div>
+        <div class="s-lbl">Itens no extrato</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icone" style="background:var(--verde-bg);color:var(--verde-ok);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="s-info">
+        <div class="s-val" id="st-conciliados" style="color:var(--verde-ok)">0</div>
+        <div class="s-lbl">Conciliados</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icone" style="background:var(--amar-bg);color:var(--amarelo);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="s-info">
+        <div class="s-val" id="st-pendentes" style="color:var(--amarelo)">0</div>
+        <div class="s-lbl">Pendentes</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icone" style="background:var(--roxo-bg);color:var(--roxo);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="s-info">
+        <div class="s-val" id="st-diferenca" style="color:var(--roxo)">R$ 0</div>
+        <div class="s-lbl">Diferença</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEPPER -->
+  <div class="stepper-bar">
+    <div class="step-item ativo" id="step-1">
+      <div class="step-dot">1</div>
+      <span>Selecionar conta</span>
+    </div>
+    <span class="step-seta">›</span>
+    <div class="step-item" id="step-2">
+      <div class="step-dot">2</div>
+      <span>Importar extrato</span>
+    </div>
+    <span class="step-seta">›</span>
+    <div class="step-item" id="step-3">
+      <div class="step-dot">3</div>
+      <span>Conciliar</span>
+    </div>
+    <span class="step-seta">›</span>
+    <div class="step-item" id="step-4">
+      <div class="step-dot">4</div>
+      <span>Confirmar</span>
+    </div>
+  </div>
+
+  <!-- PASSO 1: SELECIONAR BANCO -->
+  <div id="passo-1">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-titulo">Selecione a conta para conciliar</div>
+        <span class="card-sub">Bancos e caixas cadastrados</span>
+      </div>
+      <div class="bancos-lista" id="bancos-lista">
+        <!-- preenchido por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSO 2: IMPORTAR EXTRATO -->
+  <div id="passo-2" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-titulo" id="passo2-titulo">Importar extrato</div>
+          <div class="card-sub">OFX (Open Finance), QFX, CSV — arraste ou clique para selecionar</div>
+        </div>
+        <button class="btn-s" onclick="voltarPasso(1)">← Trocar conta</button>
+      </div>
+
+      <div class="upload-area" id="upload-area"
+        ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropArquivo(event)"
+        onclick="document.getElementById('file-input').click()">
+        <div class="upload-icone">📄</div>
+        <div class="upload-titulo">Arraste o extrato aqui ou clique para selecionar</div>
+        <div class="upload-sub">
+          Formatos aceitos: <strong>.ofx</strong>, <strong>.qfx</strong>, <strong>.csv</strong><br>
+          Bancos suportados: Bradesco, Itaú, Santander, BB, Caixa, Nubank, Sicoob, Sicredi e outros
+        </div>
+      </div>
+      <input type="file" id="file-input" accept=".ofx,.qfx,.csv,.txt" class="hidden" onchange="carregarArquivo(event)">
+
+      <textarea id="texto-extrato" class="hidden"></textarea>
+    </div>
+  </div>
+
+  <!-- PASSO 3: CONCILIAR -->
+  <div id="passo-3" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:.6rem;">
+      <div>
+        <h3 style="font-family:var(--fonte-d);font-size:1.1rem;font-weight:600;color:var(--n900);">Extrato vs Lançamentos</h3>
+        <p style="font-size:12px;color:var(--texto3);" id="p3-sub">Clique em um item do extrato, depois no lançamento correspondente para conciliar</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="match-badge" id="auto-badge">0 matches automáticos</span>
+        <button class="btn-p" onclick="abrirRevisaoMatch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Auto-match
+        </button>
+        <button class="btn-s" onclick="voltarPasso(2)">← Reimportar</button>
+      </div>
+    </div>
+
+    <div class="concilia-layout">
+      <!-- EXTRATO -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-titulo">
+            <svg style="width:14px;height:14px;margin-right:4px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+            Extrato bancário
+          </div>
+          <span class="card-sub" id="extrato-conta-label">—</span>
+        </div>
+        <div class="divider-center" id="extrato-resumo">— itens carregados</div>
+        <div class="extrato-lista" id="extrato-lista"><!-- JS --></div>
+      </div>
+
+      <!-- LANÇAMENTOS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-titulo">
+            <svg style="width:14px;height:14px;margin-right:4px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+            Lançamentos do sistema
+          </div>
+          <span class="card-sub">Não conciliados</span>
+        </div>
+        <div style="padding:.6rem 1.2rem;border-bottom:1px solid var(--borda);">
+          <input class="busca-lanc" id="busca-lanc" placeholder="Buscar por descrição, fornecedor ou valor..." oninput="renderConciliacao()">
+        </div>
+        <div class="divider-center" id="lancs-resumo">— lançamentos pendentes</div>
+        <div class="lanc-lista" id="lancs-lista"><!-- JS --></div>
+      </div>
+    </div>
+
+    <!-- BOTÃO CONCILIAR -->
+    <div style="text-align:center;padding:.5rem 0;">
+      <button class="btn-conciliar" id="btn-conciliar" disabled onclick="conciliarPar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Conciliar par selecionado
+      </button>
+      <p style="font-size:11px;color:var(--texto3);">Ou <button onclick="conciliarSemLanc()" style="background:none;border:none;color:var(--g500);cursor:pointer;font-size:11px;font-family:var(--fonte-b);">criar lançamento automaticamente</button> para itens sem correspondência</p>
+    </div>
+
+    <!-- CONCILIADOS -->
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-header">
+        <div class="card-titulo">✓ Pares conciliados nesta sessão</div>
+        <button class="btn-p" onclick="confirmarTodos()" style="font-size:12px;padding:6px 14px;">Confirmar todos →</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tabela-conc">
+          <thead><tr>
+            <th>Data Extrato</th><th>Descrição Extrato</th><th>Val. Extrato</th>
+            <th>Lançamento</th><th>Val. Lançamento</th><th>Diferença</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="pares-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--texto3);font-size:12px;">Nenhum par conciliado ainda</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSO 4: CONFIRMAÇÃO -->
+  <div id="passo-4" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-titulo">✓ Conciliação concluída</div>
+        <button class="btn-p" onclick="novaRodada()">Nova conciliação</button>
+      </div>
+      <div style="padding:2rem;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎯</div>
+        <h3 style="font-family:var(--fonte-d);font-size:1.3rem;font-weight:600;margin-bottom:.5rem;" id="conf-titulo">Conciliação salva!</h3>
+        <p style="font-size:13px;color:var(--texto2);max-width:400px;margin:0 auto;" id="conf-sub">—</p>
+        <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem;">
+          <button class="btn-s" onclick="exportarConciliacao()">Exportar CSV</button>
+          <button class="btn-p" onclick="ir('caster-modulo2-lancamentos.html')">Ver lançamentos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REVISÃO DE MATCHES AUTOMÁTICOS -->
+<div class="overlay" id="overlay-revisao">
+  <div class="modal modal-revisao">
+    <div class="modal-header">
+      <span class="modal-titulo">
+        <svg style="width:16px;height:16px;margin-right:6px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Revisar matches automáticos
+      </span>
+      <button class="modal-fechar" onclick="fecharRevisao()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="rev-summary">
+        <div class="rev-card">
+          <div class="rev-val" id="rev-cnt-total" style="color:var(--roxo)">0</div>
+          <div class="rev-lbl">Pares encontrados</div>
+        </div>
+        <div class="rev-card">
+          <div class="rev-val" id="rev-cnt-ok" style="color:var(--verde-ok)">0</div>
+          <div class="rev-lbl">Alta confiança ≥75%</div>
+        </div>
+        <div class="rev-card">
+          <div class="rev-val" id="rev-cnt-warn" style="color:var(--amarelo)">0</div>
+          <div class="rev-lbl">Verificar &lt;75%</div>
+        </div>
+      </div>
+      <div class="rev-filtros">
+        <button class="rev-fbtn ativo" onclick="revFiltrar('todos',this)">Todos</button>
+        <button class="rev-fbtn f-ok" onclick="revFiltrar('ok',this)">✓ Alta confiança</button>
+        <button class="rev-fbtn f-warn" onclick="revFiltrar('warn',this)">⚠ Verificar</button>
+      </div>
+      <div class="rev-pairs" id="rev-pairs-list"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <span class="rev-footer-info" id="rev-footer-info">—</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-s" onclick="fecharRevisao()">Cancelar</button>
+        <button class="btn-p" onclick="confirmarRevisao()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Confirmar aprovados
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CRIAR LANÇAMENTO A PARTIR DO EXTRATO / TRANSFERÊNCIA -->
+<div class="overlay" id="overlay-criar">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo" id="criar-modal-titulo">Criar lançamento do extrato</span>
+      <button class="modal-fechar" onclick="fecharCriar()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- ABAS -->
+      <div id="criar-tabs-wrap" style="display:flex;gap:0;margin-bottom:1rem;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;">
+        <button id="ctab-lanc" onclick="setCriarTab('lanc')" style="flex:1;padding:8px 12px;font-family:var(--fonte-b);font-size:12px;font-weight:600;border:none;background:var(--g900);color:var(--d300);cursor:pointer;transition:all .2s;">📋 Lançamento</button>
+        <button id="ctab-transf" onclick="setCriarTab('transf')" style="flex:1;padding:8px 12px;font-family:var(--fonte-b);font-size:12px;font-weight:600;border:none;background:var(--bg-card);color:var(--texto3);cursor:pointer;transition:all .2s;border-left:1px solid var(--borda);">⇄ Transferência entre Contas</button>
+      </div>
+
+      <!-- PAINEL TRANSFERÊNCIA -->
+      <div id="criar-painel-transf" class="hidden">
+        <p style="font-size:12px;color:var(--texto3);margin-bottom:1rem;">Registre uma movimentação entre suas contas cadastradas.</p>
+        <!-- Conta de saída/entrada pré-determinada pelo tipo do extrato -->
+        <div class="form-group" style="margin-bottom:.8rem;">
+          <label class="form-label" id="ctr-conta-label">Conta de Saída (Banco Ativo)</label>
+          <input class="form-input" id="ctr-conta-nome" readonly style="background:var(--g050);color:var(--g700);font-weight:500;cursor:default;">
+          <input type="hidden" id="ctr-conta-id">
+        </div>
+        <div class="form-group" style="margin-bottom:.8rem;">
+          <label class="form-label" id="ctr-outra-label">Conta Destino</label>
+          <select class="form-select" id="ctr-destino"><option value="">— selecione —</option></select>
+        </div>
+        <div class="fr-2" style="margin-bottom:.8rem;">
+          <div class="form-group">
+            <label class="form-label">Valor (R$)</label>
+            <input class="form-input" id="ctr-valor" type="number" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data</label>
+            <input class="form-input" id="ctr-data" type="date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <input class="form-input" id="ctr-obs" placeholder="Opcional">
+        </div>
+      </div>
+
+      <!-- PAINEL LANÇAMENTO -->
+      <div id="criar-painel-lanc">
+        <!-- Resumo do item do extrato -->
+        <div style="background:var(--n050);border:1px solid var(--borda);border-radius:var(--r-md);padding:.65rem 1rem;margin-bottom:1rem;font-size:12px;color:var(--texto2);" id="criar-desc">—</div>
+
+        <!-- TIPO (toggle igual ao módulo 2) -->
+        <div id="criar-tipo-toggle" style="display:flex;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;margin-bottom:1rem;">
+          <button id="criar-btn-rec" onclick="setCriarTipo('receber')" style="flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;background:var(--azul-bg);color:var(--azul);font-weight:600;">↑ A Receber</button>
+          <button id="criar-btn-pag" onclick="setCriarTipo('pagar')" style="flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;background:var(--bg-card);color:var(--texto3);">↓ A Pagar</button>
+        </div>
+        <input type="hidden" id="criar-tipo" value="receber">
+
+        <!-- Fornecedor / Cliente com auto-preenchimento -->
+        <div class="form-group" style="margin-bottom:.8rem;">
+          <label class="form-label" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);">Fornecedor / Cliente</label>
+          <input class="form-input" id="criar-forn" placeholder="Nome do fornecedor ou cliente" list="criar-forn-dl" oninput="autoPreencherFornecedorCriar(this.value)" autocomplete="off">
+          <datalist id="criar-forn-dl"></datalist>
+        </div>
+        <!-- Informações do fornecedor cadastrado (aparece quando encontrado) -->
+        <div id="criar-forn-info" class="hidden" style="background:var(--g050);border:1px solid rgba(61,138,90,.2);border-radius:var(--r-md);padding:.6rem 1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.75rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--g500);flex-shrink:0;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:var(--g700);" id="forn-info-nome">—</div>
+            <div style="font-size:11px;color:var(--texto3);" id="forn-info-doc">—</div>
+          </div>
+          <span id="forn-info-tipo-badge" style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;"></span>
+        </div>
+
+        <!-- Categoria (filtrada pelo tipo) -->
+        <div class="fr-2" style="margin-bottom:.8rem;">
+          <div class="form-group">
+            <label class="form-label" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);">Categoria</label>
+            <select class="form-select" id="criar-cat">
+              <option value="">— selecione —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);">Centro de Custo</label>
+            <select class="form-select" id="criar-cc">
+              <option value="">— selecione —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Conta bancária (pré-preenchida com banco ativo) -->
+        <div class="form-group" style="margin-bottom:.8rem;">
+          <label class="form-label" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);">Conta Bancária</label>
+          <input class="form-input" id="criar-banco-nome" readonly style="background:var(--g050);color:var(--g700);font-weight:500;cursor:default;">
+          <input type="hidden" id="criar-banco-id">
+        </div>
+
+        <!-- Observação -->
+        <div class="form-group">
+          <label class="form-label" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);">Observação</label>
+          <input class="form-input" id="criar-obs" placeholder="Observação interna opcional">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharCriar()">Cancelar</button>
+      <button class="btn-p" id="btn-criar-confirm" onclick="confirmarCriarOuTransferir()">✓ Criar e conciliar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR LANÇAMENTO (ajuste rápido de valores na conciliação) -->
+<div class="overlay" id="overlay-edit-lanc">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo">
+        <svg style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Ajustar Lançamento
+      </span>
+      <button class="modal-fechar" onclick="fecharEditarLanc()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--amar-bg);border:1px solid rgba(217,119,6,.25);border-radius:var(--r-md);padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:8px;" id="el-hint-wrap">
+        <span style="font-size:12px;color:var(--amarelo);" id="el-hint">—</span>
+        <button class="btn-icon" id="el-usar-ext" style="color:var(--amarelo);border-color:var(--amarelo);white-space:nowrap;font-size:11px;">← Usar valor do extrato</button>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--texto3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem;" id="el-titulo">—</div>
+      <div class="fr-2" style="margin-bottom:.8rem;">
+        <div class="form-group">
+          <label class="form-label">Fornecedor / Cliente</label>
+          <input class="form-input" id="el-forn" placeholder="Nome...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <input class="form-input" id="el-desc" placeholder="Opcional...">
+        </div>
+      </div>
+      <div class="fr-2" style="margin-bottom:.8rem;">
+        <div class="form-group">
+          <label class="form-label">Valor (R$) <span style="color:var(--amarelo);">*</span></label>
+          <input class="form-input" id="el-valor" type="number" step="0.01" min="0" placeholder="0,00" style="border-color:var(--amarelo);">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dt. Vencimento</label>
+          <input class="form-input" id="el-venc" type="date">
+        </div>
+      </div>
+      <div class="fr-2" style="margin-bottom:.8rem;">
+        <div class="form-group">
+          <label class="form-label">Dt. Pagamento/Receb.</label>
+          <input class="form-input" id="el-pag" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" id="el-obs" placeholder="Opcional">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharEditarLanc()">Cancelar</button>
+      <button class="btn-p" onclick="confirmarEditarLanc()">✓ Salvar ajuste</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+if (window.self !== window.top) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var t = document.getElementById('topbar-mod');
+    if (t) t.style.display = 'none';
+    var l = document.querySelector('.layout');
+    if (l) l.style.minHeight = '100vh';
+  });
+}
+
+const CHAVE='caster_bpo_v2';
+const SUPA_URL='https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+let DB={empresas:[],bancos:{},lancamentos:{},categorias:{},centrosCusto:{},fornecedores:{},fornecedoresObj:{},orcamentos:{}};
+function salvarDB(){localStorage.setItem(CHAVE,JSON.stringify(DB));}
+
+async function carregarDB(){
+  const cache=localStorage.getItem(CHAVE);
+  if(cache) try{DB=JSON.parse(cache);}catch(e){}
+  const eid=sessionStorage.getItem('empresa_ativa');
+  if(!eid) return;
+
+  // Isola erros por tabela: uma falha não derruba as outras
+  const safe=async(fn)=>{try{return await fn();}catch(e){console.warn('Supabase erro parcial:',e);return null;}};
+
+  const [emps,bancos,cats,centros,forn,lancs]=await Promise.all([
+    safe(()=>supa.from('empresas').select('*')),
+    safe(()=>supa.from('bancos').select('*').eq('empresa_id',eid)),
+    safe(()=>supa.from('categorias').select('*').eq('empresa_id',eid)),
+    safe(()=>supa.from('centros_custo').select('*').eq('empresa_id',eid)),
+    safe(()=>supa.from('fornecedores').select('*').eq('empresa_id',eid)),
+    safe(()=>supa.from('lancamentos').select('*').eq('empresa_id',eid)),
+  ]);
+
+  if(emps?.data?.length) DB.empresas         =emps.data;
+  if(bancos?.data)        DB.bancos[eid]      =bancos.data;
+  if(cats?.data)          DB.categorias[eid]  =cats.data;
+  if(centros?.data)       DB.centrosCusto[eid]=centros.data;
+  if(forn?.data)          DB.fornecedores[eid]=forn.data;
+  if(lancs?.data) DB.lancamentos[eid]=lancs.data.map(l=>({
+    ...l,
+    bancoId:       l.bancoId       ?? l.banco_id,
+    centroCusto:   l.centroCusto   ?? l.centro_custo,
+    dtCompetencia: l.dtCompetencia ?? l.dt_competencia,
+    dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
+    dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
+    criadoEm:      l.criadoEm      ?? l.criado_em
+  }));
+  localStorage.setItem(CHAVE,JSON.stringify(DB));
+}
+
+// ── FITID JÁ CONCILIADOS: busca do Supabase ao selecionar banco ──
+let fitidsConciliados=new Set();
+async function carregarFitidsConciliados(bancoId){
+  fitidsConciliados=new Set();
+  try{
+    const {data}=await supa.from('extrato_conciliado').select('fitid').eq('banco_id',bancoId).eq('empresa_id',EMP.id);
+    if(data) data.forEach(r=>fitidsConciliados.add(r.fitid));
+  }catch(e){ console.warn('Erro ao buscar FITIDs conciliados:',e); }
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function hoje(){return new Date().toISOString().slice(0,10);}
+function fmtM(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtDt(d){if(!d)return'—';const[y,m,dia]=d.split('-');return`${dia}/${m}/${y}`;}
+function voltarPainel(){
+  if(window.self!==window.top) window.parent.irAba('dashboard', window.parent.document.getElementById('sb-dashboard'));
+  else window.location.href='caster-modulo1-painel.html';
+}
+function ir(url){
+  if(window.self!==window.top){
+    const mapaAbas = {
+      'caster-modulo2-lancamentos.html':'lancamentos',
+      'caster-modulo3-conciliacao.html':'conciliacao',
+      'caster-modulo4-relatorios.html':'relatorios',
+      'caster-modulo5-configuracoes.html':'configuracoes'
+    };
+    const abaAlvo = mapaAbas[url] || 'dashboard';
+    window.parent.irAba(abaAlvo, window.parent.document.getElementById('sb-'+abaAlvo));
+  } else window.location.href=url;
+}
+
+let EMP=null;
+let bancoAtivo=null;
+let passoAtual=1;
+let extratoItens=[];    // [{id,data,valor,descricao,tipo,conciliado}]
+let paresConc=[];       // [{extratoId,lancId,auto}]
+let extratoSel=null;
+let lancSel=null;
+let criarExtId=null;
+
+// ── REVISÃO AUTO-MATCH ──
+let revPares=[];       // pares candidatos gerados pelo algoritmo
+let revEstados=[];     // 'pendente' | 'aprovado' | 'rejeitado'
+let revFiltroAtivo='todos';
+
+function init(){
+  const eid=sessionStorage.getItem('empresa_ativa');
+  if(eid) EMP=DB.empresas.find(e=>e.id===eid);
+  if(!EMP&&DB.empresas.length) EMP=DB.empresas[0];
+  if(!EMP) return;
+  document.getElementById('badge-empresa').textContent=EMP.fantasia||EMP.razao;
+  document.getElementById('sub-emp').textContent=`${EMP.fantasia||EMP.razao} · Conciliação bancária`;
+  carregarHistoricoBancos().then(() => renderBancos());
+  atualizarStatus();
+}
+
+// Cache de histórico por banco: { bancoId: { ultimaEm: ISO string|null, total: number } }
+let historicoConciliacao = {};
+
+async function carregarHistoricoBancos() {
+  if (!EMP) return;
+  const bancos = DB.bancos[EMP.id] || [];
+  if (!bancos.length) return;
+  try {
+    const { data } = await supa
+      .from('extrato_conciliado')
+      .select('banco_id, conciliado_em')
+      .eq('empresa_id', EMP.id);
+    if (!data) return;
+    // Agrupa por banco_id
+    const mapa = {};
+    data.forEach(r => {
+      if (!mapa[r.banco_id]) mapa[r.banco_id] = { ultimaEm: null, total: 0 };
+      mapa[r.banco_id].total++;
+      if (!mapa[r.banco_id].ultimaEm || r.conciliado_em > mapa[r.banco_id].ultimaEm) {
+        mapa[r.banco_id].ultimaEm = r.conciliado_em;
+      }
+    });
+    historicoConciliacao = mapa;
+  } catch(e) { console.warn('Erro ao carregar histórico de conciliações:', e); }
+}
+
+function fmtDataHora(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const dia  = String(d.getDate()).padStart(2,'0');
+  const mes  = String(d.getMonth()+1).padStart(2,'0');
+  const ano  = d.getFullYear();
+  const hora = String(d.getHours()).padStart(2,'0');
+  const min  = String(d.getMinutes()).padStart(2,'0');
+  return `${dia}/${mes}/${ano} às ${hora}:${min}`;
+}
+
+function renderBancos() {
+  const bancos = DB.bancos[EMP.id] || [];
+  const c = document.getElementById('bancos-lista');
+  if (!bancos.length) {
+    c.innerHTML = '<p style="text-align:center;color:var(--texto3);font-size:12px;padding:1rem;">Nenhuma conta cadastrada. Acesse Configurações.</p>';
+    return;
+  }
+  c.innerHTML = bancos.map(b => {
+    const hist = historicoConciliacao[b.id];
+    const temHistorico = hist && hist.total > 0;
+    const dataHoraStr = temHistorico ? fmtDataHora(hist.ultimaEm) : null;
+    const historicoHtml = temHistorico
+      ? `<div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding-top:6px;border-top:1px solid var(--borda);">
+           <span style="display:inline-flex;align-items:center;gap:4px;background:var(--verde-bg);color:var(--verde-ok);border-radius:100px;padding:2px 9px;font-size:10px;font-weight:600;">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px;height:10px;"><polyline points="20 6 9 17 4 12"/></svg>
+             ${hist.total} conciliado${hist.total !== 1 ? 's' : ''}
+           </span>
+           <span style="font-size:10px;color:var(--texto3);">Última: <strong style="color:var(--texto2);">${dataHoraStr}</strong></span>
+         </div>`
+      : `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--borda);">
+           <span style="font-size:10px;color:var(--texto3);font-style:italic;">Nenhuma conciliação registrada</span>
+         </div>`;
+    return `
+    <div class="banco-seletor" onclick="selecionarBanco('${b.id}')" style="flex-direction:column;align-items:stretch;gap:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="banco-icone-sq">${b.banco.slice(0,2).toUpperCase()}</div>
+        <div style="flex:1;">
+          <div style="font-weight:500;font-size:13px;">${b.nome}</div>
+          <div style="font-size:11px;color:var(--texto3);">${b.tipo} · ${b.banco}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--fonte-m);font-size:13px;font-weight:500;color:${b.saldo>=0?'var(--verde-ok)':'var(--vermelho)'};">${fmtM(b.saldo)}</div>
+          <div style="font-size:10px;color:var(--texto3);">saldo atual</div>
+        </div>
+      </div>
+      ${historicoHtml}
+    </div>`;
+  }).join('');
+}
+
+async function selecionarBanco(id){
+  bancoAtivo=((DB.bancos[EMP.id])||[]).find(b=>b.id===id);
+  document.querySelectorAll('.banco-seletor').forEach(b=>b.classList.remove('sel'));
+  event.currentTarget.classList.add('sel');
+  await carregarFitidsConciliados(id);
+  setTimeout(()=>irPasso(2),300);
+}
+
+function irPasso(n){
+  passoAtual=n;
+  [1,2,3,4].forEach(i=>{
+    document.getElementById(`passo-${i}`).classList.toggle('hidden',i!==n);
+    const s=document.getElementById(`step-${i}`);
+    s.classList.remove('ativo','completo');
+    if(i===n) s.classList.add('ativo');
+    else if(i<n) s.classList.add('completo');
+  });
+  if(n===2&&bancoAtivo){
+    document.getElementById('passo2-titulo').textContent=`Importar extrato — ${bancoAtivo.nome}`;
+  }
+}
+
+function voltarPasso(n){irPasso(n);}
+
+// ── DRAG/DROP ──
+function dragOver(e){e.preventDefault();document.getElementById('upload-area').classList.add('dragover');}
+function dragLeave(e){document.getElementById('upload-area').classList.remove('dragover');}
+function dropArquivo(e){
+  e.preventDefault();
+  document.getElementById('upload-area').classList.remove('dragover');
+  const f=e.dataTransfer.files[0];
+  if(f) lerArquivo(f);
+}
+function carregarArquivo(e){
+  const f=e.target.files[0];
+  if(f) lerArquivo(f);
+}
+function lerArquivo(f){
+  const r=new FileReader();
+  r.onload=ev=>{
+    document.getElementById('texto-extrato').value=ev.target.result;
+    processarTexto();
+  };
+  r.readAsText(f,'UTF-8');
+}
+
+// ── PARSER OFX ──
+function parseOFX(txt){
+  const itens=[];
+  // Suporte a OFX 1.x (SGML) e 2.x (XML)
+  const re=/<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi;
+  let m;
+  while((m=re.exec(txt))!==null){
+    const bloco=m[1];
+    const get=(tag)=>{const r=new RegExp(`<${tag}>([^<\n\r]+)`,'i');const x=r.exec(bloco);return x?x[1].trim():'';}
+    const trntype=get('TRNTYPE');
+    const dtposted=get('DTPOSTED')||'';
+    const trnamt=parseFloat(get('TRNAMT').replace(',','.'));
+    const memo=get('MEMO')||get('NAME')||'Sem descrição';
+    const fitid=get('FITID')||uid();
+    if(!isNaN(trnamt)){
+      let dataFmt='';
+      if(dtposted.length>=8){
+        dataFmt=`${dtposted.slice(0,4)}-${dtposted.slice(4,6)}-${dtposted.slice(6,8)}`;
+      }
+      // Marca como já conciliado se FITID consta no histórico do Supabase
+      const jaConciliado=fitidsConciliados.has(fitid);
+      itens.push({id:fitid,data:dataFmt,valor:Math.abs(trnamt),tipo:trnamt<0?'debito':'credito',descricao:memo,conciliado:jaConciliado});
+    }
+  }
+  // Tentar formato SGML sem tags de fechamento
+  if(!itens.length){
+    const blocos=txt.split('<STMTTRN>');
+    blocos.slice(1).forEach(bloco=>{
+      const get=(tag)=>{const r=new RegExp(`<${tag}>([^\n\r<]+)`,'i');const x=r.exec(bloco);return x?x[1].trim():'';}
+      const trnamt=parseFloat(get('TRNAMT').replace(',','.'));
+      const dtposted=get('DTPOSTED');
+      const memo=get('MEMO')||get('NAME')||'Sem descrição';
+      const fitid=get('FITID')||uid();
+      if(!isNaN(trnamt)){
+        let dataFmt='';
+        if(dtposted.length>=8) dataFmt=`${dtposted.slice(0,4)}-${dtposted.slice(4,6)}-${dtposted.slice(6,8)}`;
+        const jaConciliado=fitidsConciliados.has(fitid);
+        itens.push({id:fitid,data:dataFmt,valor:Math.abs(trnamt),tipo:trnamt<0?'debito':'credito',descricao:memo,conciliado:jaConciliado});
+      }
+    });
+  }
+  return itens;
+}
+
+// ── PARSER CSV ──
+function parseCSV(txt){
+  const linhas=txt.trim().split('\n').map(l=>l.split(/[;,]/).map(c=>c.replace(/"/g,'').trim()));
+  const itens=[];
+  linhas.slice(1).forEach(col=>{
+    if(col.length<3) return;
+    let data='',desc='',valor=0;
+    const iData=col.findIndex(c=>/\d{2}[\/\-]\d{2}[\/\-]\d{2,4}|\d{4}-\d{2}-\d{2}/.test(c));
+    if(iData>=0){
+      const d=col[iData];
+      if(d.includes('/')){
+        const pts=d.split('/');
+        if(pts[2].length===4) data=`${pts[2]}-${pts[1].padStart(2,'0')}-${pts[0].padStart(2,'0')}`;
+        else data=`20${pts[2]}-${pts[1].padStart(2,'0')}-${pts[0].padStart(2,'0')}`;
+      } else data=d;
+    }
+    const iVal=col.findIndex((c,i)=>{const n=parseFloat(c.replace(/\./g,'').replace(',','.'));return !isNaN(n)&&Math.abs(n)>0&&i!==iData;});
+    if(iVal>=0) valor=parseFloat(col[iVal].replace(/\./g,'').replace(',','.'));
+    const iDesc=col.reduce((best,c,i)=>i!==iData&&i!==iVal&&c.length>=(col[best]||'').length?i:best,0);
+    desc=col[iDesc]||'Sem descrição';
+    if(data&&valor!==0){
+      itens.push({id:uid(),data,valor:Math.abs(valor),tipo:valor<0?'debito':'credito',descricao:desc,conciliado:false});
+    }
+  });
+  return itens;
+}
+
+function processarTexto(){
+  const txt=document.getElementById('texto-extrato').value.trim();
+  if(!txt){toast('Cole o conteúdo do extrato antes de processar','err');return;}
+  let itens=[];
+  if(txt.toLowerCase().includes('<ofx>')||txt.toLowerCase().includes('<stmttrn>')||txt.includes('OFXHEADER')){
+    itens=parseOFX(txt);
+  } else {
+    itens=parseCSV(txt);
+  }
+  if(!itens.length){toast('Não foi possível interpretar o extrato. Verifique o formato.','err');return;}
+  extratoItens=itens;
+  paresConc=[];
+  extratoSel=null; lancSel=null;
+  irPasso(3);
+  renderConciliacao();
+  const jaConciliados=itens.filter(i=>i.conciliado).length;
+  const novos=itens.length-jaConciliados;
+  toast(`${itens.length} transações carregadas · ${jaConciliados} já conciliadas · ${novos} novas`,'ok');
+}
+
+function carregarDemo(){
+  const ofxDemo=`OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+
+<OFX>
+<BANKMSGSRSV1>
+<STMTTRNRS>
+<STMTRS>
+<CURDEF>BRL
+<BANKTRANLIST>
+<STMTTRN>
+<TRNTYPE>CREDIT
+<DTPOSTED>20250510
+<TRNAMT>18500.00
+<FITID>001
+<MEMO>PIX RECEBIDO CLIENTE XYZ
+</STMTTRN>
+<STMTTRN>
+<TRNTYPE>DEBIT
+<DTPOSTED>20250512
+<TRNAMT>-4800.00
+<FITID>002
+<MEMO>ALUGUEL SEDE
+</STMTTRN>
+<STMTTRN>
+<TRNTYPE>DEBIT
+<DTPOSTED>20250514
+<TRNAMT>-14200.00
+<FITID>003
+<MEMO>FOLHA PAGAMENTO MAIO
+</STMTTRN>
+<STMTTRN>
+<TRNTYPE>CREDIT
+<DTPOSTED>20250515
+<TRNAMT>9200.00
+<FITID>004
+<MEMO>TED RECEBIDA CONSULTORIA
+</STMTTRN>
+<STMTTRN>
+<TRNTYPE>DEBIT
+<DTPOSTED>20250518
+<TRNAMT>-7600.00
+<FITID>005
+<MEMO>PAGTO FORNECEDOR ABC
+</STMTTRN>
+<STMTTRN>
+<TRNTYPE>DEBIT
+<DTPOSTED>20250520
+<TRNAMT>-2200.00
+<FITID>006
+<MEMO>GOOGLE ADS
+</STMTTRN>
+</BANKTRANLIST>
+</STMTRS>
+</STMTTRNRS>
+</BANKMSGSRSV1>
+</OFX>`;
+  document.getElementById('texto-extrato').value=ofxDemo;
+  processarTexto();
+}
+
+function renderConciliacao(){
+  if(!bancoAtivo) return;
+  document.getElementById('extrato-conta-label').textContent=bancoAtivo.nome;
+
+  // EXTRATO
+  const pendExt=extratoItens.filter(i=>!i.conciliado);
+  document.getElementById('extrato-resumo').textContent=`${extratoItens.length} itens · ${pendExt.length} pendentes`;
+  const eList=document.getElementById('extrato-lista');
+  eList.innerHTML=extratoItens.map(item=>{
+    const conc=paresConc.some(p=>p.extratoId===item.id)||item.conciliado;
+    const sel=extratoSel===item.id;
+    const cls=conc?'conciliado-item':sel?'selecionado-item':'';
+    const cor=item.tipo==='credito'?'color:var(--azul);':'color:var(--vermelho);';
+    return `<div class="extrato-item ${cls}" onclick="selecionarExtrato('${item.id}')" data-eid="${item.id}">
+      <span class="ext-data">${fmtDt(item.data)}</span>
+      <span class="ext-desc">${item.descricao}</span>
+      <span class="ext-valor" style="${cor}">${item.tipo==='credito'?'+':'−'}${fmtM(item.valor)}</span>
+      <span class="ext-status">${conc?'<span class="tag tag-conc">✓</span>':sel?'<span class="tag tag-auto">●</span>':'<span class="tag tag-pend">—</span>'}</span>
+    </div>`;
+  }).join('');
+
+  // LANÇAMENTOS — com filtro de busca e banco ativo
+  const termoBusca=(document.getElementById('busca-lanc')?.value||'').toLowerCase().trim();
+  const lancs=(DB.lancamentos[EMP.id]||[]).filter(l=>{
+    if(l.conciliado) return false;
+    if(!l.dtPagamento) return false;
+    // Filtra pelo banco selecionado (se o lançamento tiver bancoId definido)
+    if(bancoAtivo && l.bancoId && l.bancoId !== bancoAtivo.id) return false;
+    return true;
+  });
+  const lancsFiltrados=termoBusca
+    ? lancs.filter(l=>(l.descricao||'').toLowerCase().includes(termoBusca)||(l.fornecedor||'').toLowerCase().includes(termoBusca)||String(l.valor).includes(termoBusca))
+    : lancs;
+  const concIds=new Set(paresConc.map(p=>p.lancId));
+  document.getElementById('lancs-resumo').textContent=`${lancs.length} lançamentos com baixa · ${lancs.length-concIds.size} pendentes`;
+  const lList=document.getElementById('lancs-lista');
+  lList.innerHTML=lancsFiltrados.map(l=>{
+    const conc=concIds.has(l.id);
+    const sel=lancSel===l.id;
+    const isMatch=extratoSel&&sugerirMatch(extratoSel)===l.id;
+    const cls=conc?'conciliado-item':isMatch?'match-item':sel?'selecionado-item':'';
+    const cor=l.tipo==='receber'?'color:var(--azul);':'color:var(--vermelho);';
+    return `<div class="lanc-item ${cls}" onclick="selecionarLanc('${l.id}')" data-lid="${l.id}">
+      <span class="ext-data">${fmtDt(l.dtPagamento)}</span>
+      <div style="overflow:hidden;">
+        <div style="font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.descricao||l.fornecedor}</div>
+        <div style="font-size:10px;color:var(--texto3);">${l.fornecedor}</div>
+      </div>
+      <span class="ext-valor" style="${cor}">${l.tipo==='receber'?'+':'−'}${fmtM(l.valor)}</span>
+      <span class="ext-status">${conc?'<span class="tag tag-conc">✓</span>':isMatch?'<span class="tag tag-match">match</span>':sel?'<span class="tag tag-auto">●</span>':'<span class="tag tag-pend">—</span>'}</span>
+    </div>`;
+  }).join('')||`<div style="padding:1.5rem;text-align:center;color:var(--texto3);font-size:12px;">${termoBusca?'Nenhum lançamento encontrado para "'+termoBusca+'"':'Nenhum lançamento com baixa registrada'}</div>`;
+
+  renderPares();
+  atualizarBotaoConciliar();
+  atualizarStatus();
+}
+
+function selecionarExtrato(id){
+  if(paresConc.some(p=>p.extratoId===id)) return;
+  const item=extratoItens.find(i=>i.id===id);
+  if(item?.conciliado) return;
+  extratoSel = extratoSel===id ? null : id;
+  if(extratoSel){
+    const sugestao=sugerirMatch(extratoSel);
+    if(sugestao&&!lancSel) lancSel=sugestao;
+  }
+  renderConciliacao();
+}
+
+function selecionarLanc(id){
+  if(paresConc.some(p=>p.lancId===id)) return;
+  lancSel = lancSel===id ? null : id;
+  renderConciliacao();
+}
+
+// ── SCORE DE CONFIANÇA ──
+function calcularScore(ext,lanc){
+  let score=0;
+  const diffVal=Math.abs(lanc.valor-ext.valor);
+  if(diffVal<0.01) score+=40;
+  else if(diffVal/ext.valor<0.01) score+=25; // diferença < 1%
+  else if(diffVal/ext.valor<0.05) score+=10; // diferença < 5%
+  const dt=new Date(ext.data);
+  const antes=new Date(dt); antes.setDate(dt.getDate()-1);
+  const depois=new Date(dt); depois.setDate(dt.getDate()+1);
+  const fmtD=d=>d.toISOString().slice(0,10);
+  if(lanc.dtPagamento===ext.data) score+=40;
+  else if([fmtD(antes),fmtD(depois)].includes(lanc.dtPagamento)) score+=25;
+  else { const diasDiff=Math.abs((new Date(lanc.dtPagamento)-dt)/(1000*60*60*24)); if(diasDiff<=3) score+=10; }
+  const tipoOk=(ext.tipo==='credito'&&lanc.tipo==='receber')||(ext.tipo==='debito'&&lanc.tipo==='pagar');
+  if(tipoOk) score+=20;
+  return Math.min(score,100);
+}
+
+function motivoMatch(ext,lanc){
+  const motivos=[];
+  const diffVal=Math.abs(lanc.valor-ext.valor);
+  if(diffVal<0.01) motivos.push('Valor exato');
+  else motivos.push(`Valor próximo (dif. ${fmtM(diffVal)})`);
+  const dt=new Date(ext.data);
+  const antes=new Date(dt); antes.setDate(dt.getDate()-1);
+  const depois=new Date(dt); depois.setDate(dt.getDate()+1);
+  const fmtD=d=>d.toISOString().slice(0,10);
+  if(lanc.dtPagamento===ext.data) motivos.push('Mesma data');
+  else if([fmtD(antes),fmtD(depois)].includes(lanc.dtPagamento)) motivos.push('Data ±1 dia');
+  else { const dias=Math.round(Math.abs((new Date(lanc.dtPagamento)-dt)/(1000*60*60*24))); motivos.push(`Data ±${dias} dias`); }
+  const tipoOk=(ext.tipo==='credito'&&lanc.tipo==='receber')||(ext.tipo==='debito'&&lanc.tipo==='pagar');
+  if(tipoOk) motivos.push('Tipo compatível');
+  return motivos.join(' · ');
+}
+
+// ── ALGORITMO DE MATCH ──
+function sugerirMatch(extId){
+  const ext=extratoItens.find(i=>i.id===extId);
+  if(!ext) return null;
+  const concIds=new Set(paresConc.map(p=>p.lancId));
+  const lancs=(DB.lancamentos[EMP.id]||[]).filter(l=>!l.conciliado&&l.dtPagamento&&!concIds.has(l.id));
+  const dt=new Date(ext.data);
+  const antes=new Date(dt); antes.setDate(dt.getDate()-1);
+  const depois=new Date(dt); depois.setDate(dt.getDate()+1);
+  const fmtD=d=>d.toISOString().slice(0,10);
+  // Tenta match por valor + data + tipo (o mais preciso primeiro)
+  let melhor=lancs.find(l=>{
+    const sameVal=Math.abs(l.valor-ext.valor)<0.01;
+    const sameDate=[ext.data,fmtD(antes),fmtD(depois)].includes(l.dtPagamento);
+    const tipoOk=(ext.tipo==='credito'&&l.tipo==='receber')||(ext.tipo==='debito'&&l.tipo==='pagar');
+    return sameVal&&sameDate&&tipoOk;
+  });
+  // Fallback: valor exato sem restrição de data (exibe aviso de confiança baixa na revisão)
+  if(!melhor){
+    const candidatos=lancs.filter(l=>Math.abs(l.valor-ext.valor)<0.01);
+    if(candidatos.length===1) melhor=candidatos[0]; // só sugere se for único, evita match errado
+  }
+  return melhor?.id||null;
+}
+
+function sugerirMatchComIds(ext,concIds){
+  const lancs=(DB.lancamentos[EMP.id]||[]).filter(l=>!l.conciliado&&l.dtPagamento&&!concIds.has(l.id));
+  const dt=new Date(ext.data);
+  const antes=new Date(dt);antes.setDate(dt.getDate()-1);
+  const depois=new Date(dt);depois.setDate(dt.getDate()+1);
+  const fmtD=d=>d.toISOString().slice(0,10);
+  let melhor=lancs.find(l=>{
+    const sameVal=Math.abs(l.valor-ext.valor)<0.01;
+    const sameDate=[ext.data,fmtD(antes),fmtD(depois)].includes(l.dtPagamento);
+    const tipoOk=(ext.tipo==='credito'&&l.tipo==='receber')||(ext.tipo==='debito'&&l.tipo==='pagar');
+    return sameVal&&sameDate&&tipoOk;
+  });
+  if(!melhor){
+    const candidatos=lancs.filter(l=>Math.abs(l.valor-ext.valor)<0.01);
+    if(candidatos.length===1) melhor=candidatos[0];
+  }
+  return melhor?.id||null;
+}
+
+// ── ABRIR MODAL DE REVISÃO DE AUTO-MATCH ──
+function abrirRevisaoMatch(){
+  // Gera candidatos sem alterar paresConc (que pode ter pares manuais já feitos)
+  const concIdsExt=new Set(paresConc.map(p=>p.extratoId));
+  revPares=[];
+  extratoItens.filter(i=>!i.conciliado&&!concIdsExt.has(i.id)).forEach(ext=>{
+    const concIds=new Set(paresConc.map(p=>p.lancId));
+    const lancId=sugerirMatchComIds(ext,concIds);
+    if(lancId){
+      const lanc=(DB.lancamentos[EMP.id]||[]).find(l=>l.id===lancId);
+      if(lanc){
+        const score=calcularScore(ext,lanc);
+        const motivo=motivoMatch(ext,lanc);
+        revPares.push({extId:ext.id,lancId,score,motivo});
+        // Reserva temporariamente para não duplicar matches no loop
+        concIds.add(lancId);
+      }
+    }
+  });
+  if(!revPares.length){ toast('Nenhum match automático encontrado para os itens pendentes','err'); return; }
+  revEstados=revPares.map(()=>'pendente');
+  revFiltroAtivo='todos';
+  renderRevModal();
+  document.getElementById('overlay-revisao').classList.add('aberto');
+}
+
+function fecharRevisao(){
+  document.getElementById('overlay-revisao').classList.remove('aberto');
+}
+
+function revFiltrar(tipo,btn){
+  revFiltroAtivo=tipo;
+  document.querySelectorAll('.rev-fbtn').forEach(b=>b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  renderRevModal();
+}
+
+function renderRevModal(){
+  const total=revPares.length;
+  const nOk=revPares.filter(p=>p.score>=75).length;
+  const nWarn=revPares.filter(p=>p.score<75).length;
+  document.getElementById('rev-cnt-total').textContent=total;
+  document.getElementById('rev-cnt-ok').textContent=nOk;
+  document.getElementById('rev-cnt-warn').textContent=nWarn;
+
+  const aprov=revEstados.filter(e=>e==='aprovado').length;
+  const rej=revEstados.filter(e=>e==='rejeitado').length;
+  document.getElementById('rev-footer-info').innerHTML=`${total} pares &nbsp;·&nbsp; <b style="color:var(--verde-ok)">${aprov} aprovados</b> &nbsp;·&nbsp; <b style="color:var(--vermelho)">${rej} rejeitados</b>`;
+
+  const itens=revPares.map((p,i)=>[p,i]).filter(([p])=>{
+    if(revFiltroAtivo==='ok') return p.score>=75;
+    if(revFiltroAtivo==='warn') return p.score<75;
+    return true;
+  });
+
+  const ext2=id=>extratoItens.find(i=>i.id===id);
+  const lanc2=id=>(DB.lancamentos[EMP.id]||[]).find(l=>l.id===id);
+
+  document.getElementById('rev-pairs-list').innerHTML=itens.map(([p,i])=>{
+    const ext=ext2(p.extId); const lanc=lanc2(p.lancId);
+    if(!ext||!lanc) return '';
+    const nivel=p.score>=75?'conf-ok':'conf-warn';
+    const est=revEstados[i];
+    const rowCls=`rev-pair ${nivel} ${est==='aprovado'?'est-aprov':est==='rejeitado'?'est-rej':''}`;
+    const fillColor=p.score>=85?'var(--verde-ok)':p.score>=60?'var(--amarelo)':'var(--vermelho)';
+    const diffVal=Math.abs(ext.valor-lanc.valor);
+    const diffBadge=diffVal<0.01
+      ?`<span class="diff-ok">✓ Valor exato</span>`
+      :`<span class="diff-warn">⚠ Dif. ${fmtM(diffVal)}</span>`;
+    const estChip=est==='aprovado'?`<span class="est-chip est-chip-aprov">✓ Aprovado</span>`:est==='rejeitado'?`<span class="est-chip est-chip-rej">✕ Rejeitado</span>`:'';
+    return `<div class="${rowCls}" id="revrow-${i}">
+      <div class="rev-cols">
+        <div class="rev-side">
+          <span class="rev-side-lbl">extrato</span>
+          <span class="rev-side-desc" title="${ext.descricao}">${ext.descricao}</span>
+          <span class="rev-side-meta">${fmtDt(ext.data)} · ${fmtM(ext.valor)}</span>
+        </div>
+        <svg style="width:16px;height:16px;color:var(--texto3);flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <div class="rev-side">
+          <span class="rev-side-lbl">lançamento</span>
+          <span class="rev-side-desc" title="${lanc.descricao||lanc.fornecedor}">${lanc.descricao||lanc.fornecedor}</span>
+          <span class="rev-side-meta">${fmtDt(lanc.dtPagamento)} · ${fmtM(lanc.valor)}</span>
+        </div>
+        <div class="rev-score">
+          <div class="rev-bar"><div class="rev-fill" style="width:${p.score}%;background:${fillColor};"></div></div>
+          <span class="rev-pct">${p.score}%</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span class="rev-motivo">${p.motivo}</span>
+        ${diffBadge}
+        ${estChip}
+      </div>
+      ${est!=='rejeitado'?`<div class="rev-actions">
+        <button class="rev-btn rej" onclick="revRejeitar(${i})">✕ Rejeitar</button>
+        <button class="rev-btn aprov" onclick="revAprovar(${i})">✓ Aprovar</button>
+      </div>`:`<div class="rev-actions"><button class="rev-btn" onclick="revRestaurar(${i})">↩ Restaurar</button></div>`}
+    </div>`;
+  }).join('')||'<div style="padding:1.5rem;text-align:center;color:var(--texto3);font-size:12px;">Nenhum par neste filtro</div>';
+}
+
+function revAprovar(i){ revEstados[i]='aprovado'; renderRevModal(); }
+function revRejeitar(i){ revEstados[i]='rejeitado'; renderRevModal(); }
+function revRestaurar(i){ revEstados[i]='pendente'; renderRevModal(); }
+
+function confirmarRevisao(){
+  // Pares aprovados + pendentes (pendente = não revisado, entra por padrão)
+  let n=0;
+  revPares.forEach((p,i)=>{
+    if(revEstados[i]==='rejeitado') return;
+    // Evita duplicar se já existe par manual com o mesmo extrato ou lançamento
+    if(paresConc.some(x=>x.extratoId===p.extId||x.lancId===p.lancId)) return;
+    paresConc.push({extratoId:p.extId,lancId:p.lancId,auto:true});
+    n++;
+  });
+  fecharRevisao();
+  renderConciliacao();
+  const rej=revEstados.filter(e=>e==='rejeitado').length;
+  document.getElementById('auto-badge').textContent=`${n} matches confirmados`;
+  toast(`${n} pares confirmados${rej?` · ${rej} rejeitados`:''}`, 'ok');
+}
+
+function autoMatch(){
+  abrirRevisaoMatch();
+}
+
+function atualizarBotaoConciliar(){
+  const btn=document.getElementById('btn-conciliar');
+  if(extratoSel&&lancSel){
+    btn.disabled=false;
+    btn.textContent='✓ Conciliar par selecionado';
+  } else {
+    btn.disabled=true;
+    btn.textContent='Selecione um item do extrato e um lançamento';
+  }
+}
+
+function conciliarPar(){
+  if(!extratoSel||!lancSel) return;
+  if(paresConc.some(p=>p.extratoId===extratoSel||p.lancId===lancSel)){
+    toast('Um dos itens já está em um par conciliado','err'); return;
+  }
+  paresConc.push({extratoId:extratoSel,lancId:lancSel,auto:false});
+  extratoSel=null; lancSel=null;
+  renderConciliacao();
+  toast('Par conciliado com sucesso!','ok');
+}
+
+let criarTabAtual = 'lanc';
+
+function setCriarTipo(tipo){
+  document.getElementById('criar-tipo').value = tipo;
+  const btnRec = document.getElementById('criar-btn-rec');
+  const btnPag = document.getElementById('criar-btn-pag');
+  if(tipo === 'receber'){
+    btnRec.style.cssText='flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;background:var(--azul-bg);color:var(--azul);font-weight:600;';
+    btnPag.style.cssText='flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;background:var(--bg-card);color:var(--texto3);font-weight:400;';
+  } else {
+    btnPag.style.cssText='flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;background:var(--verm-bg);color:var(--vermelho);font-weight:600;';
+    btnRec.style.cssText='flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;background:var(--bg-card);color:var(--texto3);font-weight:400;';
+  }
+  atualizarCatsCriar();
+}
+
+function setCriarTab(tab){
+  criarTabAtual = tab;
+  const isTransf = tab === 'transf';
+  document.getElementById('criar-painel-lanc').classList.toggle('hidden', isTransf);
+  document.getElementById('criar-painel-transf').classList.toggle('hidden', !isTransf);
+  const btnLanc = document.getElementById('ctab-lanc');
+  const btnTransf = document.getElementById('ctab-transf');
+  if(isTransf){
+    btnTransf.style.background='var(--g900)'; btnTransf.style.color='var(--d300)';
+    btnLanc.style.background='var(--bg-card)'; btnLanc.style.color='var(--texto3)';
+    document.getElementById('criar-modal-titulo').textContent='Nova Transferência';
+    document.getElementById('btn-criar-confirm').textContent='⇄ Confirmar transferência';
+  } else {
+    btnLanc.style.background='var(--g900)'; btnLanc.style.color='var(--d300)';
+    btnTransf.style.background='var(--bg-card)'; btnTransf.style.color='var(--texto3)';
+    document.getElementById('criar-modal-titulo').textContent='Criar lançamento do extrato';
+    document.getElementById('btn-criar-confirm').textContent='✓ Criar e conciliar';
+  }
+}
+
+function autoPreencherFornecedorCriar(nome){
+  if(!EMP || !nome){ document.getElementById('criar-forn-info').classList.add('hidden'); return; }
+  const fornsObj = (DB.fornecedoresObj || {})[EMP.id] || [];
+  const forn = fornsObj.find(f => f.nome.toLowerCase() === nome.toLowerCase());
+  if(!forn){ document.getElementById('criar-forn-info').classList.add('hidden'); return; }
+  // Mostra card informativo do fornecedor
+  document.getElementById('criar-forn-info').classList.remove('hidden');
+  document.getElementById('forn-info-nome').textContent = forn.nome;
+  document.getElementById('forn-info-doc').textContent = forn.doc ? forn.doc : 'Sem CNPJ/CPF';
+  const badge = document.getElementById('forn-info-tipo-badge');
+  if(forn.tipo === 'cliente'){
+    badge.textContent = 'Cliente'; badge.style.cssText='font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--azul-bg);color:var(--azul);';
+    setCriarTipo('receber');
+  } else {
+    badge.textContent = 'Fornecedor'; badge.style.cssText='font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--verm-bg);color:var(--vermelho);';
+    setCriarTipo('pagar');
+  }
+}
+
+function atualizarCatsCriar(){
+  const tipo = document.getElementById('criar-tipo').value;
+  const cats = DB.categorias[EMP.id]||[];
+  const maeFiltro = tipo === 'receber' ? 'Entradas' : 'Saídas';
+  const catsFiltradas = cats.filter(c => {
+    if(!c.pai) return c.mae === maeFiltro;
+    let cur = c;
+    while(cur.pai){ cur = cats.find(x=>x.id===cur.pai); if(!cur) return false; }
+    return cur.mae === maeFiltro;
+  });
+  const catSel = document.getElementById('criar-cat');
+  catSel.innerHTML='<option value="">— selecione —</option>'+
+    catsFiltradas.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+function confirmarCriarOuTransferir(){
+  if(criarTabAtual === 'transf') salvarTransferenciaConc();
+  else confirmarCriar();
+}
+
+async function salvarTransferenciaConc(){
+  const contaId = document.getElementById('ctr-conta-id').value;
+  const destinoId = document.getElementById('ctr-destino').value;
+  const valor = parseFloat(document.getElementById('ctr-valor').value);
+  const data = document.getElementById('ctr-data').value;
+  const obs = document.getElementById('ctr-obs').value.trim();
+  const ext = extratoItens.find(i=>i.id===criarExtId);
+  // Determina orientação: extrato de crédito = dinheiro chegou = entrada (destino é o banco ativo)
+  const isCredito = ext ? ext.tipo === 'credito' : true;
+  const origemId = isCredito ? destinoId : contaId;
+  const finalDestinoId = isCredito ? contaId : destinoId;
+  if(!contaId||!destinoId){toast('Selecione a conta de transferência','err');return;}
+  if(!valor||valor<=0){toast('Informe um valor válido','err');return;}
+  if(!data){toast('Informe a data','err');return;}
+  const bancos=DB.bancos[EMP.id]||[];
+  const bO=bancos.find(b=>b.id===origemId); const bD=bancos.find(b=>b.id===finalDestinoId);
+  const desc=`Transferência: ${bO?.nome||'Conta'} → ${bD?.nome||'Conta'}`;
+  const sid=uid(); const eid2=uid();
+  const saida={id:sid,tipo:'pagar',fornecedor:'Transferência entre contas',cnpj:'',descricao:desc,categoria:'',centroCusto:'',valor,dtCompetencia:data,dtVencimento:data,dtPagamento:data,bancoId:origemId,documento:'',obs,anexos:[],recorrencia:'nenhuma',conciliado:true,criadoEm:new Date().toISOString(),isTransferencia:true};
+  const entrada={id:eid2,tipo:'receber',fornecedor:'Transferência entre contas',cnpj:'',descricao:desc,categoria:'',centroCusto:'',valor,dtCompetencia:data,dtVencimento:data,dtPagamento:data,bancoId:finalDestinoId,documento:'',obs,anexos:[],recorrencia:'nenhuma',conciliado:true,criadoEm:new Date().toISOString(),isTransferencia:true};
+  if(!DB.lancamentos[EMP.id]) DB.lancamentos[EMP.id]=[];
+  DB.lancamentos[EMP.id].unshift(saida,entrada);
+  // Vincula o lançamento ao par de conciliação
+  const lancId = isCredito ? eid2 : sid;
+  if(ext){ ext.conciliado=true; }
+  paresConc.push({extratoId:criarExtId,lancId,auto:false,criado:true});
+  salvarDB();
+  fecharCriar(); extratoSel=null; renderConciliacao(); atualizarStatus();
+  toast('Transferência registrada e conciliada!','ok');
+  const upsertT=async(l)=>{try{await supa.rpc('upsert_lancamento',{p_id:l.id,p_empresa_id:EMP.id,p_tipo:l.tipo,p_fornecedor:l.fornecedor,p_descricao:l.descricao||null,p_categoria:null,p_centro_custo:null,p_banco_id:l.bancoId||null,p_cnpj:null,p_dt_competencia:l.dtCompetencia||null,p_dt_vencimento:l.dtVencimento||null,p_dt_pagamento:l.dtPagamento||null,p_valor:l.valor,p_documento:null,p_conciliado:true,p_obs:l.obs||null,p_recorrencia:'nenhuma'});}catch(e){console.warn('Erro transf supabase:',e);}};
+  await upsertT(saida); await upsertT(entrada);
+  // Salva FITID
+  if(ext){
+    try{
+      await supa.from('extrato_conciliado').upsert({fitid:ext.id,banco_id:bancoAtivo?.id,empresa_id:EMP.id,lancamento_id:lancId,conciliado_em:new Date().toISOString()},{onConflict:'fitid,banco_id'});
+      fitidsConciliados.add(ext.id);
+    }catch(e){console.warn('Erro FITID transf:',e);}
+  }
+}
+
+function conciliarSemLanc(){
+  if(!extratoSel){ toast('Selecione um item do extrato primeiro','err'); return; }
+  const ext=extratoItens.find(i=>i.id===extratoSel);
+  if(!ext) return;
+  criarExtId=extratoSel;
+  criarTabAtual='lanc';
+  setCriarTab('lanc');
+  // Resumo do extrato
+  const cor = ext.tipo==='credito' ? 'var(--azul)' : 'var(--vermelho)';
+  const sinal = ext.tipo==='credito' ? '+ ' : '− ';
+  document.getElementById('criar-desc').innerHTML=`<strong>${ext.descricao}</strong> &nbsp;·&nbsp; ${fmtDt(ext.data)} &nbsp;·&nbsp; <span style="color:${cor};font-weight:600;">${sinal}${fmtM(ext.valor)}</span>`;
+  // Tipo automático conforme extrato
+  const tipoAuto = ext.tipo==='credito' ? 'receber' : 'pagar';
+  setCriarTipo(tipoAuto);
+  // Fornecedor sugerido (descrição do extrato)
+  const fornSugerido = ext.descricao.slice(0,60);
+  document.getElementById('criar-forn').value = fornSugerido;
+  // Tenta auto-preencher se já cadastrado
+  autoPreencherFornecedorCriar(fornSugerido);
+  // Popula datalist de fornecedores/clientes
+  const fList = (DB.fornecedores[EMP.id]||[]);
+  const fObjList = (DB.fornecedoresObj[EMP.id]||[]);
+  const nomes = fList.length ? fList : fObjList.map(f=>f.nome);
+  document.getElementById('criar-forn-dl').innerHTML = nomes.map(n=>`<option value="${typeof n==='string'?n:n.nome}">`).join('');
+  // Categorias filtradas pelo tipo
+  atualizarCatsCriar();
+  // Centro de custo
+  const ccs=DB.centrosCusto[EMP.id]||[];
+  document.getElementById('criar-cc').innerHTML='<option value="">— selecione —</option>'+ccs.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+  // Conta bancária pré-preenchida com banco ativo
+  document.getElementById('criar-banco-nome').value = bancoAtivo ? bancoAtivo.nome + (bancoAtivo.banco ? ' · ' + bancoAtivo.banco : '') : '—';
+  document.getElementById('criar-banco-id').value = bancoAtivo?.id || '';
+  // Transferência: preenche conta e outros bancos
+  const bancosOutros = (DB.bancos[EMP.id]||[]).filter(b=>b.ativo!==false && b.id !== bancoAtivo?.id);
+  const opcoesBancosOutros = '<option value="">— selecione —</option>'+bancosOutros.map(b=>`<option value="${b.id}">${b.nome}</option>`).join('');
+  document.getElementById('ctr-destino').innerHTML = opcoesBancosOutros;
+  document.getElementById('ctr-conta-nome').value = bancoAtivo ? bancoAtivo.nome + (bancoAtivo.banco ? ' · ' + bancoAtivo.banco : '') : '—';
+  document.getElementById('ctr-conta-id').value = bancoAtivo?.id || '';
+  // Rótulos dinâmicos de transferência conforme tipo
+  if(ext.tipo === 'credito'){
+    document.getElementById('ctr-conta-label').textContent = 'Conta de Entrada (Banco Ativo)';
+    document.getElementById('ctr-outra-label').textContent = 'Conta de Origem';
+  } else {
+    document.getElementById('ctr-conta-label').textContent = 'Conta de Saída (Banco Ativo)';
+    document.getElementById('ctr-outra-label').textContent = 'Conta de Destino';
+  }
+  document.getElementById('ctr-valor').value = ext.valor||'';
+  document.getElementById('ctr-data').value = ext.data||hoje();
+  document.getElementById('ctr-obs').value='';
+  document.getElementById('criar-obs').value='';
+  document.getElementById('overlay-criar').classList.add('aberto');
+}
+function fecharCriar(){ document.getElementById('overlay-criar').classList.remove('aberto'); criarExtId=null; criarTabAtual='lanc'; }
+async function confirmarCriar(){
+  const ext=extratoItens.find(i=>i.id===criarExtId);
+  if(!ext) return;
+  const forn=document.getElementById('criar-forn').value.trim()||ext.descricao;
+  const id=uid();
+  const tipoLanc=document.getElementById('criar-tipo').value;
+  const bancoId=document.getElementById('criar-banco-id').value || bancoAtivo?.id || '';
+  const lanc={
+    id,
+    tipo:tipoLanc,
+    fornecedor:forn,
+    cnpj:'',
+    descricao:ext.descricao,
+    categoria:document.getElementById('criar-cat').value,
+    centroCusto:document.getElementById('criar-cc').value,
+    valor:ext.valor,
+    dtCompetencia:ext.data,
+    dtVencimento:ext.data,
+    dtPagamento:ext.data,
+    bancoId,
+    documento:'',
+    obs:document.getElementById('criar-obs').value.trim(),
+    anexos:[],
+    recorrencia:'nenhuma',
+    conciliado:true,  // já nasce conciliado pois será vinculado ao extrato
+    criadoEm:new Date().toISOString()
+  };
+  if(!DB.lancamentos[EMP.id]) DB.lancamentos[EMP.id]=[];
+  DB.lancamentos[EMP.id].unshift(lanc);
+  if(!DB.fornecedores[EMP.id]) DB.fornecedores[EMP.id]=[];
+  if(!DB.fornecedores[EMP.id].includes(forn)) DB.fornecedores[EMP.id].push(forn);
+  // Marca o item do extrato como conciliado imediatamente
+  ext.conciliado=true;
+  paresConc.push({extratoId:criarExtId,lancId:id,auto:false,criado:true});
+  salvarDB();
+  // Persiste no Supabase
+  try {
+    const { error } = await supa.rpc('upsert_lancamento', {
+      p_id: lanc.id,
+      p_empresa_id: EMP.id,
+      p_tipo: lanc.tipo,
+      p_fornecedor: lanc.fornecedor,
+      p_descricao: lanc.descricao || null,
+      p_categoria: lanc.categoria || null,
+      p_centro_custo: lanc.centroCusto || null,
+      p_banco_id: lanc.bancoId || null,
+      p_cnpj: lanc.cnpj || null,
+      p_dt_competencia: lanc.dtCompetencia || null,
+      p_dt_vencimento: lanc.dtVencimento || null,
+      p_dt_pagamento: lanc.dtPagamento || null,
+      p_valor: lanc.valor,
+      p_documento: lanc.documento || null,
+      p_conciliado: true,
+      p_obs: lanc.obs || null,
+      p_recorrencia: lanc.recorrencia || 'nenhuma'
+    });
+    if(error) console.warn('Erro ao salvar lançamento no Supabase:', error);
+    else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
+  } catch(e){ console.warn('Erro ao salvar lançamento no Supabase:', e); }
+  // Persiste FITID como conciliado para não reaparecer em futuras importações
+  try {
+    await supa.from('extrato_conciliado').upsert({
+      fitid: ext.id,
+      banco_id: bancoAtivo?.id,
+      empresa_id: EMP.id,
+      lancamento_id: id,
+      conciliado_em: new Date().toISOString()
+    }, { onConflict: 'fitid,banco_id' });
+    fitidsConciliados.add(ext.id);
+  } catch(e){ console.warn('Erro ao salvar FITID conciliado:', e); }
+  fecharCriar();
+  extratoSel=null;
+  renderConciliacao();
+  atualizarStatus();
+  toast('Lançamento criado e conciliado!','ok');
+}
+
+// ── MODAL DE EDIÇÃO RÁPIDA DE LANÇAMENTO (ajuste de valor/data na conciliação) ──
+let editandoLancId = null;
+
+function abrirEditarLanc(lancId, i){
+  editandoLancId = lancId;
+  const lanc = (DB.lancamentos[EMP.id]||[]).find(l=>l.id===lancId);
+  if(!lanc) return;
+  const par = paresConc[i];
+  const ext = par ? extratoItens.find(e=>e.id===par.extratoId) : null;
+  document.getElementById('el-titulo').textContent = lanc.descricao||lanc.fornecedor;
+  document.getElementById('el-forn').value = lanc.fornecedor||'';
+  document.getElementById('el-desc').value = lanc.descricao||'';
+  document.getElementById('el-valor').value = lanc.valor||'';
+  document.getElementById('el-venc').value = lanc.dtVencimento||'';
+  document.getElementById('el-pag').value = lanc.dtPagamento||'';
+  document.getElementById('el-obs').value = lanc.obs||'';
+  // Dica: mostra valor do extrato para facilitar ajuste
+  if(ext){
+    document.getElementById('el-hint').textContent = `Extrato: ${fmtM(ext.valor)} em ${fmtDt(ext.data)}`;
+    document.getElementById('el-hint').style.display='block';
+    // Botão "Usar valor do extrato"
+    document.getElementById('el-usar-ext').style.display='inline-flex';
+    document.getElementById('el-usar-ext').onclick=()=>{
+      document.getElementById('el-valor').value=ext.valor;
+      document.getElementById('el-pag').value=ext.data;
+    };
+  } else {
+    document.getElementById('el-hint').style.display='none';
+    document.getElementById('el-usar-ext').style.display='none';
+  }
+  document.getElementById('overlay-edit-lanc').classList.add('aberto');
+}
+
+function fecharEditarLanc(){ document.getElementById('overlay-edit-lanc').classList.remove('aberto'); editandoLancId=null; }
+
+async function confirmarEditarLanc(){
+  const lanc = (DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoLancId);
+  if(!lanc) return;
+  const novoValor = parseFloat(document.getElementById('el-valor').value);
+  if(!novoValor||novoValor<=0){ toast('Valor inválido','err'); return; }
+  lanc.fornecedor = document.getElementById('el-forn').value.trim()||lanc.fornecedor;
+  lanc.descricao = document.getElementById('el-desc').value.trim();
+  lanc.valor = novoValor;
+  lanc.dtVencimento = document.getElementById('el-venc').value||lanc.dtVencimento;
+  lanc.dtPagamento = document.getElementById('el-pag').value||lanc.dtPagamento;
+  lanc.obs = document.getElementById('el-obs').value.trim();
+  salvarDB();
+  try {
+    await supa.rpc('upsert_lancamento', {
+      p_id:lanc.id, p_empresa_id:EMP.id, p_tipo:lanc.tipo,
+      p_fornecedor:lanc.fornecedor, p_descricao:lanc.descricao||null,
+      p_categoria:lanc.categoria||null, p_centro_custo:lanc.centroCusto||null,
+      p_banco_id:lanc.bancoId||null, p_cnpj:lanc.cnpj||null,
+      p_dt_competencia:lanc.dtCompetencia||null, p_dt_vencimento:lanc.dtVencimento||null,
+      p_dt_pagamento:lanc.dtPagamento||null,
+      p_valor:lanc.valor, p_documento:lanc.documento||null,
+      p_conciliado:lanc.conciliado||false, p_obs:lanc.obs||null,
+      p_recorrencia:lanc.recorrencia||'nenhuma'
+    });
+  } catch(e){ console.warn('Erro ao editar lançamento:', e); }
+  fecharEditarLanc();
+  renderConciliacao();
+  toast('Lançamento ajustado!','ok');
+}
+
+function renderPares(){
+  const tbody=document.getElementById('pares-tbody');
+  if(!paresConc.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--texto3);font-size:12px;">Nenhum par conciliado ainda</td></tr>';
+    return;
+  }
+  tbody.innerHTML=paresConc.map((par,i)=>{
+    const ext=extratoItens.find(e=>e.id===par.extratoId);
+    const lanc=(DB.lancamentos[EMP.id]||[]).find(l=>l.id===par.lancId);
+    if(!ext) return '';
+    const diff=ext&&lanc?Math.abs(ext.valor-lanc.valor):null;
+    const temDiff = diff!==null && diff>=0.01;
+    const diffBadge = diff===null ? '—' : diff<0.01
+      ? '<span style="color:var(--verde-ok)">✓ Zero</span>'
+      : `<span style="color:var(--amarelo);font-weight:600;">${fmtM(diff)}</span>`;
+    return `<tr style="${temDiff?'background:var(--amar-bg);':''}">
+      <td style="font-family:var(--fonte-m);font-size:11px;">${fmtDt(ext.data)}</td>
+      <td style="font-size:12px;">${ext.descricao}</td>
+      <td style="font-family:var(--fonte-m);font-size:12px;color:${ext.tipo==='credito'?'var(--azul)':'var(--vermelho)'};">
+        ${ext.tipo==='credito'?'+':'−'}${fmtM(ext.valor)}
+      </td>
+      <td style="font-size:12px;">${lanc?lanc.descricao||lanc.fornecedor:'<em style="color:var(--texto3);">Criado agora</em>'}</td>
+      <td style="font-family:var(--fonte-m);font-size:12px;">${lanc?fmtM(lanc.valor):'—'}</td>
+      <td style="font-family:var(--fonte-m);font-size:11px;">${diffBadge}</td>
+      <td>
+        ${temDiff&&lanc?`<button class="btn-icon" onclick="abrirEditarLanc('${lanc.id}',${i})" title="Ajustar valores do lançamento" style="color:var(--amarelo);border-color:var(--amarelo);">✏ Ajustar</button>`:''}
+        ${par.auto?'<span class="tag tag-auto" style="margin-left:4px;">Auto</span>':''}
+        <button class="btn-icon danger" onclick="removerPar(${i})" style="margin-left:4px;">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function removerPar(i){
+  paresConc.splice(i,1);
+  renderConciliacao();
+}
+
+async function confirmarTodos(){
+  if(!paresConc.length){toast('Nenhum par para confirmar','err');return;}
+  let n=0;
+  const lancsConciliados=[];
+  const fitidsParaSalvar=[];
+  const dataHoje=hoje();
+  paresConc.forEach(par=>{
+    const ext=extratoItens.find(e=>e.id===par.extratoId);
+    const lanc=(DB.lancamentos[EMP.id]||[]).find(l=>l.id===par.lancId);
+    if(ext){ ext.conciliado=true; }
+    // Pares já criados pelo modal (criado:true) já foram salvos no Supabase e no extrato_conciliado
+    // Apenas marca localmente e pula o upsert duplicado
+    if(par.criado){
+      if(lanc){ lanc.conciliado=true; n++; }
+      return;
+    }
+    if(ext) fitidsParaSalvar.push({fitid:ext.id,lancamento_id:par.lancId});
+    if(lanc){
+      lanc.conciliado=true;
+      // Se ainda não tem data de pagamento, usa a data do extrato (ou hoje)
+      if(!lanc.dtPagamento){
+        lanc.dtPagamento = ext ? ext.data : dataHoje;
+      }
+      n++; lancsConciliados.push(lanc);
+    }
+  });
+  salvarDB();
+  try {
+    if(fitidsParaSalvar.length){
+      await supa.from('extrato_conciliado').upsert(
+        fitidsParaSalvar.map(f=>({
+          fitid: f.fitid,
+          banco_id: bancoAtivo.id,
+          empresa_id: EMP.id,
+          lancamento_id: f.lancamento_id,
+          conciliado_em: new Date().toISOString()
+        })),
+        { onConflict: 'fitid,banco_id' }
+      );
+    }
+    // Atualiza conciliado=true e dtPagamento nos lançamentos
+    for(const lanc of lancsConciliados){
+      await supa.rpc('upsert_lancamento', {
+        p_id:lanc.id, p_empresa_id:EMP.id, p_tipo:lanc.tipo,
+        p_fornecedor:lanc.fornecedor, p_descricao:lanc.descricao||null,
+        p_categoria:lanc.categoria||null, p_centro_custo:lanc.centroCusto||null,
+        p_banco_id:lanc.bancoId||null, p_cnpj:lanc.cnpj||null,
+        p_dt_competencia:lanc.dtCompetencia||null, p_dt_vencimento:lanc.dtVencimento||null,
+        p_dt_pagamento:lanc.dtPagamento||null,
+        p_valor:lanc.valor, p_documento:lanc.documento||null,
+        p_conciliado:true, p_obs:lanc.obs||null,
+        p_recorrencia:lanc.recorrencia||'nenhuma'
+      });
+    }
+  } catch(e){ console.warn('Erro ao salvar conciliação no Supabase:',e); }
+  document.getElementById('conf-titulo').textContent=`${n} pares conciliados com sucesso!`;
+  document.getElementById('conf-sub').textContent=`Extrato de ${bancoAtivo?.nome||'—'} · ${paresConc.length} transações marcadas como pagas/recebidas no sistema.`;
+  irPasso(4);
+  atualizarStatus();
+  toast('Conciliação confirmada e salva!','ok');
+}
+
+function novaRodada(){
+  extratoItens=[]; paresConc=[]; extratoSel=null; lancSel=null;
+  revPares=[]; revEstados=[];
+  document.getElementById('texto-extrato').value='';
+  const b=document.getElementById('busca-lanc'); if(b) b.value='';
+  irPasso(1);
+  carregarHistoricoBancos().then(() => renderBancos());
+}
+
+function atualizarStatus(){
+  const conc=paresConc.length;
+  const total=extratoItens.length;
+  const pend=total-conc;
+  const somaExt=extratoItens.reduce((s,i)=>s+(i.tipo==='credito'?i.valor:-i.valor),0);
+  const somaLanc=paresConc.reduce((s,p)=>{
+    const l=(DB.lancamentos[EMP.id]||[]).find(x=>x.id===p.lancId);
+    return s+(l?(l.tipo==='receber'?l.valor:-l.valor):0);
+  },0);
+  const diff=Math.abs(somaExt-somaLanc);
+  document.getElementById('st-extrato').textContent=total;
+  document.getElementById('st-conciliados').textContent=conc;
+  document.getElementById('st-pendentes').textContent=pend;
+  document.getElementById('st-diferenca').textContent=fmtM(diff);
+}
+
+function exportarConciliacao(){
+  const linhas=[['Data Extrato','Descrição Extrato','Valor Extrato','Lançamento','Valor Lançamento','Diferença','Status']];
+  paresConc.forEach(par=>{
+    const ext=extratoItens.find(e=>e.id===par.extratoId);
+    const lanc=(DB.lancamentos[EMP.id]||[]).find(l=>l.id===par.lancId);
+    if(!ext) return;
+    const diff=lanc?Math.abs(ext.valor-lanc.valor).toFixed(2):'—';
+    linhas.push([fmtDt(ext.data),ext.descricao,(ext.tipo==='credito'?'+':'-')+ext.valor.toFixed(2).replace('.',','),
+      lanc?lanc.descricao||lanc.fornecedor:'Sem lançamento',lanc?lanc.valor.toFixed(2).replace('.',','):'—',diff,'Conciliado']);
+  });
+  const csv='\ufeff'+linhas.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`conciliacao_${(EMP.fantasia||EMP.razao).replace(/\s/g,'_')}.csv`;
+  a.click();
+  toast('Exportação concluída','ok');
+}
+
+function toast(msg,tipo=''){
+  const c=document.getElementById('toasts');const t=document.createElement('div');
+  t.className='toast'+(tipo==='ok'?' ok':tipo==='err'?' err':'');
+  const ico=tipo==='ok'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>':tipo==='err'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>':'';
+  t.innerHTML=ico+msg;c.appendChild(t);setTimeout(()=>t.remove(),3200);
+}
+
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('aberto');}));
+
+const eid=sessionStorage.getItem('empresa_ativa');
+if(!eid&&DB.empresas.length) sessionStorage.setItem('empresa_ativa',DB.empresas[0].id);
+carregarDB().then(()=>init());
+</script>
+</body>
+</html>
