@@ -848,6 +848,21 @@ let EMP = null;  // empresa ativa
 let tabAtiva = 'todos';
 let filtros  = { busca:'', status:'', categoria:'', cc:'', de:'', ate:'' };
 let ordemCol = 'dtVencimento';
+function getCodCatGlobal(cats, id) {
+  const c = cats.find(x => x.id === id);
+  if (!c) return '—';
+  const getCod = (allCats, cc) => {
+    const prefMae = cc.mae === 'Entradas' ? '1' : '2';
+    if (!cc.pai) {
+      const irmaos = allCats.filter(x => x.mae === cc.mae && !x.pai);
+      return `${prefMae}.${irmaos.findIndex(x => x.id === cc.id) + 1}`;
+    }
+    const pai = allCats.find(x => x.id === cc.pai);
+    if (!pai) return prefMae;
+    return `${getCod(allCats, pai)}.${allCats.filter(x => x.pai === cc.pai).findIndex(x => x.id === cc.id) + 1}`;
+  };
+  return getCod(cats, c) + ' ' + c.nome;
+}  
 let ordemDir = 1; // 1 asc, -1 desc
 let pagAtual = 1;
 const POR_PAG = 20;
@@ -1162,7 +1177,7 @@ function getLancamentosFiltrados(){
       const cats  = DB.categorias[EMP.id]||[];
       const ccs   = DB.centrosCusto[EMP.id]||[];
       const bancos= DB.bancos[EMP.id]||[];
-      const catNome  = (cats.find(c=>c.id===l.categoria)||{}).nome||'';
+      const catNome  = getCodCatGlobal(cats, l.categoria);
       const ccNome   = (ccs.find(c=>c.id===l.centroCusto)||{}).nome||'';
       const bancoNome= (bancos.find(b=>b.id===l.bancoId)||{}).nome||'';
       const status   = !l.dtPagamento ? (l.dtVencimento<hoje()?'vencido':'pendente') : 'pago';
@@ -1234,7 +1249,7 @@ function renderTabela(){
     document.getElementById('tfoot-lancs').innerHTML='';
   } else {
     tbody.innerHTML = pag.map(l=>{
-      const cat    = (cats.find(c=>c.id===l.categoria)||{}).nome||'—';
+      const cat    = getCodCatGlobal(cats, l.categoria);
       const cc     = (ccs.find(c=>c.id===l.centroCusto)||{}).nome||'—';
       const banco  = (bancos.find(b=>b.id===l.bancoId)||{}).nome||'—';
       const status = !l.dtPagamento ? (l.dtVencimento<hj?'vencido':'pendente') : 'pago';
