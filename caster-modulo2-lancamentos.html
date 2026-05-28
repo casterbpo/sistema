@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CasterBPO — Lançamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+if (window.self !== window.top) {
+  document.write('<style>.topbar{display:none!important;}.layout{min-height:100vh!important;}</style>');
+}
+</script>
+<script>
+// ═══ GUARD DE SESSÃO ═══
+const SUPA_URL_GUARD = 'https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY_GUARD = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const REDIRECT_URL_GUARD = 'https://casterbpo.github.io/sistema/index.html';
+if (window.self === window.top) {
+  (async function() {
+    const _supa = supabase.createClient(SUPA_URL_GUARD, SUPA_KEY_GUARD);
+    const { data: { session } } = await _supa.auth.getSession();
+    if (!session) window.location.href = REDIRECT_URL_GUARD;
+  })();
+}
+</script>
+<style>
+:root {
+  --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;
+  --g400:#3d8a5a;--g300:#5aaa76;--g200:#8dcca4;--g100:#c4e8d0;--g050:#edf7f1;
+  --d700:#b37f00;--d600:#c99520;--d500:#d4a832;--d400:#e0bc55;--d300:#e8cc7a;--d200:#f0dba0;--d050:#fdf8ee;
+  --n900:#111418;--n800:#1e2328;--n700:#2d3339;--n600:#414950;--n500:#596168;
+  --n400:#737c84;--n300:#959da4;--n200:#bcc2c7;--n100:#dde1e4;--n050:#f4f5f6;
+  --vermelho:#c0392b;--verm-bg:#fdecea;--verm-leve:#fff0f0;
+  --azul:#2563eb;--azul-bg:#eff6ff;
+  --amarelo:#d97706;--amar-bg:#fffbeb;
+  --verde-ok:#16a34a;--verde-bg:#f0fdf4;
+  --bg:#f2f0eb;--bg-card:#fff;--borda:#e4e0d8;--texto:#111418;--texto2:#596168;--texto3:#959da4;
+  --fonte-d:'Cormorant Garamond',serif;--fonte-b:'DM Sans',sans-serif;--fonte-m:'DM Mono',monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-modal:0 8px 40px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--fonte-b);background:var(--bg);color:var(--texto);font-size:14px;line-height:1.5;min-height:100vh;}
+.hidden{display:none!important;}
+
+/* Oculta topbar quando dentro de iframe */
+body.embed .topbar { display: none !important; }
+body.embed .page, body.embed .conteudo { padding-top: 0; }
+
+/* TOPBAR */
+.topbar{background:var(--g900);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:80;border-bottom:1px solid rgba(201,168,76,.12);}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--d600),var(--d700));display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:18px;height:18px;}
+.logo-wordmark{font-family:var(--fonte-d);font-size:1.15rem;font-weight:700;color:var(--d400);letter-spacing:.03em;}
+.logo-wordmark em{font-style:normal;color:rgba(255,255,255,.85);}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.1);}
+.empresa-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-sm);padding:4px 10px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;transition:all .2s;}
+.empresa-badge:hover{background:rgba(255,255,255,.1);}
+.empresa-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--g300);}
+.spacer{flex:1;}
+.tnav-btn{background:transparent;border:none;color:rgba(255,255,255,.45);padding:5px 11px;border-radius:var(--r-sm);font-size:12px;font-family:var(--fonte-b);font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.tnav-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);}
+.tnav-btn.ativo{background:rgba(201,168,76,.15);color:var(--d300);}
+.tnav-btn svg{width:14px;height:14px;}
+.topbar-action{background:linear-gradient(135deg,var(--d600),var(--d700));color:var(--g900);border:none;border-radius:var(--r-sm);padding:6px 14px;font-size:12px;font-weight:600;font-family:var(--fonte-b);cursor:pointer;display:flex;align-items:center;gap:5px;transition:opacity .2s;}
+.topbar-action:hover{opacity:.88;}
+.topbar-action svg{width:13px;height:13px;}
+
+/* LAYOUT */
+.page{max-width:1320px;margin:0 auto;padding:1.5rem 2rem;}
+
+/* CABEÇALHO DA PÁGINA */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;}
+.page-header h1{font-family:var(--fonte-d);font-size:1.6rem;font-weight:600;color:var(--n900);}
+.page-header p{font-size:12px;color:var(--texto3);margin-top:2px;}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:.8rem;margin-bottom:1.5rem;}
+.kpi-mini{background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);padding:.9rem 1rem;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.kpi-mini::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.kpi-mini.k1::after{background:var(--azul);}
+.kpi-mini.k2::after{background:var(--vermelho);}
+.kpi-mini.k3::after{background:var(--amarelo);}
+.kpi-mini.k4::after{background:#991b1b;}
+.kpi-mini.k5::after{background:var(--g400);}
+.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);margin-bottom:4px;}
+.kpi-val{font-family:var(--fonte-d);font-size:1.3rem;font-weight:700;color:var(--n900);}
+.kpi-sub{font-size:10px;color:var(--texto3);margin-top:2px;}
+
+/* FILTROS */
+.filtros-bar{background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);padding:1rem 1.2rem;margin-bottom:1rem;display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;box-shadow:var(--shadow);}
+.filtro-grupo{display:flex;flex-direction:column;gap:4px;}
+.filtro-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);}
+.filtro-select,.filtro-input{background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-md);padding:7px 10px;font-size:12px;font-family:var(--fonte-b);color:var(--texto);outline:none;transition:border-color .15s;}
+.filtro-select:focus,.filtro-input:focus{border-color:var(--g400);}
+.filtro-input{min-width:180px;}
+.filtro-grupo.grow{flex:1;min-width:150px;}
+
+/* TABS TIPO */
+.tipo-tabs{display:flex;background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow);margin-bottom:1rem;}
+.tipo-tab{flex:1;padding:10px 16px;border:none;background:transparent;font-family:var(--fonte-b);font-size:13px;font-weight:500;color:var(--texto3);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid var(--borda);}
+.tipo-tab:last-child{border-right:none;}
+.tipo-tab.ativo.todos{background:var(--g900);color:#fff;}
+.tipo-tab.ativo.pagar{background:var(--verm-bg);color:var(--vermelho);}
+.tipo-tab.ativo.receber{background:var(--azul-bg);color:var(--azul);}
+.tipo-tab:hover:not(.ativo){background:var(--n050);}
+.tab-count{font-size:10px;background:rgba(0,0,0,.08);border-radius:100px;padding:1px 6px;font-weight:600;}
+
+/* TABELA */
+.tabela-wrap{background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow);}
+.tabela-scroll{overflow-x:auto;width:100%;}
+.tabela-scroll::-webkit-scrollbar{height:6px;}
+.tabela-scroll::-webkit-scrollbar-track{background:var(--n050);}
+.tabela-scroll::-webkit-scrollbar-thumb{background:var(--n200);border-radius:3px;}
+.tabela-scroll::-webkit-scrollbar-thumb:hover{background:var(--n300);}
+.scroll-phantom-wrap{position:fixed;bottom:0;left:0;width:100%;z-index:60;overflow-x:auto;display:none;background:transparent;}
+.scroll-phantom-wrap::-webkit-scrollbar{height:8px;}
+.scroll-phantom-wrap::-webkit-scrollbar-track{background:var(--n100);}
+.scroll-phantom-wrap::-webkit-scrollbar-thumb{background:var(--n300);border-radius:4px;}
+.scroll-phantom-wrap::-webkit-scrollbar-thumb:hover{background:var(--n400);}
+.scroll-phantom-inner{height:1px;}
+.tabela-header{padding:.8rem 1.2rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;}
+.tabela-info{font-size:12px;color:var(--texto3);}
+.tabela-acoes-lote{display:flex;gap:6px;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--g900);}
+thead th{padding:9px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(201,168,76,.65);text-align:left;white-space:nowrap;}
+thead th.center{text-align:center;}
+thead th.right{text-align:right;}
+th.sort{cursor:pointer;user-select:none;}
+th.sort:hover{color:var(--d300);}
+tbody tr{border-bottom:1px solid var(--borda);transition:background .12s;}
+tbody tr:hover{background:var(--n050);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr.vencido-row{background:var(--verm-leve);}
+tbody tr.hoje-row{background:var(--amar-bg);}
+tbody tr.selecionada{background:#fffbeb;outline:2px solid var(--d400);}
+td{padding:9px 12px;font-size:12px;color:var(--texto);vertical-align:middle;}
+td.mono{font-family:var(--fonte-m);white-space:nowrap;}
+td.right{text-align:right;}
+td.center{text-align:center;}
+
+/* CHECKBOX COLUNA */
+.cb-wrap{display:flex;align-items:center;justify-content:center;}
+input[type=checkbox]{width:15px;height:15px;accent-color:var(--g500);cursor:pointer;}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap;}
+.tag-pagar{background:var(--verm-bg);color:var(--vermelho);}
+.tag-receber{background:var(--azul-bg);color:var(--azul);}
+.tag-pago{background:var(--verde-bg);color:var(--verde-ok);}
+.tag-vencido{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.tag-pendente{background:var(--amar-bg);color:var(--amarelo);}
+.tag-cat{background:var(--n050);color:var(--texto3);}
+.tag-conc{background:#ede9fe;color:#6d28d9;}
+
+/* BOTÕES */
+.btn-p{background:var(--g700);color:#fff;border:none;border-radius:var(--r-md);padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+.btn-p:hover{background:var(--g600);}
+.btn-p svg{width:15px;height:15px;}
+.btn-s{background:var(--bg-card);color:var(--texto2);border:1px solid var(--borda);border-radius:var(--r-md);padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+.btn-s:hover{border-color:var(--g400);color:var(--g600);}
+.btn-s svg{width:14px;height:14px;}
+.btn-s.danger:hover{border-color:var(--vermelho);color:var(--vermelho);}
+.btn-icon{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);padding:4px 7px;font-size:11px;cursor:pointer;color:var(--texto3);transition:all .15s;display:inline-flex;align-items:center;gap:3px;font-family:var(--fonte-b);}
+.btn-icon:hover{border-color:var(--g400);color:var(--g600);}
+.btn-icon.del:hover{border-color:var(--vermelho);color:var(--vermelho);}
+.btn-icon.baixa:hover{border-color:var(--verde-ok);color:var(--verde-ok);}
+.btn-icon svg{width:12px;height:12px;}
+
+/* PAGINAÇÃO */
+.paginacao{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.2rem;border-top:1px solid var(--borda);background:var(--bg-card);}
+.paginacao-info{font-size:12px;color:var(--texto3);}
+.paginacao-btns{display:flex;gap:4px;}
+.pg-btn{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);width:28px;height:28px;font-size:12px;cursor:pointer;color:var(--texto3);transition:all .15s;display:flex;align-items:center;justify-content:center;font-family:var(--fonte-b);}
+.pg-btn:hover{border-color:var(--g400);color:var(--g600);}
+.pg-btn.ativo{background:var(--g700);color:#fff;border-color:var(--g700);}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(2px);}
+.overlay.aberto{opacity:1;pointer-events:all;}
+.modal{background:var(--bg-card);border-radius:var(--r-xl);width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-modal);transform:translateY(12px) scale(.98);transition:transform .22s;}
+.overlay.aberto .modal{transform:translateY(0) scale(1);}
+.modal-sm{width:420px;}
+.modal-header{background:var(--g900);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:var(--r-xl) var(--r-xl) 0 0;}
+.modal-titulo{font-family:var(--fonte-d);font-size:1.1rem;font-weight:600;color:var(--d300);}
+.modal-fechar{background:rgba(255,255,255,.08);border:none;width:28px;height:28px;border-radius:50%;color:rgba(255,255,255,.5);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;}
+.modal-fechar:hover{background:rgba(255,255,255,.15);color:#fff;}
+.modal-body{padding:1.5rem;}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--borda);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--bg-card);}
+
+/* FORMULÁRIO */
+.form-row{display:grid;gap:.8rem;margin-bottom:.8rem;}
+.fr-1{grid-template-columns:1fr;}
+.fr-2{grid-template-columns:1fr 1fr;}
+.fr-3{grid-template-columns:1fr 1fr 1fr;}
+.fr-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);}
+.form-label.req::after{content:' *';color:var(--vermelho);}
+.form-input,.form-select,.form-textarea{background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-md);padding:9px 12px;font-size:13px;font-family:var(--fonte-b);color:var(--texto);outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--g400);box-shadow:0 0 0 3px rgba(61,138,90,.12);background:var(--bg-card);}
+.form-textarea{resize:vertical;min-height:60px;}
+.form-hint{font-size:10px;color:var(--texto3);}
+.form-divider{grid-column:1/-1;border:none;border-top:1px solid var(--borda);margin:.2rem 0;}
+.form-secao{grid-column:1/-1;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--g500);margin-top:.4rem;}
+
+/* TIPO TOGGLE */
+.tipo-toggle{display:flex;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;margin-bottom:1rem;}
+.tipo-toggle button{flex:1;padding:11px;border:none;font-family:var(--fonte-b);font-size:13px;cursor:pointer;transition:all .2s;}
+.tipo-toggle .t-rec{background:var(--azul-bg);color:var(--azul);font-weight:600;}
+.tipo-toggle .t-pag{background:var(--bg-card);color:var(--texto2);}
+.tipo-toggle .t-rec.inativo{background:var(--bg-card);color:var(--texto3);font-weight:400;}
+.tipo-toggle .t-pag.ativo{background:var(--verm-bg);color:var(--vermelho);font-weight:600;}
+
+/* RECORRÊNCIA */
+.recorr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px;}
+.recorr-btn{padding:7px 4px;border:1px solid var(--borda);border-radius:var(--r-sm);background:var(--bg-card);font-size:11px;font-family:var(--fonte-b);color:var(--texto2);cursor:pointer;text-align:center;transition:all .15s;}
+.recorr-btn:hover{border-color:var(--g300);color:var(--g600);}
+.recorr-btn.ativo{border-color:var(--g500);background:var(--g050);color:var(--g700);font-weight:600;}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--g900);color:var(--d200);border:1px solid rgba(201,168,76,.25);border-radius:var(--r-md);padding:10px 16px;font-size:13px;box-shadow:var(--shadow-modal);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;display:flex;align-items:center;gap:8px;}
+.toast.erro{border-color:rgba(192,57,43,.4);color:#ff8a7a;}
+.toast.ok{border-color:rgba(22,163,74,.4);color:#86efac;}
+.toast svg{width:15px;height:15px;flex-shrink:0;}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateY(8px);}}
+
+/* ESTADO VAZIO */
+.empty-state{padding:3rem;text-align:center;color:var(--texto3);}
+.empty-state svg{width:48px;height:48px;margin-bottom:1rem;opacity:.25;}
+.empty-state h3{font-size:1rem;font-weight:600;color:var(--n700);margin-bottom:.4rem;}
+.empty-state p{font-size:12px;}
+
+/* BADGE SELECIONADOS */
+.sel-bar{background:var(--g800);color:var(--d300);border-radius:var(--r-md);padding:8px 14px;font-size:12px;display:flex;align-items:center;gap:10px;margin-bottom:.8rem;}
+.sel-bar button{background:rgba(255,255,255,.1);border:none;color:var(--d300);border-radius:var(--r-sm);padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--fonte-b);}
+.sel-bar button:hover{background:rgba(255,255,255,.18);}
+
+/* LINHA TOTAIS TABELA */
+.linha-total td{background:var(--g050);font-weight:600;border-top:2px solid var(--borda);}
+
+/* RESPONSIVO */
+@media(max-width:900px){.kpi-strip{grid-template-columns:repeat(3,1fr);}.filtros-bar{flex-direction:column;}.fr-3,.fr-4{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.kpi-strip{grid-template-columns:1fr 1fr;}.fr-2,.fr-3,.fr-4{grid-template-columns:1fr;}.tnav-btn span{display:none;}}
+
+/* EXPORT DROPDOWN */
+.export-group{position:relative;display:inline-flex;}
+.export-group .export-menu{position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);box-shadow:var(--shadow-modal);min-width:260px;z-index:100;overflow:hidden;display:none;}
+.export-group.open .export-menu{display:block;}
+.export-menu-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--texto3);padding:.6rem 1rem .3rem;}
+.export-item{display:flex;align-items:flex-start;gap:10px;padding:.7rem 1rem;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--borda);}
+.export-item:last-child{border-bottom:none;}
+.export-item:hover{background:var(--n050);}
+.export-item-ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.export-item-ico svg{width:15px;height:15px;}
+.export-item-titulo{font-size:12px;font-weight:600;color:var(--n800);}
+.export-item-sub{font-size:10px;color:var(--texto3);}
+/* MODAL EXPORTAR */
+.campos-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem;}
+.campo-check{display:flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid var(--borda);border-radius:var(--r-sm);cursor:pointer;font-size:12px;color:var(--texto2);transition:all .15s;user-select:none;}
+.campo-check:hover{border-color:var(--g300);background:var(--g050);}
+.campo-check.selecionado{border-color:var(--g500);background:var(--g050);color:var(--g700);font-weight:500;}
+.campo-check input[type=checkbox]{accent-color:var(--g500);width:14px;height:14px;}
+/* ANEXOS */
+.anexo-drop{border:2px dashed var(--borda);border-radius:var(--r-md);padding:1.2rem;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s;background:var(--n050);min-height:80px;}
+.anexo-drop:hover,.anexo-drop.drag-over{border-color:var(--g400);background:var(--g050);}
+.anexo-lista{margin-top:.5rem;display:flex;flex-direction:column;gap:4px;}
+.anexo-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-sm);font-size:12px;}
+.anexo-item-ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;}
+.anexo-item-nome{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--texto);}
+.anexo-item-size{font-size:10px;color:var(--texto3);flex-shrink:0;}
+.anexo-item-del{background:transparent;border:none;color:var(--texto3);cursor:pointer;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:14px;transition:all .15s;flex-shrink:0;}
+.anexo-item-del:hover{background:var(--verm-bg);color:var(--vermelho);}
+
+/* REPETIÇÃO PERSONALIZADA */
+.recorr-tipo-toggle{display:flex;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;}
+.recorr-tipo-btn{flex:1;padding:8px 6px;border:none;background:var(--bg-card);font-family:var(--fonte-b);font-size:12px;font-weight:500;color:var(--texto3);cursor:pointer;transition:all .2s;border-right:1px solid var(--borda);}
+.recorr-tipo-btn:last-child{border-right:none;}
+.recorr-tipo-btn.ativo{background:var(--g700);color:#fff;}
+.parcela-custom-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.parcela-custom-row .parcela-num{font-size:11px;color:var(--texto3);min-width:56px;font-weight:600;}
+.parcela-custom-row input{flex:1;}
+.parcela-custom-row button{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);color:var(--texto3);width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.parcela-custom-row button:hover{border-color:var(--vermelho);color:var(--vermelho);}
+
+/* SORT INDICATORS */
+th.sort{cursor:pointer;user-select:none;white-space:nowrap;}
+th.sort:hover{color:var(--d300) !important;}
+.sort-ico{font-style:normal;font-size:10px;opacity:.9;}
+
+/* CADASTRO RÁPIDO DE FORNECEDOR */
+.forn-hint{display:none;align-items:center;gap:8px;margin-top:5px;padding:7px 10px;background:var(--amar-bg);border:1px solid rgba(217,119,6,.25);border-radius:var(--r-sm);font-size:11px;color:var(--amarelo);}
+.forn-hint.visivel{display:flex;}
+.forn-hint button{margin-left:auto;background:var(--amarelo);color:#fff;border:none;border-radius:var(--r-sm);padding:4px 10px;font-size:11px;font-weight:600;font-family:var(--fonte-b);cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.forn-hint button:hover{opacity:.85;}
+.modal-qr{width:500px;}
+.modal-qr .modal-header{background:linear-gradient(135deg,var(--g800),var(--g900));}
+.modal-qr .modal-titulo{font-size:1rem;}
+.qr-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.2);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--d400);margin-bottom:.8rem;text-transform:uppercase;}
+.qr-badge svg{width:11px;height:11px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="voltarPainel()">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <span class="logo-wordmark">Caster<em>BPO</em></span>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="empresa-badge" onclick="voltarPainel()">
+    <span class="dot"></span>
+    <span id="badge-empresa">—</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px;opacity:.5;"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="spacer"></div>
+  <nav style="display:flex;gap:2px;">
+    <button class="tnav-btn" onclick="navegar('caster-modulo1-painel.html')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="tnav-btn ativo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+      <span>Lançamentos</span>
+    </button>
+    <button class="tnav-btn" onclick="navegar('caster-modulo3-conciliacao.html')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Conciliação</span>
+    </button>
+    <button class="tnav-btn" onclick="navegar('caster-modulo4-relatorios.html')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Relatórios</span>
+    </button>
+    <button class="tnav-btn" onclick="navegar('caster-modulo5-configuracoes.html')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Configurações</span>
+    </button>
+  </nav>
+  <div style="width:8px;"></div>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="page">
+
+  <!-- Cabeçalho -->
+  <div class="page-header">
+    <div>
+      <h1>Lançamentos</h1>
+      <p id="sub-empresa">Contas a pagar e a receber</p>
+    </div>
+    <div class="header-actions">
+      <div class="export-group" id="exp-lanc">
+        <button class="btn-s" onclick="toggleExport('exp-lanc')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Exportar ▾
+        </button>
+        <div class="export-menu">
+          <div class="export-menu-titulo">Formato de exportação</div>
+          <div class="export-item" onclick="abrirModalExportar('pdf')">
+            <div class="export-item-ico" style="background:#fee2e2;color:#dc2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><div class="export-item-titulo">PDF</div><div class="export-item-sub">Layout formatado, pronto para impressão</div></div>
+          </div>
+          <div class="export-item" onclick="abrirModalExportar('csv')">
+            <div class="export-item-ico" style="background:#d1fae5;color:#065f46;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div>
+            <div><div class="export-item-titulo">Excel / CSV</div><div class="export-item-sub">Planilha editável, compatível com Excel</div></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-p" onclick="abrirModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo lançamento
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-mini k1">
+      <div class="kpi-lbl">A Receber</div>
+      <div class="kpi-val" id="kpi-a-receber" style="color:var(--azul)">R$ 0</div>
+      <div class="kpi-sub" id="kpi-a-receber-qt">0 lançamentos</div>
+    </div>
+    <div class="kpi-mini k2">
+      <div class="kpi-lbl">A Pagar</div>
+      <div class="kpi-val" id="kpi-a-pagar" style="color:var(--vermelho)">R$ 0</div>
+      <div class="kpi-sub" id="kpi-a-pagar-qt">0 lançamentos</div>
+    </div>
+    <div class="kpi-mini k3">
+      <div class="kpi-lbl">Vence hoje</div>
+      <div class="kpi-val" id="kpi-hoje" style="color:var(--amarelo)">R$ 0</div>
+      <div class="kpi-sub" id="kpi-hoje-qt">0 lançamentos</div>
+    </div>
+    <div class="kpi-mini k4">
+      <div class="kpi-lbl">Vencidos</div>
+      <div class="kpi-val" id="kpi-vencidos" style="color:#991b1b">R$ 0</div>
+      <div class="kpi-sub" id="kpi-vencidos-qt">0 lançamentos</div>
+    </div>
+    <div class="kpi-mini k5">
+      <div class="kpi-lbl">Recebido este mês</div>
+      <div class="kpi-val" id="kpi-recebido" style="color:var(--verde-ok)">R$ 0</div>
+      <div class="kpi-sub" id="kpi-recebido-qt">este mês</div>
+    </div>
+    <div class="kpi-mini" style="position:relative;overflow:hidden;">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--vermelho);"></div>
+      <div class="kpi-lbl">Pago este mês</div>
+      <div class="kpi-val" id="kpi-pago" style="color:var(--vermelho)">R$ 0</div>
+      <div class="kpi-sub" id="kpi-pago-qt">este mês</div>
+    </div>
+  </div>
+
+  <!-- TABS TIPO -->
+  <div class="tipo-tabs">
+    <button class="tipo-tab todos ativo" id="tab-todos" onclick="setTab('todos',this)">
+      Todos <span class="tab-count" id="tc-todos">0</span>
+    </button>
+    <button class="tipo-tab receber" id="tab-receber" onclick="setTab('receber',this)">
+      ↑ A Receber <span class="tab-count" id="tc-receber">0</span>
+    </button>
+    <button class="tipo-tab pagar" id="tab-pagar" onclick="setTab('pagar',this)">
+      ↓ A Pagar <span class="tab-count" id="tc-pagar">0</span>
+    </button>
+    <button class="tipo-tab" id="tab-vencidos" onclick="setTab('vencidos',this)" style="border-right:none;">
+      ⚠ Vencidos <span class="tab-count" id="tc-vencidos" style="background:rgba(192,57,43,.15);color:var(--vermelho);">0</span>
+    </button>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-bar">
+    <div class="filtro-grupo grow">
+      <label class="filtro-label">Buscar</label>
+      <input class="filtro-input" id="f-busca" placeholder="Descrição, fornecedor, documento..." oninput="filtrar()">
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">Status</label>
+      <select class="filtro-select" id="f-status" onchange="filtrar()">
+        <option value="">Todos os status</option>
+        <option value="pendente">Pendente</option>
+        <option value="pago">Pago / Recebido</option>
+        <option value="vencido">Vencido</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">Categoria</label>
+      <select class="filtro-select" id="f-categoria" onchange="filtrar()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">Centro de Custo</label>
+      <select class="filtro-select" id="f-cc" onchange="filtrar()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">Venc. de</label>
+      <input class="filtro-input" id="f-de" type="date" oninput="filtrar()" style="min-width:130px;">
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">Venc. até</label>
+      <input class="filtro-input" id="f-ate" type="date" oninput="filtrar()" style="min-width:130px;">
+    </div>
+    <div class="filtro-grupo">
+      <label class="filtro-label">&nbsp;</label>
+      <button class="btn-s" onclick="limparFiltros()">Limpar</button>
+    </div>
+  </div>
+
+  <!-- BARRA SELECIONADOS -->
+  <div class="sel-bar hidden" id="sel-bar">
+    <span id="sel-info">0 selecionados</span>
+    <button onclick="baixarLote()">✓ Dar baixa em lote</button>
+    <button onclick="excluirLote()" style="background:rgba(192,57,43,.2);color:#ff8a7a;">✕ Excluir selecionados</button>
+    <button onclick="limparSel()" style="background:transparent;color:rgba(255,255,255,.4);">Cancelar</button>
+  </div>
+
+  <!-- TABELA -->
+  <div id="periodo-banner" class="hidden" style="background:var(--d050);border:1px solid rgba(201,168,76,.3);border-radius:var(--r-md);padding:7px 14px;margin-bottom:.5rem;font-size:12px;color:var(--d700);display:flex;align-items:center;gap:6px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span id="periodo-texto">—</span>
+  </div>
+  <div class="tabela-wrap">
+    <div class="tabela-header">
+      <span class="tabela-info" id="tabela-info">0 registros</span>
+      <div class="tabela-acoes-lote"></div>
+    </div>
+    <div class="tabela-scroll" id="tabela-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="center" style="width:36px;"><input type="checkbox" id="cb-all" onchange="selecionarTodos(this)"></th>
+            <th class="sort" id="th-dtVencimento" onclick="ordenar('dtVencimento')">Vencimento <span class="sort-ico"></span></th>
+            <th class="sort" id="th-descricao" onclick="ordenar('descricao')">Descrição / Fornecedor <span class="sort-ico"></span></th>
+            <th class="center" style="width:60px;">Parcela</th>
+            <th class="sort" id="th-categoria" onclick="ordenar('categoria')">Categoria <span class="sort-ico"></span></th>
+            <th class="sort" id="th-centroCusto" onclick="ordenar('centroCusto')">Custo <span class="sort-ico"></span></th>
+            <th class="sort" id="th-tipo" onclick="ordenar('tipo')">Tipo <span class="sort-ico"></span></th>
+            <th class="right sort" id="th-valor" onclick="ordenar('valor')">Valor <span class="sort-ico"></span></th>
+            <th class="sort" id="th-status" onclick="ordenar('status')">Status <span class="sort-ico"></span></th>
+            <th class="sort" id="th-dtPagamento" onclick="ordenar('dtPagamento')">Dt. Pagamento <span class="sort-ico"></span></th>
+            <th class="sort" id="th-bancoId" onclick="ordenar('bancoId')">Conta <span class="sort-ico"></span></th>
+            <th class="center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-lancs"></tbody>
+        <tfoot id="tfoot-lancs"></tfoot>
+      </table>
+    </div>
+    <div class="paginacao" id="paginacao">
+      <span class="paginacao-info" id="pag-info"></span>
+      <div class="paginacao-btns" id="pag-btns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL LANÇAMENTO / TRANSFERÊNCIA ═══ -->
+<div class="overlay" id="overlay-lanc">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <span class="modal-titulo" id="modal-titulo">Novo Lançamento</span>
+        <span id="modal-parcela-badge" style="display:none;font-size:11px;background:rgba(201,168,76,0.18);color:var(--d300);padding:2px 10px;border-radius:100px;font-weight:600;letter-spacing:.04em;width:fit-content;"></span>
+      </div>
+      <button class="modal-fechar" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- ABAS: LANÇAMENTO | TRANSFERÊNCIA -->
+      <div id="modal-tabs-wrap" style="display:flex;gap:0;margin-bottom:1rem;border:1px solid var(--borda);border-radius:var(--r-md);overflow:hidden;">
+        <button class="modal-tab ativo" id="mtab-lanc" onclick="setModalTab('lanc')" style="flex:1;padding:8px 12px;font-family:var(--fonte-b);font-size:12px;font-weight:600;border:none;background:var(--g900);color:var(--d300);cursor:pointer;transition:all .2s;">📋 Lançamento</button>
+        <button class="modal-tab" id="mtab-transf" onclick="setModalTab('transf')" style="flex:1;padding:8px 12px;font-family:var(--fonte-b);font-size:12px;font-weight:600;border:none;background:var(--bg-card);color:var(--texto3);cursor:pointer;transition:all .2s;border-left:1px solid var(--borda);">⇄ Transferência entre Contas</button>
+      </div>
+
+      <!-- PAINEL TRANSFERÊNCIA -->
+      <div id="painel-transf" class="hidden">
+        <p style="font-size:12px;color:var(--texto3);margin-bottom:1rem;">Registre uma movimentação entre suas contas cadastradas.</p>
+        <div class="form-row fr-2">
+          <div class="form-group">
+            <label class="form-label req">Conta Origem</label>
+            <select class="form-select" id="tr-origem"><option value="">— selecione —</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label req">Conta Destino</label>
+            <select class="form-select" id="tr-destino"><option value="">— selecione —</option></select>
+          </div>
+        </div>
+        <div class="form-row fr-2">
+          <div class="form-group">
+            <label class="form-label req">Valor (R$)</label>
+            <input class="form-input" id="tr-valor" type="number" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label class="form-label req">Data</label>
+            <input class="form-input" id="tr-data" type="date">
+          </div>
+        </div>
+        <div class="form-row fr-1">
+          <div class="form-group">
+            <label class="form-label">Dt. Pagamento</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input class="form-input" id="tr-pagamento" type="date" style="flex:1;">
+              <button type="button" onclick="document.getElementById('tr-pagamento').value=hoje()" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Preencher com hoje">Hoje</button>
+              <button type="button" onclick="document.getElementById('tr-pagamento').value=''" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Limpar = pendente">✕</button>
+            </div>
+            <span class="form-hint">Vazio = pendente</span>
+          </div>
+        </div>
+        <div class="form-row fr-1">
+          <div class="form-group">
+            <label class="form-label">Observações</label>
+            <input class="form-input" id="tr-obs" placeholder="Opcional">
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL LANÇAMENTO -->
+      <div id="painel-lanc">
+      <!-- TIPO -->
+      <div class="tipo-toggle">
+        <button class="t-rec" id="t-rec-btn" onclick="setTipo('receber')">↑ A Receber</button>
+        <button class="t-pag inativo" id="t-pag-btn" onclick="setTipo('pagar')">↓ A Pagar</button>
+      </div>
+
+      <div class="form-row fr-2">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label req">Fornecedor / Cliente</label>
+          <input class="form-input" id="m-forn" placeholder="Nome do fornecedor ou cliente" list="forn-dl" oninput="autoPreencherFornecedor(this.value);verificarFornNovo(this.value)">
+          <datalist id="forn-dl"></datalist>
+          <div class="forn-hint" id="forn-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="forn-hint-txt">Fornecedor não cadastrado.</span>
+            <button onclick="abrirCadastroRapido()">+ Cadastrar agora</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label">CNPJ / CPF</label>
+          <input class="form-input" id="m-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraCNPJ(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição / Histórico</label>
+          <input class="form-input" id="m-desc" placeholder="Ex: NF-e 00123, Aluguel março, Salário...">
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label req">Valor (R$)</label>
+          <input class="form-input" id="m-valor" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nº Documento</label>
+          <input class="form-input" id="m-doc" placeholder="NF, boleto, contrato...">
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="m-cat">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Centro de Custo</label>
+          <select class="form-select" id="m-cc">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row fr-3">
+        <div class="form-group">
+          <label class="form-label">Dt. Competência</label>
+          <input class="form-input" id="m-comp" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label req">Dt. Vencimento</label>
+          <input class="form-input" id="m-venc" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dt. Pagamento/Receb.</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="form-input" id="m-pag" type="date" style="flex:1;">
+            <button type="button" onclick="document.getElementById('m-pag').value=hoje()" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Preencher com hoje">Hoje</button>
+            <button type="button" onclick="document.getElementById('m-pag').value=''" style="white-space:nowrap;padding:0 10px;height:36px;font-size:11px;font-weight:600;font-family:var(--fonte-b);border:1px solid var(--borda);border-radius:var(--r-md);background:var(--bg-card);color:var(--texto2);cursor:pointer;" title="Limpar = pendente">✕</button>
+          </div>
+          <span class="form-hint">Vazio = pendente</span>
+        </div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group">
+          <label class="form-label req">Conta Bancária</label>
+          <select class="form-select" id="m-banco">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div id="secao-recorr">
+      <div class="form-secao" style="margin-bottom:.6rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        Repetições
+      </div>
+      <div class="form-row fr-1" style="margin-bottom:.5rem;">
+        <div class="form-group">
+          <label class="form-label">Tipo de repetição</label>
+          <div class="recorr-tipo-toggle">
+            <button type="button" class="recorr-tipo-btn ativo" id="rt-nenhuma" onclick="setRecorrTipo('nenhuma')">Sem repetição</button>
+            <button type="button" class="recorr-tipo-btn" id="rt-auto" onclick="setRecorrTipo('auto')">Automática</button>
+            <button type="button" class="recorr-tipo-btn" id="rt-custom" onclick="setRecorrTipo('custom')">Personalizada</button>
+          </div>
+        </div>
+      </div>
+      <!-- BLOCO AUTO -->
+      <div id="bloco-auto" class="hidden">
+        <div class="form-row fr-2">
+          <div class="form-group">
+            <label class="form-label">Frequência</label>
+            <select class="form-select" id="m-recorr">
+              <option value="semanal">Semanal</option>
+              <option value="quinzenal">Quinzenal</option>
+              <option value="mensal" selected>Mensal</option>
+              <option value="bimestral">Bimestral</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nº de parcelas</label>
+            <input class="form-input" id="m-recorr-qt" type="number" min="2" max="120" value="12" placeholder="ex: 12">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--texto3);margin-top:-4px;margin-bottom:.6rem;">As datas serão geradas automaticamente a partir do vencimento.</div>
+      </div>
+      <!-- BLOCO PERSONALIZADO -->
+      <div id="bloco-custom" class="hidden">
+        <div style="font-size:11px;color:var(--texto3);margin-bottom:.5rem;">Informe a data de vencimento de cada parcela adicional (além desta).</div>
+        <div id="custom-parcelas-wrap"></div>
+        <button type="button" class="btn-s" style="font-size:11px;padding:5px 12px;margin-top:.4rem;" onclick="adicionarParcelaCustom()">+ Adicionar parcela</button>
+      </div>
+      </div><!-- /secao-recorr -->
+      <!-- hidden input para modo sem repetição -->
+      <input type="hidden" id="m-recorr-tipo" value="nenhuma">
+      <div class="form-row fr-1">
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" id="m-obs" placeholder="Observação interna opcional">
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-secao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+        Anexos
+      </div>
+      <div class="form-row fr-1" style="margin-top:.5rem;">
+        <div class="form-group">
+          <div class="anexo-drop" id="anexo-drop" onclick="document.getElementById('m-anexo-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleAnexoDrop(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.35;margin-bottom:6px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            <span style="font-size:12px;color:var(--texto3);">Clique para anexar ou arraste arquivos aqui</span>
+            <span style="font-size:10px;color:var(--texto3);margin-top:2px;">PDF, imagens, XML, planilhas — máx. 10MB por arquivo</span>
+            <input type="file" id="m-anexo-input" multiple accept=".pdf,.png,.jpg,.jpeg,.xml,.xlsx,.xls,.csv,.doc,.docx" style="display:none;" onchange="handleAnexoChange(event)">
+          </div>
+          <div id="anexo-lista" class="anexo-lista"></div>
+        </div>
+      </div>
+      </div><!-- /painel-lanc -->
+    </div>
+    <!-- Painel de série — aparece ao editar lançamentos de uma recorrência -->
+    <div id="serie-painel" style="display:none;padding:.8rem 1.5rem;border-top:1px solid var(--borda);background:var(--n050);"></div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-p" id="btn-salvar-modal" onclick="salvarOuTransferir()">✓ Salvar lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL BAIXA ═══ -->
+<div class="overlay" id="overlay-baixa">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-titulo">Dar Baixa</span>
+      <button class="modal-fechar" onclick="fecharBaixa()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--texto2);margin-bottom:1rem;" id="baixa-desc">—</p>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label req">Data de pagamento</label>
+          <input class="form-input" id="baixa-data" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor pago (R$)</label>
+          <input class="form-input" id="baixa-valor" type="number" step="0.01" placeholder="0,00">
+        </div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group">
+          <label class="form-label req">Conta utilizada</label>
+          <select class="form-select" id="baixa-banco">
+            <option value="">— selecione —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" id="baixa-obs" placeholder="Opcional">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharBaixa()">Cancelar</button>
+      <button class="btn-p" onclick="confirmarBaixa()">✓ Confirmar baixa</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CONFIRMAR EXCLUSÃO ═══ -->
+<div class="overlay" id="overlay-del">
+  <div class="modal modal-sm">
+    <div class="modal-header" style="background:#7f1d1d;">
+      <span class="modal-titulo" style="color:#fca5a5;">Confirmar exclusão</span>
+      <button class="modal-fechar" onclick="fecharDel()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--texto2);" id="del-desc">Deseja excluir este lançamento? Esta ação não pode ser desfeita.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharDel()">Cancelar</button>
+      <button class="btn-s danger" onclick="confirmarDel()">✕ Excluir</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL EXPORTAR -->
+<div class="overlay" id="overlay-exportar">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">
+      <span class="modal-titulo" id="exp-modal-titulo">Exportar Lançamentos</span>
+      <button class="modal-fechar" onclick="fecharModalExp()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border:1px solid var(--borda);border-radius:var(--r-md);margin-bottom:1rem;background:var(--n050);">
+        <span id="exp-formato-ico" style="font-size:1.2rem;">📄</span>
+        <div><div style="font-size:13px;font-weight:600;" id="exp-formato-label">PDF</div><div style="font-size:11px;color:var(--texto3);" id="exp-formato-sub">—</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);margin-bottom:.5rem;">Campos a exportar</div>
+      <div style="display:flex;gap:.4rem;margin-bottom:.5rem;">
+        <button class="btn-s" style="font-size:11px;padding:4px 10px;" onclick="marcarTodosCampos(true)">Selecionar todos</button>
+        <button class="btn-s" style="font-size:11px;padding:4px 10px;" onclick="marcarTodosCampos(false)">Limpar</button>
+      </div>
+      <div class="campos-grid" id="campos-grid"></div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);margin-bottom:.5rem;margin-top:.8rem;">Ordenação</div>
+      <div style="display:flex;gap:.6rem;">
+        <select id="exp-ordem-campo" style="flex:1;background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-sm);padding:7px 10px;font-size:12px;font-family:var(--fonte-b);color:var(--texto);outline:none;">
+          <option value="dtVencimento">Vencimento</option>
+          <option value="valor">Valor</option>
+          <option value="fornecedor">Fornecedor A-Z</option>
+          <option value="status">Status</option>
+        </select>
+        <select id="exp-ordem-dir" style="background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-sm);padding:7px 10px;font-size:12px;font-family:var(--fonte-b);color:var(--texto);outline:none;">
+          <option value="asc">↑ Crescente</option>
+          <option value="desc">↓ Decrescente</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModalExp()">Cancelar</button>
+      <button class="btn-p" onclick="confirmarExportacao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Exportar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<!-- ═══ MODAL CADASTRO RÁPIDO DE FORNECEDOR/CLIENTE ═══ -->
+<div class="overlay" id="overlay-qr">
+  <div class="modal modal-qr">
+    <div class="modal-header">
+      <div>
+        <div class="qr-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          Cadastro rápido
+        </div>
+        <span class="modal-titulo" id="qr-titulo">Novo Fornecedor / Cliente</span>
+      </div>
+      <button class="modal-fechar" onclick="fecharCadastroRapido()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--texto3);margin-bottom:1rem;">Preencha os dados básicos. Após salvar, o lançamento será preenchido automaticamente.</p>
+      <div class="form-row fr-2">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label req">Nome / Razão Social</label>
+          <input class="form-input" id="qr-nome" placeholder="Nome do fornecedor ou cliente">
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label req">Tipo</label>
+          <select class="form-select" id="qr-tipo">
+            <option value="fornecedor">Fornecedor</option>
+            <option value="cliente">Cliente</option>
+            <option value="ambos">Ambos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ / CPF</label>
+          <input class="form-input" id="qr-doc" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraCNPJ(this)">
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="form-input" id="qr-email" type="email" placeholder="contato@empresa.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input class="form-input" id="qr-tel" placeholder="(00) 00000-0000" maxlength="15" oninput="mascaraTel(this)">
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label">Cidade / Estado</label>
+          <input class="form-input" id="qr-cidade" placeholder="São Paulo, SP">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" id="qr-obs" placeholder="Opcional">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharCadastroRapido()">Cancelar</button>
+      <button class="btn-p" onclick="salvarCadastroRapido()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Salvar e continuar lançamento
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════
+if (window.self !== window.top) {
+  document.body.classList.add('embed');
+} else {
+  document.body.classList.remove('embed');
+}
+const CHAVE = 'caster_bpo_v2';
+const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+let DB = { empresas:[], bancos:{}, lancamentos:{}, categorias:{}, centrosCusto:{}, fornecedores:{}, fornecedoresObj:{}, orcamentos:{} };
+let EMP = null;  // empresa ativa
+
+let tabAtiva = 'todos';
+let filtros  = { busca:'', status:'', categoria:'', cc:'', de:'', ate:'' };
+let ordemCol = 'dtVencimento';
+let ordemDir = 1; // 1 asc, -1 desc
+let pagAtual = 1;
+const POR_PAG = 20;
+let selecionados = new Set();
+let editandoId = null;
+let baixandoId = null;
+let deletandoId = null;
+let tipoAtual = 'receber';
+
+let modalTabAtual = 'lanc'; // 'lanc' | 'transf'
+function salvarDB(){ localStorage.setItem(CHAVE, JSON.stringify(DB)); }
+
+function setModalTab(tab){
+  modalTabAtual = tab;
+  const isTransf = tab === 'transf';
+  document.getElementById('painel-lanc').classList.toggle('hidden', isTransf);
+  document.getElementById('painel-transf').classList.toggle('hidden', !isTransf);
+  const mTabLanc = document.getElementById('mtab-lanc');
+  const mTabTransf = document.getElementById('mtab-transf');
+  if(isTransf){
+    mTabTransf.style.background='var(--g900)'; mTabTransf.style.color='var(--d300)';
+    mTabLanc.style.background='var(--bg-card)'; mTabLanc.style.color='var(--texto3)';
+    document.getElementById('btn-salvar-modal').textContent='⇄ Confirmar transferência';
+    document.getElementById('modal-titulo').textContent='Nova Transferência';
+  } else {
+    mTabLanc.style.background='var(--g900)'; mTabLanc.style.color='var(--d300)';
+    mTabTransf.style.background='var(--bg-card)'; mTabTransf.style.color='var(--texto3)';
+    document.getElementById('btn-salvar-modal').textContent='✓ Salvar lançamento';
+    document.getElementById('modal-titulo').textContent = editandoId ? 'Editar Lançamento' : 'Novo Lançamento';
+  }
+}
+
+function salvarOuTransferir(){
+  if(modalTabAtual === 'transf') salvarTransferencia();
+  else salvar();
+}
+
+async function salvarTransferencia(){
+  const origemId = document.getElementById('tr-origem').value;
+  const destinoId = document.getElementById('tr-destino').value;
+  const valor = parseFloat(document.getElementById('tr-valor').value);
+  const data = document.getElementById('tr-data').value;
+  const obs = document.getElementById('tr-obs').value.trim();
+  const dtPag = document.getElementById('tr-pagamento').value || null;
+  if(!origemId || !destinoId){ toast('Selecione as contas de origem e destino','err'); return; }
+  if(origemId === destinoId){ toast('Origem e destino devem ser contas diferentes','err'); return; }
+  if(!valor || valor <= 0){ toast('Informe um valor válido','err'); return; }
+  if(!data){ toast('Informe a data da transferência','err'); return; }
+  const bancos = DB.bancos[EMP.id]||[];
+  const bOrigem = bancos.find(b=>b.id===origemId);
+  const bDestino = bancos.find(b=>b.id===destinoId);
+  const descricao = `Transferência: ${bOrigem?.nome||'Conta'} → ${bDestino?.nome||'Conta'}`;
+  // Cria lançamento saída (pagar) na origem
+  const saidaId = uid();
+  const saida = {
+    id: saidaId, tipo:'pagar', fornecedor:'Transferência entre contas',
+    cnpj:'', descricao, categoria:'', centroCusto:'',
+    valor, dtCompetencia:data, dtVencimento:data, dtPagamento:dtPag,
+    bancoId:origemId, documento:'', obs, anexos:[], recorrencia:'nenhuma',
+    conciliado:false, criadoEm:new Date().toISOString(), isTransferencia:true, parId: saidaId+'_entrada'
+  };
+  // Cria lançamento entrada (receber) no destino
+  const entradaId = uid();
+  const entrada = {
+    id: entradaId, tipo:'receber', fornecedor:'Transferência entre contas',
+    cnpj:'', descricao, categoria:'', centroCusto:'',
+    valor, dtCompetencia:data, dtVencimento:data, dtPagamento:dtPag,
+    bancoId:destinoId, documento:'', obs, anexos:[], recorrencia:'nenhuma',
+    conciliado:false, criadoEm:new Date().toISOString(), isTransferencia:true, parId: saidaId+'_saida'
+  };
+  if(!DB.lancamentos[EMP.id]) DB.lancamentos[EMP.id]=[];
+  DB.lancamentos[EMP.id].unshift(saida, entrada);
+  salvarDB(); fecharModal(); renderKPIs(); filtrar();
+  toast(`Transferência de ${fmtM(valor)} registrada!`,'ok');
+  // Supabase upsert ambos
+  const upsertSafe = async (l) => {
+    try {
+      await supa.rpc('upsert_lancamento', {
+        p_id:l.id, p_empresa_id:EMP.id, p_tipo:l.tipo,
+        p_fornecedor:l.fornecedor, p_descricao:l.descricao||null,
+        p_categoria:null, p_centro_custo:null,
+        p_banco_id:l.bancoId||null, p_cnpj:null,
+        p_dt_competencia:l.dtCompetencia||null, p_dt_vencimento:l.dtVencimento||null,
+        p_dt_pagamento:l.dtPagamento||null,
+        p_valor:l.valor, p_documento:null,
+        p_conciliado:false, p_obs:l.obs||null, p_recorrencia:'nenhuma',
+        p_serie_id: null
+      });
+    } catch(e){ console.warn('Erro ao salvar transferência:', e); }
+  };
+  await upsertSafe(saida);
+  await upsertSafe(entrada);
+  try { window.parent.postMessage({tipo:'lancamento_salvo'},'*'); } catch(_){}
+}
+
+async function carregarDB(){
+  const cache = localStorage.getItem(CHAVE);
+  if(cache) try{
+    DB = JSON.parse(cache);
+    // Sanitiza fornecedores do cache: garante que são sempre strings
+    Object.keys(DB.fornecedores||{}).forEach(k => {
+      DB.fornecedores[k] = (DB.fornecedores[k]||[]).filter(f => typeof f === 'string');
+    });
+  }catch(e){}
+  const eid = sessionStorage.getItem('empresa_ativa');
+  if(!eid) return;
+
+  // Busca cada tabela individualmente: um 500 em uma não derruba as outras
+  const safe = async (fn) => { try { return await fn(); } catch(e) { console.warn('Supabase erro parcial:', e); return null; } };
+
+  const [emps, bancos, cats, centros, forn, lancs] = await Promise.all([
+    safe(() => supa.from('empresas').select('*')),
+    safe(() => supa.from('bancos').select('*').eq('empresa_id', eid)),
+    safe(() => supa.from('categorias').select('*').eq('empresa_id', eid)),
+    safe(() => supa.from('centros_custo').select('*').eq('empresa_id', eid)),
+    safe(() => supa.from('fornecedores').select('*').eq('empresa_id', eid)),
+    safe(() => supa.from('lancamentos').select('*').eq('empresa_id', eid)),
+  ]);
+
+  if(emps?.data?.length)   DB.empresas          = emps.data;
+  if(bancos?.data)         DB.bancos[eid]        = bancos.data;
+  if(cats?.data)           DB.categorias[eid]    = cats.data.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
+  if(centros?.data)        DB.centrosCusto[eid]  = centros.data;
+  if(forn?.data){
+    if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
+    // Deduplica pelo nome (case-insensitive) — mantém o primeiro registro de cada nome
+    const vistos = new Map();
+    forn.data.forEach(f => {
+      const chave = f.nome.toLowerCase();
+      if(!vistos.has(chave)) vistos.set(chave, f);
+    });
+    const fornUnicos = [...vistos.values()];
+    DB.fornecedoresObj[eid] = fornUnicos.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
+    DB.fornecedores[eid] = fornUnicos.map(f => f.nome);
+    // Remove duplicatas do Supabase silenciosamente (mantém o primeiro, deleta os extras)
+    const idsExtras = forn.data.filter(f => {
+      const chave = f.nome.toLowerCase();
+      return vistos.get(chave).id !== f.id;
+    }).map(f => f.id);
+    if(idsExtras.length) supa.from('fornecedores').delete().in('id', idsExtras).then(({error}) => {
+      if(error) console.warn('Erro ao limpar fornecedores duplicados:', error);
+      else console.log(`${idsExtras.length} fornecedor(es) duplicado(s) removido(s) do Supabase`);
+    });
+  }
+  if(lancs?.data) DB.lancamentos[eid] = lancs.data.map(l => ({
+  ...l,
+  bancoId:       l.bancoId       ?? l.banco_id,
+  centroCusto:   l.centroCusto   ?? l.centro_custo,
+  dtCompetencia: l.dtCompetencia ?? l.dt_competencia,
+  dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
+  dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
+  criadoEm:      l.criadoEm      ?? l.criado_em,
+  serie_id:      l.serie_id      ?? null
+}));
+  localStorage.setItem(CHAVE, JSON.stringify(DB));
+}
+function uid(){ return crypto.randomUUID(); }
+function hoje(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function fmtM(v){ return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDt(d){ if(!d) return '—'; const [y,m,dia]=d.split('-'); return `${dia}/${m}/${y}`; }
+
+function voltarPainel(){
+  if(window.self!==window.top) window.parent.irAba('dashboard', window.parent.document.getElementById('sb-dashboard'));
+  else window.location.href='caster-modulo1-painel.html';
+}
+function navegar(url){
+  if(window.self!==window.top){
+    const aba = url.replace('caster-modulo2-','').replace('caster-modulo3-','').replace('caster-modulo4-','').replace('caster-modulo5-','').replace('.html','').split('-')[0];
+    const mapaAbas = {'lancamentos':'lancamentos','conciliacao':'conciliacao','relatorios':'relatorios','configuracoes':'configuracoes'};
+    const abaAlvo = mapaAbas[aba] || 'dashboard';
+    window.parent.irAba(abaAlvo, window.parent.document.getElementById('sb-'+abaAlvo));
+  } else window.location.href=url;
+}
+
+// ══════════════════════════════════════
+// INICIALIZAÇÃO
+// ══════════════════════════════════════
+function init(){
+  // Pegar empresa ativa do sessionStorage
+  const eid = sessionStorage.getItem('empresa_ativa');
+  if(eid) EMP = DB.empresas.find(e=>e.id===eid);
+  if(!EMP && DB.empresas.length) EMP = DB.empresas[0];
+  if(!EMP){ document.getElementById('badge-empresa').textContent='Sem empresa'; return; }
+
+  document.getElementById('badge-empresa').textContent = EMP.fantasia || EMP.razao;
+  document.getElementById('sub-empresa').textContent = `${EMP.fantasia||EMP.razao} · Lançamentos`;
+
+  preencherFiltrosCats();
+  renderKPIs();
+  filtrar();
+  atualizarSortHeaders();
+}
+
+// ── Helpers de categoria (mesma lógica do módulo 1) ──────────────────────
+function getCodCat(allCats, c) {
+  const sorted = allCats.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
+  const prefMae = c.mae === 'Entradas' ? '1' : '2';
+  if (!c.pai) {
+    const irmaos = sorted.filter(x => x.mae === c.mae && !x.pai);
+    return `${prefMae}.${irmaos.findIndex(x => x.id === c.id) + 1}`;
+  }
+  const pai = sorted.find(x => x.id === c.pai);
+  if (!pai) return prefMae;
+  const codPai = getCodCat(sorted, pai);
+  const filhos = sorted.filter(x => x.pai === c.pai);
+  return `${codPai}.${filhos.findIndex(x => x.id === c.id) + 1}`;
+}
+
+function popularCatSelect(selId, cats, maeFiltro, labelVazio) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  const valAtual = sel.value;
+  const sorted = cats.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
+  const grupos = maeFiltro ? [maeFiltro] : ['Entradas', 'Saídas'];
+  const catsFiltradas = maeFiltro
+    ? sorted.filter(c => {
+        if (!c.pai) return c.mae === maeFiltro;
+        let cur = c;
+        while (cur.pai) { cur = sorted.find(x => x.id === cur.pai); if (!cur) return false; }
+        return cur.mae === maeFiltro;
+      })
+    : sorted;
+  sel.innerHTML = `<option value="">${labelVazio || '— selecione —'}</option>` +
+    grupos.map(mae => {
+      const nivel1 = catsFiltradas.filter(c => c.mae === mae && !c.pai);
+      if (!nivel1.length) return '';
+      return `<optgroup label="${mae}">` +
+        nivel1.map(c => {
+          const cod1 = getCodCat(sorted, c);
+          const subs = catsFiltradas.filter(x => x.pai === c.id);
+          return `<option value="${c.id}">${cod1} ${c.nome}</option>` +
+            subs.map(s => {
+              const cod2 = getCodCat(sorted, s);
+              const subs2 = catsFiltradas.filter(x => x.pai === s.id);
+              return `<option value="${s.id}">&nbsp;&nbsp;↳ ${cod2} ${s.nome}</option>` +
+                subs2.map(s2 => {
+                  const cod3 = getCodCat(sorted, s2);
+                  return `<option value="${s2.id}">&nbsp;&nbsp;&nbsp;&nbsp;↳ ${cod3} ${s2.nome}</option>`;
+                }).join('');
+            }).join('');
+        }).join('') + '</optgroup>';
+    }).join('');
+  // Restaura seleção anterior se ainda válida
+  if (valAtual && catsFiltradas.find(c => c.id === valAtual)) sel.value = valAtual;
+}
+
+function preencherFiltrosCats(){
+  const cats = DB.categorias[EMP.id]||[];
+  const ccs  = DB.centrosCusto[EMP.id]||[];
+  popularCatSelect('f-categoria', cats, null, 'Todas');
+  const cSel = document.getElementById('f-cc');
+  cSel.innerHTML='<option value="">Todos</option>'+ccs.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+// ══════════════════════════════════════
+// KPIs
+// ══════════════════════════════════════
+function renderKPIs(){
+  const lancs = DB.lancamentos[EMP.id]||[];
+  const hj = hoje();
+  const mesAtual = hj.slice(0,7);
+
+  const aRec   = lancs.filter(l=>l.tipo==='receber'&&!l.dtPagamento);
+  const aPag   = lancs.filter(l=>l.tipo==='pagar'  &&!l.dtPagamento);
+  const hjLanc = lancs.filter(l=>!l.dtPagamento&&l.dtVencimento===hj);
+  const venc   = lancs.filter(l=>!l.dtPagamento&&l.dtVencimento<hj);
+  const realRec = lancs.filter(l=>l.tipo==='receber'&&l.dtPagamento&&l.dtPagamento.startsWith(mesAtual));
+  const realPag = lancs.filter(l=>l.tipo==='pagar'  &&l.dtPagamento&&l.dtPagamento.startsWith(mesAtual));
+
+  const soma = arr => arr.reduce((s,l)=>s+l.valor,0);
+
+  document.getElementById('kpi-a-receber').textContent   = fmtM(soma(aRec));
+  document.getElementById('kpi-a-receber-qt').textContent= `${aRec.length} lançamentos`;
+  document.getElementById('kpi-a-pagar').textContent     = fmtM(soma(aPag));
+  document.getElementById('kpi-a-pagar-qt').textContent  = `${aPag.length} lançamentos`;
+  document.getElementById('kpi-hoje').textContent        = fmtM(soma(hjLanc));
+  document.getElementById('kpi-hoje-qt').textContent     = `${hjLanc.length} lançamentos`;
+  document.getElementById('kpi-vencidos').textContent    = fmtM(soma(venc));
+  document.getElementById('kpi-vencidos-qt').textContent = `${venc.length} lançamentos`;
+  document.getElementById('kpi-recebido').textContent    = fmtM(soma(realRec));
+  document.getElementById('kpi-recebido-qt').textContent = `${realRec.length} recebimentos`;
+  document.getElementById('kpi-pago').textContent        = fmtM(soma(realPag));
+  document.getElementById('kpi-pago-qt').textContent     = `${realPag.length} pagamentos`;
+
+  // contagens tabs
+  document.getElementById('tc-todos').textContent    = lancs.length;
+  document.getElementById('tc-receber').textContent  = lancs.filter(l=>l.tipo==='receber').length;
+  document.getElementById('tc-pagar').textContent    = lancs.filter(l=>l.tipo==='pagar').length;
+  document.getElementById('tc-vencidos').textContent = venc.length;
+}
+
+// ══════════════════════════════════════
+// FILTRO + TABELA
+// ══════════════════════════════════════
+function setTab(tab, btn){
+  tabAtiva = tab;
+  document.querySelectorAll('.tipo-tab').forEach(b=>b.classList.remove('ativo','todos','pagar','receber'));
+  btn.classList.add('ativo', tab==='vencidos'?'pagar':tab);
+  pagAtual=1; selecionados.clear();
+  filtrar();
+}
+
+function filtrar(){
+  filtros.busca     = document.getElementById('f-busca').value.trim().toLowerCase();
+  filtros.status    = document.getElementById('f-status').value;
+  filtros.categoria = document.getElementById('f-categoria').value;
+  filtros.cc        = document.getElementById('f-cc').value;
+  filtros.de        = document.getElementById('f-de').value;
+  filtros.ate       = document.getElementById('f-ate').value;
+  pagAtual = 1;
+  const banner = document.getElementById('periodo-banner');
+  if(filtros.de || filtros.ate){
+    document.getElementById('periodo-texto').textContent =
+      `Período analisado: ${filtros.de ? fmtDt(filtros.de) : 'início'} até ${filtros.ate ? fmtDt(filtros.ate) : 'hoje'}`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+  renderTabela();
+}
+
+function limparFiltros(){
+  ['f-busca','f-de','f-ate'].forEach(id=>document.getElementById(id).value='');
+  ['f-status','f-categoria','f-cc'].forEach(id=>document.getElementById(id).value='');
+  filtros={busca:'',status:'',categoria:'',cc:'',de:'',ate:''};
+  filtrar();
+}
+
+function getLancamentosFiltrados(){
+  const lancs = DB.lancamentos[EMP.id]||[];
+  const hj = hoje();
+  return lancs.filter(l=>{
+    // Tab
+    if(tabAtiva==='receber' && l.tipo!=='receber') return false;
+    if(tabAtiva==='pagar'   && l.tipo!=='pagar')   return false;
+    if(tabAtiva==='vencidos'&& (l.dtPagamento||l.dtVencimento>=hj)) return false;
+    // Status
+    const status = !l.dtPagamento ? (l.dtVencimento<hj?'vencido':'pendente') : 'pago';
+    if(filtros.status && status!==filtros.status) return false;
+    // Categoria
+    if(filtros.categoria && l.categoria!==filtros.categoria) return false;
+    // CC
+    if(filtros.cc && l.centroCusto!==filtros.cc) return false;
+    // Datas
+    if(filtros.de  && l.dtVencimento < filtros.de)  return false;
+    if(filtros.ate && l.dtVencimento > filtros.ate)  return false;
+    // Busca — cobre todos os campos visíveis na tabela
+    if(filtros.busca){
+      const cats  = DB.categorias[EMP.id]||[];
+      const ccs   = DB.centrosCusto[EMP.id]||[];
+      const bancos= DB.bancos[EMP.id]||[];
+      const catNome  = (cats.find(c=>c.id===l.categoria)||{}).nome||'';
+      const ccNome   = (ccs.find(c=>c.id===l.centroCusto)||{}).nome||'';
+      const bancoNome= (bancos.find(b=>b.id===l.bancoId)||{}).nome||'';
+      const status   = !l.dtPagamento ? (l.dtVencimento<hoje()?'vencido':'pendente') : 'pago';
+      const tipoTxt  = l.tipo==='receber' ? 'a receber receber' : 'a pagar pagar';
+      const valorTxt = String(l.valor||'');
+      const txt = [
+        l.fornecedor, l.descricao, l.documento, l.obs,
+        catNome, ccNome, bancoNome,
+        status, tipoTxt, valorTxt,
+        fmtDt(l.dtVencimento), fmtDt(l.dtPagamento), fmtDt(l.dtCompetencia)
+      ].join(' ').toLowerCase();
+      if(!txt.includes(filtros.busca)) return false;
+    }
+    return true;
+  });
+}
+
+function ordenar(col){
+  if(ordemCol===col) ordemDir*=-1;
+  else { ordemCol=col; ordemDir=1; }
+  atualizarSortHeaders();
+  renderTabela();
+}
+
+function atualizarSortHeaders(){
+  document.querySelectorAll('thead th.sort').forEach(th=>{
+    const ico = th.querySelector('.sort-ico');
+    if(!ico) return;
+    const id = th.id.replace('th-','');
+    if(id===ordemCol){
+      ico.textContent = ordemDir===1 ? ' ↑' : ' ↓';
+      th.style.color = 'var(--d400)';
+    } else {
+      ico.textContent = '';
+      th.style.color = '';
+    }
+  });
+}
+
+function renderTabela(){
+  const cats  = DB.categorias[EMP.id]||[];
+  const ccs   = DB.centrosCusto[EMP.id]||[];
+  const bancos= DB.bancos[EMP.id]||[];
+  const hj    = hoje();
+
+  let dados = getLancamentosFiltrados();
+  const hj2=hoje();
+  dados.sort((a,b)=>{
+    const getStatus=l=>!l.dtPagamento?(l.dtVencimento<hj2?'vencido':'pendente'):'pago';
+    let va = ordemCol==='status' ? getStatus(a) : (a[ordemCol]||'');
+    let vb = ordemCol==='status' ? getStatus(b) : (b[ordemCol]||'');
+    if(typeof va==='number'||typeof vb==='number') return (Number(va)-Number(vb))*ordemDir;
+    return String(va).localeCompare(String(vb))*ordemDir;
+  });
+
+  const total = dados.length;
+  const ini   = (pagAtual-1)*POR_PAG;
+  const pag   = dados.slice(ini, ini+POR_PAG);
+
+  document.getElementById('tabela-info').textContent = `${total} registro${total!==1?'s':''}`;
+
+  const tbody = document.getElementById('tbody-lancs');
+  if(!pag.length){
+    tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+      <h3>Nenhum lançamento encontrado</h3>
+      <p>Ajuste os filtros ou crie um novo lançamento.</p>
+    </div></td></tr>`;
+    document.getElementById('tfoot-lancs').innerHTML='';
+  } else {
+    tbody.innerHTML = pag.map(l=>{
+      const _catObj = cats.find(c=>c.id===l.categoria);
+      const cat    = _catObj ? getCodCat(cats, _catObj)+' '+_catObj.nome : '—';
+      const cc     = (ccs.find(c=>c.id===l.centroCusto)||{}).nome||'—';
+      const banco  = (bancos.find(b=>b.id===l.bancoId)||{}).nome||'—';
+      const status = !l.dtPagamento ? (l.dtVencimento<hj?'vencido':'pendente') : 'pago';
+      const rowCls = status==='vencido'?'vencido-row':(l.dtVencimento===hj?'hoje-row':'')+(selecionados.has(l.id)?' selecionada':'');
+      const tagCls = {pago:'tag-pago',vencido:'tag-vencido',pendente:'tag-pendente'}[status];
+      const tagTxt = {pago:l.tipo==='receber'?'Recebido':'Pago',vencido:'Vencido',pendente:'Pendente'}[status];
+      // Calcula o número da parcela
+      let parcelaHtml;
+      if(l.serie_id){
+        const serie = (DB.lancamentos[EMP.id]||[])
+          .filter(x => x.serie_id === l.serie_id)
+          .sort((a,b) => (a.dtVencimento||'').localeCompare(b.dtVencimento||''));
+        const idxParc = serie.findIndex(x => x.id === l.id);
+        const tot = serie.length;
+        parcelaHtml = `<span style="font-size:10px;font-weight:700;background:rgba(201,168,76,0.12);color:var(--d700);padding:2px 7px;border-radius:100px;white-space:nowrap;">${idxParc>=0?idxParc+1:1}/${tot}</span>`;
+      } else {
+        parcelaHtml = '<span style="font-size:10px;color:var(--texto3);padding:2px 7px;">1/1</span>';
+      }
+      return `<tr class="${rowCls}" data-id="${l.id}">
+        <td class="center cb-wrap"><input type="checkbox" ${selecionados.has(l.id)?'checked':''} onchange="toggleSel('${l.id}',this)"></td>
+        <td class="mono">${fmtDt(l.dtVencimento)}</td>
+        <td>
+          <div style="font-weight:500;font-size:12px;">${l.descricao||'—'}</div>
+          <div style="font-size:11px;color:var(--texto3);">${l.fornecedor}${l.documento?' · '+l.documento:''}</div>
+        </td>
+        <td class="center">${parcelaHtml}</td>
+        <td><span class="tag tag-cat">${cat}</span></td>
+        <td style="font-size:11px;color:var(--texto3);">${cc}</td>
+        <td><span class="tag ${l.tipo==='receber'?'tag-receber':'tag-pagar'}">${l.tipo==='receber'?'↑ Receber':'↓ Pagar'}</span></td>
+        <td class="right mono ${l.tipo==='receber'?'':'valor-neg'}" style="${l.tipo==='receber'?'color:var(--azul);':''}font-weight:600;">${l.tipo==='receber'?'+ ':'− '}${fmtM(l.valor)}</td>
+        <td><span class="tag ${tagCls}">${tagTxt}</span>${l.conciliado?'<span class="tag tag-conc" style="margin-left:4px;">✓ Conc.</span>':''}</td>
+        <td class="mono">${fmtDt(l.dtPagamento)}</td>
+        <td style="font-size:11px;color:var(--texto3);">${banco!=='—'?banco:'—'}</td>
+        <td class="center">
+          <div style="display:flex;gap:4px;justify-content:center;">
+            ${!l.dtPagamento?`<button class="btn-icon baixa" onclick="abrirBaixa('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Baixa</button>`:''}
+            <button class="btn-icon" onclick="repetirLancamento('${l.id}')" title="Repetir este lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>Repetir</button>
+            <button class="btn-icon" onclick="editar('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
+            <button class="btn-icon del" onclick="abrirDel('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Excluir</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Linha de totais — resultado final dos lançamentos filtrados (todos, não só a página)
+    const todosLancsFiltrados = getLancamentosFiltrados();
+    const totRecTotal = todosLancsFiltrados.filter(l=>l.tipo==='receber').reduce((s,l)=>s+l.valor,0);
+    const totPagTotal = todosLancsFiltrados.filter(l=>l.tipo==='pagar').reduce((s,l)=>s+l.valor,0);
+    const resultado = totRecTotal - totPagTotal;
+    const corResultado = resultado >= 0 ? 'var(--verde-ok)' : 'var(--vermelho)';
+    document.getElementById('tfoot-lancs').innerHTML=`<tr class="linha-total">
+      <td colspan="5" style="font-size:12px;color:var(--texto3);">
+        Resultado dos ${todosLancsFiltrados.length} lançamento${todosLancsFiltrados.length!==1?'s':''} filtrados
+      </td>
+      <td colspan="2"></td>
+      <td class="right mono">
+        <div style="color:var(--azul);font-size:11px;font-weight:600;">↑ Entradas: +${fmtM(totRecTotal)}</div>
+        <div style="color:var(--vermelho);font-size:11px;font-weight:600;">↓ Saídas: −${fmtM(totPagTotal)}</div>
+        <div style="color:${corResultado};font-size:12px;font-weight:700;border-top:1px solid var(--borda);margin-top:3px;padding-top:3px;">${resultado>=0?'':'−'}Resultado: ${fmtM(resultado)}</div>
+      </td>
+      <td colspan="4"></td>
+    </tr>`;
+  }
+
+  renderPaginacao(total);
+  atualizarBarraSel();
+}
+
+function renderPaginacao(total){
+  const totalPags = Math.max(1, Math.ceil(total/POR_PAG));
+  const ini = (pagAtual-1)*POR_PAG;
+  document.getElementById('pag-info').textContent = total?`${ini+1}–${Math.min(ini+POR_PAG,total)} de ${total}`:'0 registros';
+  const c = document.getElementById('pag-btns');
+  c.innerHTML='';
+  const addBtn = (txt, pg, disabled=false) => {
+    const b = document.createElement('button');
+    b.className='pg-btn'+(pg===pagAtual?' ativo':'');
+    b.textContent=txt; b.disabled=disabled;
+    b.onclick=()=>{ pagAtual=pg; renderTabela(); };
+    c.appendChild(b);
+  };
+  addBtn('‹', pagAtual-1, pagAtual===1);
+  const range = [];
+  for(let i=1;i<=totalPags;i++){ if(i===1||i===totalPags||Math.abs(i-pagAtual)<=2) range.push(i); }
+  let last=0;
+  range.forEach(p=>{ if(last&&p-last>1){ const e=document.createElement('span'); e.textContent='…'; e.style.cssText='padding:0 4px;color:var(--texto3);'; c.appendChild(e); } addBtn(p,p); last=p; });
+  addBtn('›', pagAtual+1, pagAtual===totalPags);
+}
+
+// ══════════════════════════════════════
+// SELEÇÃO EM LOTE
+// ══════════════════════════════════════
+function toggleSel(id, cb){
+  cb.checked ? selecionados.add(id) : selecionados.delete(id);
+  atualizarBarraSel();
+}
+function selecionarTodos(cb){
+  const vis = getLancamentosFiltrados().slice((pagAtual-1)*POR_PAG, pagAtual*POR_PAG);
+  vis.forEach(l=> cb.checked ? selecionados.add(l.id) : selecionados.delete(l.id));
+  atualizarBarraSel();
+  renderTabela();
+}
+function atualizarBarraSel(){
+  const bar = document.getElementById('sel-bar');
+  if(selecionados.size){
+    bar.classList.remove('hidden');
+    document.getElementById('sel-info').textContent=`${selecionados.size} selecionado${selecionados.size>1?'s':''}`;
+  } else bar.classList.add('hidden');
+}
+function limparSel(){ selecionados.clear(); document.getElementById('cb-all').checked=false; renderTabela(); }
+
+async function baixarLote(){
+  const lancs = DB.lancamentos[EMP.id]||[];
+  const hj = hoje();
+  let n=0;
+  const aUpsert = [];
+  selecionados.forEach(id=>{
+    const l=lancs.find(x=>x.id===id);
+    if(l&&!l.dtPagamento){ l.dtPagamento=hj; n++; aUpsert.push(l); }
+  });
+  salvarDB(); selecionados.clear(); renderKPIs(); filtrar();
+  toast(`${n} lançamento(s) baixados com data de hoje`,'ok');
+  for (const l of aUpsert) {
+    try {
+      await supa.rpc('upsert_lancamento', {
+        p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
+        p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+        p_categoria: l.categoria || null, p_centro_custo: l.centroCusto || null,
+        p_banco_id: l.bancoId || null, p_cnpj: l.cnpj || null,
+        p_dt_competencia: l.dtCompetencia||null, p_dt_vencimento: l.dtVencimento||null,
+        p_dt_pagamento: l.dtPagamento||null,
+        p_valor: l.valor, p_documento: l.documento || null,
+        p_conciliado: l.conciliado||false, p_obs: l.obs || null,
+        p_recorrencia: l.recorrencia||'nenhuma',
+        p_serie_id: l.serie_id || null
+      });
+    } catch(e){ console.warn('Erro ao baixar lote no Supabase:', e); }
+  }
+}
+async function excluirLote(){
+  if(!confirm(`Excluir ${selecionados.size} lançamentos? Esta ação não pode ser desfeita.`)) return;
+  const ids = [...selecionados];
+  try {
+    const { error } = await supa.from('lancamentos').delete().in('id', ids);
+    if (error) { console.warn('Erro ao excluir lote no Supabase:', error); toast('Erro ao excluir no servidor. Tente novamente.','err'); return; }
+    try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){}
+  } catch(e){ console.warn('Erro ao excluir lote no Supabase:', e); toast('Erro de conexão ao excluir.','err'); return; }
+  DB.lancamentos[EMP.id] = (DB.lancamentos[EMP.id]||[]).filter(l=>!ids.includes(l.id));
+  salvarDB(); selecionados.clear(); renderKPIs(); filtrar();
+  toast(`${ids.length} lançamento(s) excluído(s)`,'ok');
+}
+
+// ══════════════════════════════════════
+// MODAL LANÇAMENTO
+// ══════════════════════════════════════
+function abrirModal(id=null){
+  editandoId = id;
+  modalTabAtual = 'lanc';
+  setModalTab('lanc');
+  document.getElementById('modal-titulo').textContent = id ? 'Editar Lançamento' : 'Novo Lançamento';
+  document.getElementById('btn-salvar-modal').textContent = '✓ Salvar lançamento';
+
+  const cats  = DB.categorias[EMP.id]||[];
+  const ccs   = DB.centrosCusto[EMP.id]||[];
+  const bancos= DB.bancos[EMP.id]||[];
+  const fornsObj = (DB.fornecedoresObj||{})[EMP.id]||[];
+  const nomesObj = fornsObj.map(f=>f.nome).filter(Boolean);
+  const fornsStr = (DB.fornecedores[EMP.id]||[]).filter(f=>typeof f==='string');
+  const todosNomes = [...new Set([...nomesObj, ...fornsStr])].sort();
+  document.getElementById('forn-dl').innerHTML=todosNomes.map(f=>`<option value="${f}">`).join('');
+
+  // Popula selects de transferência com bancos ativos
+  const opcoesBancos = '<option value="">— selecione —</option>'+bancos.filter(b=>b.ativo!==false).map(b=>`<option value="${b.id}">${b.nome}</option>`).join('');
+  document.getElementById('tr-origem').innerHTML = opcoesBancos;
+  document.getElementById('tr-destino').innerHTML = opcoesBancos;
+  document.getElementById('tr-valor').value = '';
+  document.getElementById('tr-data').value = hoje();
+  document.getElementById('tr-obs').value = '';
+
+  // ── Popula select de Centro de Custo ──
+  document.getElementById('m-cc').innerHTML =
+    '<option value="">— selecione —</option>' +
+    ccs.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+
+  // ── Popula select de Banco ──
+  document.getElementById('m-banco').innerHTML =
+    '<option value="">— selecione —</option>' +
+    bancos.filter(b => b.ativo !== false).map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+
+  // Mostra ou oculta seção de repetições: só aparece ao criar, não ao editar
+  const secaoRecorr = document.getElementById('secao-recorr');
+  if(secaoRecorr) secaoRecorr.style.display = id ? 'none' : '';
+
+  if(id){
+    const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===id);
+    if(!l) return;
+    setTipo(l.tipo);
+    document.getElementById('m-forn').value  = l.fornecedor||'';
+    document.getElementById('m-cnpj').value  = l.cnpj||'';
+    document.getElementById('m-desc').value  = l.descricao||'';
+    document.getElementById('m-valor').value = l.valor||'';
+    document.getElementById('m-doc').value   = l.documento||'';
+    document.getElementById('m-cat').value   = l.categoria||'';
+    document.getElementById('m-cc').value    = l.centroCusto||'';
+    document.getElementById('m-comp').value  = l.dtCompetencia||'';
+    document.getElementById('m-venc').value  = l.dtVencimento||'';
+    document.getElementById('m-pag').value   = l.dtPagamento||'';
+    document.getElementById('m-banco').value = l.bancoId||'';
+    document.getElementById('m-obs').value   = l.obs||'';
+    setRecorrTipo('nenhuma');
+  } else {
+    setTipo('receber');
+    ['m-forn','m-cnpj','m-desc','m-valor','m-doc','m-obs'].forEach(id=>document.getElementById(id).value='');
+    ['m-cat','m-cc','m-banco'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('m-comp').value  = hoje();
+    document.getElementById('m-venc').value  = hoje();
+    document.getElementById('m-pag').value   = '';
+    document.getElementById('m-recorr').value= 'mensal';
+    setRecorrTipo('nenhuma');
+  }
+
+  anexosPendentes = id ? (((DB.lancamentos[EMP.id]||[]).find(x=>x.id===id)||{}).anexos||[]).map(a=>({...a})) : [];
+  renderAnexos();
+  renderSeriePainel(id);
+  document.getElementById('overlay-lanc').classList.add('aberto');
+}
+
+function editar(id){ abrirModal(id); }
+function fecharModal(){ document.getElementById('overlay-lanc').classList.remove('aberto'); const b=document.getElementById('modal-parcela-badge'); if(b){b.style.display='none';b.textContent='';} }
+
+// Repetir lançamento existente — abre o modal como novo, preenchido, com recorrência ativa
+function repetirLancamento(id){
+  const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===id);
+  if(!l) return;
+  // Abre modal como novo lançamento (sem editandoId)
+  abrirModal(null);
+  // Aguarda o modal abrir (DOM já está sincronizado — abrirModal é síncrono)
+  setTipo(l.tipo);
+  document.getElementById('m-forn').value  = l.fornecedor||'';
+  document.getElementById('m-cnpj').value  = l.cnpj||'';
+  document.getElementById('m-desc').value  = l.descricao||'';
+  document.getElementById('m-valor').value = l.valor||'';
+  document.getElementById('m-doc').value   = l.documento||'';
+  document.getElementById('m-cat').value   = l.categoria||'';
+  document.getElementById('m-cc').value    = l.centroCusto||'';
+  document.getElementById('m-banco').value = l.bancoId||'';
+  document.getElementById('m-obs').value   = l.obs||'';
+  document.getElementById('m-comp').value  = hoje();
+  document.getElementById('m-venc').value  = hoje();
+  document.getElementById('m-pag').value   = '';
+  // Ativa repetição automática mensal por padrão (pode mudar antes de salvar)
+  setRecorrTipo('auto');
+  document.getElementById('m-recorr').value = 'mensal';
+  document.getElementById('m-recorr-qt').value = '12';
+  document.getElementById('modal-titulo').textContent = 'Repetir Lançamento';
+}
+
+// Painel de série — lançamentos irmãos do mesmo serie_id
+function renderSeriePainel(lancId){
+  const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===lancId);
+  const painel = document.getElementById('serie-painel');
+  const badge = document.getElementById('modal-parcela-badge');
+  if(!painel) return;
+  if(badge){ badge.style.display='none'; badge.textContent=''; }
+  if(!l){
+    painel.innerHTML = ''; painel.style.display = 'none'; return;
+  }
+
+  let irmaos = [];
+
+  if(l.serie_id){
+    // Agrupa pelo serie_id — inclui TODOS que têm esse serie_id (original + cópias)
+    irmaos = (DB.lancamentos[EMP.id]||[])
+      .filter(x => x.serie_id === l.serie_id);
+  }
+
+  if(irmaos.length <= 1){
+    painel.innerHTML = ''; painel.style.display = 'none'; return;
+  }
+
+  irmaos.sort((a,b) => (a.dtVencimento||'').localeCompare(b.dtVencimento||''));
+
+  // Atualiza badge de parcela no cabeçalho do modal
+  const idxAtual = irmaos.findIndex(x => x.id === lancId);
+  if(badge && idxAtual >= 0){
+    badge.textContent = `Parcela ${idxAtual + 1} de ${irmaos.length}`;
+    badge.style.display = 'inline-block';
+  }
+
+  const hj = hoje();
+  painel.style.display = 'block';
+  painel.innerHTML = `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:.5rem;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+      Série — ${irmaos.length} parcela${irmaos.length!==1?'s':''} vinculadas
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;">
+      ${irmaos.map((x,i) => {
+        const status = !x.dtPagamento ? (x.dtVencimento<hj?'vencido':'pendente') : 'pago';
+        const cor = status==='pago'?'var(--verde-ok)':status==='vencido'?'var(--vermelho)':'var(--texto3)';
+        const atual = x.id === lancId;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--r-sm);background:${atual?'var(--g050)':'var(--n050)'};border:1px solid ${atual?'var(--g300)':'var(--borda)'};cursor:${atual?'default':'pointer'};" ${atual?'':'onclick="trocarParcelaSerie(\''+x.id+'\')"'}>
+          <span style="font-size:10px;font-weight:700;color:var(--texto3);min-width:20px;">${i+1}ª</span>
+          <span style="font-family:var(--fonte-mono);font-size:11px;flex:1;">${fmtDt(x.dtVencimento)}</span>
+          <span style="font-size:11px;font-weight:600;color:${x.tipo==='receber'?'var(--azul)':'var(--vermelho)'};">${x.tipo==='receber'?'+':'−'}${fmtM(x.valor)}</span>
+          <span style="font-size:10px;color:${cor};font-weight:600;">${status==='pago'?'✓ Pago':status==='vencido'?'Vencido':'Pendente'}</span>
+          ${atual?'<span style="font-size:10px;background:var(--g500);color:#fff;padding:1px 6px;border-radius:100px;">Atual</span>':''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function trocarParcelaSerie(id){
+  // Fecha o modal atual e reabre com o lançamento selecionado
+  fecharModal();
+  setTimeout(() => abrirModal(id), 80);
+}
+
+function setTipo(tipo){
+  tipoAtual = tipo;
+  const recBtn = document.getElementById('t-rec-btn');
+  const pagBtn = document.getElementById('t-pag-btn');
+  if(tipo==='receber'){
+    recBtn.className='t-rec'; pagBtn.className='t-pag inativo';
+  } else {
+    pagBtn.className='t-pag ativo'; recBtn.className='t-rec inativo';
+  }
+  // Filtra categorias compatíveis com o tipo selecionado
+  filtrarCatsPorTipo(tipo);
+}
+
+function filtrarCatsPorTipo(tipo){
+  if(!EMP) return;
+  const cats = DB.categorias[EMP.id]||[];
+  const maeFiltro = tipo === 'receber' ? 'Entradas' : 'Saídas';
+  popularCatSelect('m-cat', cats, maeFiltro);
+}
+
+
+async function salvar(){
+  const forn  = document.getElementById('m-forn').value.trim();
+  const valor = parseFloat(document.getElementById('m-valor').value);
+  const venc  = document.getElementById('m-venc').value;
+  const banco = document.getElementById('m-banco').value;
+  if(!forn||!valor||!venc){ toast('Preencha fornecedor/cliente, valor e vencimento','err'); return; }
+  if(!banco){ toast('Selecione a conta bancária','err'); return; }
+
+  const lanc = {
+    id: editandoId || uid(),
+    tipo: tipoAtual,
+    fornecedor: forn,
+    cnpj: document.getElementById('m-cnpj').value.trim(),
+    descricao: document.getElementById('m-desc').value.trim(),
+    categoria: document.getElementById('m-cat').value,
+    centroCusto: document.getElementById('m-cc').value,
+    valor,
+    dtCompetencia: document.getElementById('m-comp').value,
+    dtVencimento: venc,
+    dtPagamento: document.getElementById('m-pag').value||null,
+    bancoId: document.getElementById('m-banco').value,
+    documento: document.getElementById('m-doc').value.trim(),
+    obs: document.getElementById('m-obs').value.trim(),
+    anexos: anexosPendentes.map(a=>({nome:a.nome,size:a.size,tipo:a.tipo,dataUrl:a.dataUrl})),
+    recorrencia: document.getElementById('m-recorr-tipo').value==='auto' ? document.getElementById('m-recorr').value : (document.getElementById('m-recorr-tipo').value==='custom' ? 'custom' : 'nenhuma'),
+    conciliado: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).conciliado||false : false,
+    criadoEm: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).criadoEm||new Date().toISOString() : new Date().toISOString(),
+    // serie_id agrupa parcelas de uma mesma recorrência; mantém o existente se for edição
+    serie_id: editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).serie_id||null : null
+  };
+  // Se é novo lançamento com recorrência, gera um serie_id compartilhado
+  const tipoRepCheck = document.getElementById('m-recorr-tipo').value;
+  if(!editandoId && (tipoRepCheck==='auto' || tipoRepCheck==='custom')){
+    lanc.serie_id = uid();
+  }
+
+  if(!DB.lancamentos[EMP.id]) DB.lancamentos[EMP.id]=[];
+  if(editandoId){
+    const idx = DB.lancamentos[EMP.id].findIndex(l=>l.id===editandoId);
+    if(idx>=0) DB.lancamentos[EMP.id][idx]=lanc;
+  } else {
+    DB.lancamentos[EMP.id].unshift(lanc);
+    // Recorrência — usa o mesmo criadoEm do lançamento base para o filtro do Supabase funcionar
+    const tipoRep = document.getElementById('m-recorr-tipo').value;
+    if(tipoRep==='auto'){
+      const qt = parseInt(document.getElementById('m-recorr-qt').value)||12;
+      gerarRecorrencias(lanc, qt, lanc.criadoEm);
+    } else if(tipoRep==='custom'){
+      gerarParcelasCustom(lanc, lanc.criadoEm);
+    }
+  }
+
+  // Salvar fornecedor — verifica em fornecedoresObj (fonte de verdade) para evitar duplicatas
+  if(!DB.fornecedores[EMP.id]) DB.fornecedores[EMP.id]=[];
+  if(!DB.fornecedoresObj) DB.fornecedoresObj={};
+  if(!DB.fornecedoresObj[EMP.id]) DB.fornecedoresObj[EMP.id]=[];
+  const jaExisteForn = DB.fornecedoresObj[EMP.id].some(f => f.nome.toLowerCase() === forn.toLowerCase());
+  if(!jaExisteForn){
+    if(!DB.fornecedores[EMP.id].includes(forn)) DB.fornecedores[EMP.id].push(forn);
+    const novoForn = { id: uid(), nome: forn, tipo: tipoAtual==='receber' ? 'cliente' : 'fornecedor', doc: document.getElementById('m-cnpj').value.trim()||null, email: null, tel: null, cidade: null, obs: null };
+    DB.fornecedoresObj[EMP.id].push(novoForn);
+    try { await supa.from('fornecedores').upsert({ id: novoForn.id, empresa_id: EMP.id, nome: novoForn.nome, tipo: novoForn.tipo, doc: novoForn.doc, email: null, tel: null, cidade: null, obs: null }, { onConflict: 'nome,empresa_id' }); } catch(e){ console.warn('Erro ao salvar fornecedor no Supabase:', e); }
+  }
+
+  // Salva via RPC (escreve em lancamentos_raw, lê via view lancamentos)
+  const upsertRPC = async (l) => {
+    const { error } = await supa.rpc('upsert_lancamento', {
+      p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
+      p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+      p_categoria: l.categoria || null,
+      p_centro_custo: l.centroCusto || null,
+      p_banco_id: l.bancoId || null,
+      p_cnpj: l.cnpj || null,
+      p_dt_competencia: l.dtCompetencia || null,
+      p_dt_vencimento: l.dtVencimento || null,
+      p_dt_pagamento: l.dtPagamento || null,
+      p_valor: l.valor, p_documento: l.documento || null,
+      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
+      p_recorrencia: l.recorrencia || 'nenhuma',
+      p_serie_id: l.serie_id || null
+    });
+    if (error) console.warn('Erro ao salvar lançamento no Supabase:', error);
+    else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
+    return !error;
+  };
+
+  try {
+    await upsertRPC(lanc);
+    // Salva todas as parcelas extras geradas
+    if(!editandoId){
+      const extras = (DB.lancamentos[EMP.id]||[]).filter(l => l !== lanc && l._batchId === lanc.id);
+      for (const e of extras) { await upsertRPC(e); }
+    }
+  } catch(e) { console.warn('Erro ao salvar lançamento no Supabase:',e); }
+
+  salvarDB(); fecharModal(); renderKPIs(); filtrar();
+  toast(editandoId?'Lançamento atualizado!':'Lançamento criado com sucesso!','ok');
+}
+
+function gerarRecorrencias(base, qt=12, criadoEm=null){
+  const mapa = { semanal:'semanal', quinzenal:'quinzenal', mensal:'month', bimestral:'bimonth', trimestral:'quarter', anual:'year' };
+  const tipo = mapa[base.recorrencia];
+  if(!tipo) return;
+  const ts = criadoEm || new Date().toISOString();
+  // Extrai ano, mês, dia da string yyyy-mm-dd para evitar problemas de timezone
+  const [baseY, baseM, baseD] = base.dtVencimento.split('-').map(Number);
+  const max = Math.min(qt-1, 119);
+  for(let i=1;i<=max;i++){
+    let novaData;
+    if(tipo==='semanal'){
+      const dt = new Date(baseY, baseM-1, baseD + 7*i);
+      novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    } else if(tipo==='quinzenal'){
+      const dt = new Date(baseY, baseM-1, baseD + 15*i);
+      novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    } else if(tipo==='month'){
+      const dt = new Date(baseY, baseM-1+i, baseD);
+      novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    } else if(tipo==='bimonth'){
+      const dt = new Date(baseY, baseM-1+i*2, baseD);
+      novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    } else if(tipo==='quarter'){
+      const dt = new Date(baseY, baseM-1+i*3, baseD);
+      novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    } else if(tipo==='year'){
+      const dt = new Date(baseY+i, baseM-1, baseD);
+      novaData = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    }
+    const copia = {...base, id:uid(), dtVencimento:novaData, dtPagamento:null, conciliado:false, recorrencia:'nenhuma', criadoEm:ts, _batchId:base.id, serie_id:base.serie_id||null};
+    DB.lancamentos[EMP.id].push(copia);
+  }
+}
+
+function gerarParcelasCustom(base, criadoEm=null){
+  const ts = criadoEm || new Date().toISOString();
+  const rows = document.querySelectorAll('.parcela-custom-row input[type=date]');
+  rows.forEach((inp) => {
+    const dt = inp.value;
+    if(!dt) return;
+    const copia = {...base, id:uid(), dtVencimento:dt, dtPagamento:null, conciliado:false, recorrencia:'nenhuma', criadoEm:ts, _batchId:base.id, serie_id:base.serie_id||null};
+    DB.lancamentos[EMP.id].push(copia);
+  });
+}
+
+// ══════════════════════════════════════
+// BAIXA
+// ══════════════════════════════════════
+function abrirBaixa(id){
+  const lancs = DB.lancamentos[EMP.id]||[];
+  const l = lancs.find(x=>x.id===id);
+  if(!l) return;
+  baixandoId = id;
+  document.getElementById('baixa-desc').textContent=`${l.tipo==='receber'?'Receber':'Pagar'}: ${l.fornecedor} — ${fmtM(l.valor)}`;
+  document.getElementById('baixa-data').value = hoje();
+  document.getElementById('baixa-valor').value = l.valor;
+  const bancos = DB.bancos[EMP.id]||[];
+  document.getElementById('baixa-banco').innerHTML='<option value="">— selecione —</option>'+bancos.map(b=>`<option value="${b.id}">${b.nome}</option>`).join('');
+  document.getElementById('baixa-obs').value='';
+  document.getElementById('overlay-baixa').classList.add('aberto');
+}
+function fecharBaixa(){ document.getElementById('overlay-baixa').classList.remove('aberto'); baixandoId=null; }
+async function confirmarBaixa(){
+  const data  = document.getElementById('baixa-data').value;
+  const banco = document.getElementById('baixa-banco').value;
+  if(!data){ toast('Informe a data de pagamento','err'); return; }
+  if(!banco){ toast('Selecione a conta utilizada','err'); return; }
+  const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===baixandoId);
+  if(!l) return;
+  l.dtPagamento = data;
+  l.bancoId     = banco;
+  const obs = document.getElementById('baixa-obs').value.trim();
+  if(obs) l.obs = (l.obs?l.obs+' | ':'')+obs;
+  salvarDB(); fecharBaixa(); renderKPIs(); filtrar();
+  toast(`Baixa registrada em ${fmtDt(data)}`,'ok');
+  try {
+    const { error: eBaixa } = await supa.rpc('upsert_lancamento', {
+      p_id: l.id, p_empresa_id: EMP.id, p_tipo: l.tipo,
+      p_fornecedor: l.fornecedor, p_descricao: l.descricao || null,
+      p_categoria: l.categoria || null,
+      p_centro_custo: l.centroCusto || null,
+      p_banco_id: l.bancoId || null, p_cnpj: l.cnpj || null,
+      p_dt_competencia: l.dtCompetencia || null,
+      p_dt_vencimento: l.dtVencimento || null,
+      p_dt_pagamento: l.dtPagamento || null,
+      p_valor: l.valor, p_documento: l.documento || null,
+      p_conciliado: l.conciliado || false, p_obs: l.obs || null,
+      p_recorrencia: l.recorrencia || 'nenhuma',
+      p_serie_id: l.serie_id || null
+    });
+    if (eBaixa) console.warn('Erro ao atualizar baixa no Supabase:', eBaixa);
+    else { try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){} }
+  } catch(e){ console.warn('Erro ao atualizar baixa no Supabase:', e); }
+}
+
+// ══════════════════════════════════════
+// EXCLUSÃO
+// ══════════════════════════════════════
+function abrirDel(id){
+  deletandoId = id;
+  const l = (DB.lancamentos[EMP.id]||[]).find(x=>x.id===id);
+  document.getElementById('del-desc').textContent=`Excluir: ${l?.descricao||l?.fornecedor} — ${fmtM(l?.valor||0)}?`;
+  document.getElementById('overlay-del').classList.add('aberto');
+}
+function fecharDel(){ document.getElementById('overlay-del').classList.remove('aberto'); deletandoId=null; }
+async function confirmarDel(){
+  const id = deletandoId;
+  DB.lancamentos[EMP.id]=(DB.lancamentos[EMP.id]||[]).filter(l=>l.id!==id);
+  salvarDB(); fecharDel(); renderKPIs(); filtrar();
+  toast('Lançamento excluído','ok');
+  try {
+    const { error: eDel } = await supa.from('lancamentos').delete().eq('id', id);
+    if (eDel) console.warn('Erro ao excluir do Supabase:', eDel);
+    else { try { window.parent.postMessage({ tipo: 'lancamento_excluido' }, '*'); } catch(_){} }
+  } catch(e){ console.warn('Erro ao excluir do Supabase:', e); }
+}
+
+// ══════════════════════════════════════
+// EXPORTAR (PDF / CSV)
+// ══════════════════════════════════════
+const CAMPOS_LANC = ['Tipo','Fornecedor/Cliente','CNPJ/CPF','Descrição','Categoria','Centro de Custo','Competência','Vencimento','Pagamento','Valor','Status','Documento','Conta','Conciliado','Obs'];
+let expFormato = 'csv';
+let anexosPendentes = [];
+
+function toggleExport(id){
+  const el=document.getElementById(id);
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.export-group').forEach(g=>g.classList.remove('open'));
+  if(!wasOpen) el.classList.add('open');
+}
+
+function abrirModalExportar(fmt){
+  document.querySelectorAll('.export-group').forEach(g=>g.classList.remove('open'));
+  expFormato = fmt;
+  document.getElementById('exp-modal-titulo').textContent = fmt==='pdf' ? 'Exportar PDF — Lançamentos' : 'Exportar CSV — Lançamentos';
+  document.getElementById('exp-formato-ico').textContent = fmt==='pdf' ? '📄' : '📊';
+  document.getElementById('exp-formato-label').textContent = fmt==='pdf' ? 'PDF' : 'Excel / CSV';
+  document.getElementById('exp-formato-sub').textContent = fmt==='pdf' ? 'Layout formatado para impressão' : 'Planilha editável compatível com Excel';
+  document.getElementById('campos-grid').innerHTML = CAMPOS_LANC.map(c=>`
+    <label class="campo-check selecionado" onclick="toggleCampo(this)">
+      <input type="checkbox" checked onchange="syncCampoClass(this.parentElement)"> ${c}
+    </label>`).join('');
+  document.getElementById('overlay-exportar').classList.add('aberto');
+}
+
+function fecharModalExp(){ document.getElementById('overlay-exportar').classList.remove('aberto'); }
+function toggleCampo(el){el.classList.toggle('selecionado');el.querySelector('input').checked=el.classList.contains('selecionado');}
+function syncCampoClass(el){el.classList.toggle('selecionado',el.querySelector('input').checked);}
+function marcarTodosCampos(val){document.querySelectorAll('.campo-check').forEach(el=>{el.querySelector('input').checked=val;el.classList.toggle('selecionado',val);});}
+
+function confirmarExportacao(){
+  const campos=Array.from(document.querySelectorAll('.campo-check.selecionado')).map(el=>el.textContent.trim());
+  if(!campos.length){toast('Selecione ao menos um campo','err');return;}
+  fecharModalExp();
+  if(expFormato==='pdf') gerarPDF(campos);
+  else gerarCSVCampos(campos);
+}
+
+function gerarPDF(campos){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const ordemCampo = document.getElementById('exp-ordem-campo')?.value||'dtVencimento';
+  const ordemDirExp = document.getElementById('exp-ordem-dir')?.value||'asc';
+  const cats=DB.categorias[EMP.id]||[], ccs=DB.centrosCusto[EMP.id]||[], bancos=DB.bancos[EMP.id]||[];
+  const hj=hoje();
+  let dados=[...getLancamentosFiltrados()].sort((a,b)=>{
+    let va=ordemCampo==='valor'?a.valor:(a[ordemCampo]||'');
+    let vb=ordemCampo==='valor'?b.valor:(b[ordemCampo]||'');
+    return ordemDirExp==='asc'?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+  });
+  const de=document.getElementById('f-de')?.value;
+  const ate=document.getElementById('f-ate')?.value;
+  const periodoStr=(de||ate)?`Período: ${de?fmtDt(de):'—'} até ${ate?fmtDt(ate):'—'}`:'Período: todos os lançamentos';
+  doc.setFillColor(11,31,19); doc.rect(0,0,297,20,'F');
+  doc.setTextColor(224,188,85); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('CasterBPO — Lançamentos',14,13);
+  doc.setFontSize(9); doc.setTextColor(200,200,200);
+  doc.text(EMP.fantasia||EMP.razao||'',150,8);
+  doc.text(periodoStr,150,14);
+  doc.text(`Gerado em: ${fmtDt(hj)}`,240,14);
+  const mapCampo={
+    'Tipo':l=>l.tipo==='receber'?'A Receber':'A Pagar',
+    'Fornecedor/Cliente':l=>l.fornecedor||'',
+    'CNPJ/CPF':l=>l.cnpj||'',
+    'Descrição':l=>l.descricao||'',
+    'Categoria':l=>{ const _c=cats.find(c=>c.id===l.categoria); return _c ? getCodCat(cats,_c)+' '+_c.nome : ''; },
+    'Centro de Custo':l=>(ccs.find(c=>c.id===l.centroCusto)||{}).nome||'',
+    'Competência':l=>fmtDt(l.dtCompetencia),
+    'Vencimento':l=>fmtDt(l.dtVencimento),
+    'Pagamento':l=>fmtDt(l.dtPagamento),
+    'Valor':l=>'R$ '+l.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}),
+    'Status':l=>!l.dtPagamento?(l.dtVencimento<hj?'Vencido':'Pendente'):(l.tipo==='receber'?'Recebido':'Pago'),
+    'Documento':l=>l.documento||'',
+    'Conta':l=>(bancos.find(b=>b.id===l.bancoId)||{}).nome||'',
+    'Conciliado':l=>l.conciliado?'Sim':'Não',
+    'Obs':l=>l.obs||''
+  };
+  const rows=dados.map(l=>campos.map(c=>mapCampo[c]?mapCampo[c](l):'—'));
+  doc.autoTable({
+    head:[campos], body:rows, startY:24,
+    styles:{fontSize:8,cellPadding:2.5,font:'helvetica',overflow:'ellipsize'},
+    headStyles:{fillColor:[11,31,19],textColor:[201,168,76],fontStyle:'bold',fontSize:8},
+    alternateRowStyles:{fillColor:[248,247,244]},
+    didParseCell(data){
+      if(data.section!=='body') return;
+      const l=dados[data.row.index]; if(!l) return;
+      if(!l.dtPagamento&&l.dtVencimento<hj) data.cell.styles.textColor=[153,27,27];
+      else if(l.dtPagamento) data.cell.styles.textColor=[22,163,74];
+    },
+    margin:{left:14,right:14},
+    didDrawPage(data){
+      const pgCount=doc.internal.getNumberOfPages();
+      doc.setFontSize(8); doc.setTextColor(150);
+      doc.text(`Página ${data.pageNumber} de ${pgCount}`,14,doc.internal.pageSize.height-8);
+      doc.text(`CasterBPO — ${EMP.fantasia||EMP.razao||''}`,148,doc.internal.pageSize.height-8,{align:'center'});
+    }
+  });
+  doc.save(`lancamentos_${(EMP.fantasia||EMP.razao||'relatorio').replace(/\s/g,'_')}_${hj}.pdf`);
+  toast(`PDF gerado — ${dados.length} lançamentos`,'ok');
+}
+
+function gerarCSVCampos(campos){
+  const cats=DB.categorias[EMP.id]||[], ccs=DB.centrosCusto[EMP.id]||[], bancos=DB.bancos[EMP.id]||[];
+  const hj=hoje();
+  const ordemCampo=document.getElementById('exp-ordem-campo')?.value||'dtVencimento';
+  const ordemDirExp=document.getElementById('exp-ordem-dir')?.value||'asc';
+  let dados=[...getLancamentosFiltrados()].sort((a,b)=>{
+    let va=ordemCampo==='valor'?a.valor:(a[ordemCampo]||'');
+    let vb=ordemCampo==='valor'?b.valor:(b[ordemCampo]||'');
+    return ordemDirExp==='asc'?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+  });
+  const mapCampo={
+    'Tipo':l=>l.tipo==='receber'?'A Receber':'A Pagar',
+    'Fornecedor/Cliente':l=>l.fornecedor||'',
+    'CNPJ/CPF':l=>l.cnpj||'',
+    'Descrição':l=>l.descricao||'',
+    'Categoria':l=>{ const _c=cats.find(c=>c.id===l.categoria); return _c ? getCodCat(cats,_c)+' '+_c.nome : ''; },
+    'Centro de Custo':l=>(ccs.find(c=>c.id===l.centroCusto)||{}).nome||'',
+    'Competência':l=>fmtDt(l.dtCompetencia),
+    'Vencimento':l=>fmtDt(l.dtVencimento),
+    'Pagamento':l=>fmtDt(l.dtPagamento),
+    'Valor':l=>l.valor.toFixed(2).replace('.',','),
+    'Status':l=>!l.dtPagamento?(l.dtVencimento<hj?'Vencido':'Pendente'):(l.tipo==='receber'?'Recebido':'Pago'),
+    'Documento':l=>l.documento||'',
+    'Conta':l=>(bancos.find(b=>b.id===l.bancoId)||{}).nome||'',
+    'Conciliado':l=>l.conciliado?'Sim':'Não',
+    'Obs':l=>l.obs||''
+  };
+  const linhas=[campos];
+  dados.forEach(l=>linhas.push(campos.map(c=>mapCampo[c]?mapCampo[c](l):'—')));
+  const csv='\ufeff'+linhas.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`lancamentos_${(EMP.fantasia||EMP.razao).replace(/\s/g,'_')}.csv`;
+  a.click();
+  toast(`CSV exportado (${campos.length} campos, ${dados.length} linhas)`,'ok');
+}
+
+// MÁSCARA CNPJ/CPF
+function mascaraCNPJ(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length<=11){
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  } else {
+    v=v.replace(/(\d{2})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1/$2');
+    v=v.replace(/(\d{4})(\d{1,2})$/,'$1-$2');
+  }
+  el.value=v;
+}
+
+// MÁSCARA TELEFONE  (aceita 8, 9, 10 ou 11 dígitos)
+function mascaraTel(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>11) v=v.slice(0,11);
+  if(v.length<=10){
+    v=v.replace(/(\d{2})(\d)/,'($1) $2');
+    v=v.replace(/(\d{4})(\d{1,4})$/,'$1-$2');
+  } else {
+    v=v.replace(/(\d{2})(\d)/,'($1) $2');
+    v=v.replace(/(\d{5})(\d{1,4})$/,'$1-$2');
+  }
+  el.value=v;
+}
+
+// ANEXOS
+function handleAnexoChange(evt){
+  adicionarAnexos(Array.from(evt.target.files));
+  evt.target.value='';
+}
+function handleAnexoDrop(evt){
+  evt.preventDefault();
+  document.getElementById('anexo-drop').classList.remove('drag-over');
+  adicionarAnexos(Array.from(evt.dataTransfer.files));
+}
+function adicionarAnexos(files){
+  files.forEach(f=>{
+    if(f.size>10*1024*1024){toast(`${f.name} excede 10MB`,'err');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      anexosPendentes.push({nome:f.name,size:f.size,tipo:f.type,dataUrl:e.target.result});
+      renderAnexos();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function removerAnexo(idx){ anexosPendentes.splice(idx,1); renderAnexos(); }
+function renderAnexos(){
+  const lista=document.getElementById('anexo-lista');
+  if(!lista) return;
+  if(!anexosPendentes.length){lista.innerHTML='';return;}
+  const getIco=t=>t.includes('pdf')?'📄':t.includes('image')?'🖼️':t.includes('xml')?'📋':t.includes('sheet')||t.includes('excel')?'📊':t.includes('word')||t.includes('doc')?'📝':'📎';
+  const fmtSize=s=>s>1024*1024?(s/1024/1024).toFixed(1)+'MB':(s/1024).toFixed(0)+'KB';
+  lista.innerHTML=anexosPendentes.map((a,i)=>`
+    <div class="anexo-item">
+      <div class="anexo-item-ico" style="background:var(--n050);">${getIco(a.tipo)}</div>
+      <span class="anexo-item-nome" title="${a.nome}">${a.nome}</span>
+      <span class="anexo-item-size">${fmtSize(a.size)}</span>
+      <button class="anexo-item-del" onclick="removerAnexo(${i})" title="Remover">✕</button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════
+// AUTO-PREENCHIMENTO DE FORNECEDOR/CLIENTE
+// ══════════════════════════════════════
+function autoPreencherFornecedor(nome) {
+  if (!EMP || !nome) return;
+  const fornsObj = (DB.fornecedoresObj || {})[EMP.id] || [];
+  const forn = fornsObj.find(f => f.nome.toLowerCase() === nome.toLowerCase());
+  if (!forn) return;
+  // Preenche CNPJ/CPF
+  if (forn.doc) document.getElementById('m-cnpj').value = forn.doc;
+  // Ajusta tipo automaticamente baseado no tipo do cadastro
+  if (forn.tipo === 'cliente') setTipo('receber');
+  else if (forn.tipo === 'fornecedor') setTipo('pagar');
+}
+
+// ══════════════════════════════════════
+// CADASTRO RÁPIDO DE FORNECEDOR/CLIENTE
+// ══════════════════════════════════════
+let _qrNomePendente = '';
+
+function verificarFornNovo(nome) {
+  const hint = document.getElementById('forn-hint');
+  const hintTxt = document.getElementById('forn-hint-txt');
+  if (!EMP || !nome || nome.length < 2) { hint.classList.remove('visivel'); return; }
+  const fornsObj = (DB.fornecedoresObj || {})[EMP.id] || [];
+  const existe = fornsObj.some(f => f.nome.toLowerCase() === nome.toLowerCase());
+  if (existe) {
+    hint.classList.remove('visivel');
+  } else {
+    hintTxt.textContent = `"${nome}" não está cadastrado.`;
+    hint.classList.add('visivel');
+  }
+}
+
+function abrirCadastroRapido() {
+  const nome = document.getElementById('m-forn').value.trim();
+  _qrNomePendente = nome;
+  document.getElementById('qr-nome').value = nome;
+  document.getElementById('qr-doc').value = document.getElementById('m-cnpj').value || '';
+  document.getElementById('qr-email').value = '';
+  document.getElementById('qr-tel').value = '';
+  document.getElementById('qr-cidade').value = '';
+  document.getElementById('qr-obs').value = '';
+  // Pré-seleciona tipo com base no tipo de lançamento atual
+  document.getElementById('qr-tipo').value = tipoAtual === 'receber' ? 'cliente' : 'fornecedor';
+  document.getElementById('overlay-qr').classList.add('aberto');
+}
+
+function fecharCadastroRapido() {
+  document.getElementById('overlay-qr').classList.remove('aberto');
+}
+
+async function salvarCadastroRapido() {
+  const nome = document.getElementById('qr-nome').value.trim();
+  if (!nome) { toast('Informe o nome do fornecedor/cliente', 'err'); return; }
+
+  const novoForn = {
+    id: uid(),
+    nome,
+    tipo: document.getElementById('qr-tipo').value,
+    doc:  document.getElementById('qr-doc').value.trim() || null,
+    email: document.getElementById('qr-email').value.trim() || null,
+    tel:  document.getElementById('qr-tel').value.trim() || null,
+    cidade: document.getElementById('qr-cidade').value.trim() || null,
+    obs:  document.getElementById('qr-obs').value.trim() || null
+  };
+
+  // Salva no estado local
+  if (!DB.fornecedoresObj) DB.fornecedoresObj = {};
+  if (!DB.fornecedoresObj[EMP.id]) DB.fornecedoresObj[EMP.id] = [];
+  if (!DB.fornecedores[EMP.id]) DB.fornecedores[EMP.id] = [];
+
+  // Verifica duplicata
+  const jaExiste = DB.fornecedoresObj[EMP.id].some(f => f.nome.toLowerCase() === nome.toLowerCase());
+  if (!jaExiste) {
+    DB.fornecedoresObj[EMP.id].push(novoForn);
+    DB.fornecedores[EMP.id].push(nome);
+    salvarDB();
+
+    // Salva no Supabase
+    try {
+      const { error } = await supa.from('fornecedores').upsert({
+        id: novoForn.id, empresa_id: EMP.id,
+        nome: novoForn.nome, tipo: novoForn.tipo,
+        doc: novoForn.doc, email: novoForn.email,
+        tel: novoForn.tel, cidade: novoForn.cidade, obs: novoForn.obs
+      }, { onConflict: 'nome,empresa_id' });
+      if (error) console.warn('Erro ao salvar fornecedor no Supabase:', error);
+    } catch(e) { console.warn('Erro Supabase fornecedor:', e); }
+  }
+
+  // Atualiza o datalist do campo fornecedor
+  const todosNomes = (DB.fornecedoresObj[EMP.id]||[]).map(f=>f.nome).sort();
+  document.getElementById('forn-dl').innerHTML = todosNomes.map(n=>`<option value="${n}">`).join('');
+
+  // Preenche os campos do lançamento com os dados cadastrados
+  document.getElementById('m-forn').value = nome;
+  if (novoForn.doc) document.getElementById('m-cnpj').value = novoForn.doc;
+  if (novoForn.tipo === 'cliente') setTipo('receber');
+  else if (novoForn.tipo === 'fornecedor') setTipo('pagar');
+
+  // Oculta o hint
+  document.getElementById('forn-hint').classList.remove('visivel');
+
+  fecharCadastroRapido();
+  toast(`"${nome}" cadastrado e preenchido com sucesso!`, 'ok');
+
+  // Notifica o módulo 5 (se estiver aberto em iframe) para atualizar a lista
+  try { window.parent.postMessage({ tipo: 'fornecedor_criado', fornecedor: novoForn }, '*'); } catch(_) {}
+}
+
+// ══════════════════════════════════════
+// REPETIÇÃO PERSONALIZADA
+// ══════════════════════════════════════
+let recorrTipoAtual = 'nenhuma';
+
+function setRecorrTipo(tipo){
+  recorrTipoAtual = tipo;
+  document.getElementById('m-recorr-tipo').value = tipo;
+  ['nenhuma','auto','custom'].forEach(t=>{
+    const btn = document.getElementById('rt-'+t);
+    if(btn) btn.classList.toggle('ativo', t===tipo);
+  });
+  document.getElementById('bloco-auto').classList.toggle('hidden', tipo!=='auto');
+  document.getElementById('bloco-custom').classList.toggle('hidden', tipo!=='custom');
+  if(tipo==='custom' && document.querySelectorAll('.parcela-custom-row').length===0){
+    adicionarParcelaCustom();
+  }
+}
+
+function adicionarParcelaCustom(){
+  const wrap = document.getElementById('custom-parcelas-wrap');
+  const idx = wrap.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'parcela-custom-row';
+  row.innerHTML = `<span class="parcela-num">Parcela ${idx+1}</span>
+    <input type="date" class="form-input" style="height:36px;">
+    <button type="button" onclick="this.parentElement.remove(); renumerarParcelas();" title="Remover">✕</button>`;
+  wrap.appendChild(row);
+  renumerarParcelas();
+}
+
+function renumerarParcelas(){
+  document.querySelectorAll('.parcela-custom-row .parcela-num').forEach((el,i)=>{
+    el.textContent = `Parcela ${i+2}`;
+  });
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function toast(msg, tipo=''){
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className='toast'+(tipo==='err'?' erro':tipo==='ok'?' ok':'');
+  const icon=tipo==='ok'
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
+    :tipo==='err'
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>';
+  t.innerHTML=icon+msg;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+
+// Fechar export dropdown clicando fora
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.export-group')) document.querySelectorAll('.export-group').forEach(g=>g.classList.remove('open'));
+});
+
+// Fechar modal exportar clicando fora
+document.getElementById('overlay-exportar').addEventListener('click',e=>{
+  if(e.target===document.getElementById('overlay-exportar')) fecharModalExp();
+});
+
+// Fechar overlay clicando fora
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('aberto'); });
+});
+
+// Fechar cadastro rápido com Escape sem fechar o modal de lançamento
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('overlay-qr').classList.contains('aberto')) {
+    e.stopImmediatePropagation();
+    fecharCadastroRapido();
+  }
+});
+const eid = sessionStorage.getItem('empresa_ativa');
+if(!eid && DB.empresas.length) sessionStorage.setItem('empresa_ativa', DB.empresas[0].id);
+carregarDB().then(() => init());
+</script>
+
+<!-- SCROLL PHANTOM: espelha a scrollbar horizontal da tabela, visível mesmo no topo da página -->
+<div class="scroll-phantom-wrap" id="scroll-phantom">
+  <div class="scroll-phantom-inner" id="scroll-phantom-inner"></div>
+</div>
+
+<script>
+(function(){
+  const scroll = document.getElementById('tabela-scroll');
+  const phantom = document.getElementById('scroll-phantom');
+  const phantomInner = document.getElementById('scroll-phantom-inner');
+  if(!scroll || !phantom || !phantomInner) return;
+
+  // Sincroniza largura do phantom com a tabela
+  function syncWidth(){
+    phantomInner.style.width = scroll.scrollWidth + 'px';
+  }
+  // Mostra phantom só quando a tabela está visível E tem overflow
+  function updateVisibility(){
+    const hasOverflow = scroll.scrollWidth > scroll.clientWidth;
+    if(!hasOverflow){ phantom.style.display='none'; return; }
+    const rect = scroll.getBoundingClientRect();
+    const tableBottom = rect.bottom;
+    const viewH = window.innerHeight;
+    // Mostra phantom quando a barra nativa ficaria fora da viewport (tabela ainda visível)
+    const nativeBarVisible = tableBottom <= viewH;
+    phantom.style.display = (!nativeBarVisible && rect.top < viewH && rect.bottom > 0) ? 'block' : 'none';
+    // Alinha phantom com a largura e posição horizontal da tabela-wrap
+    const wrap = scroll.closest('.page') || document.body;
+    const wrapRect = scroll.getBoundingClientRect();
+    phantom.style.left = wrapRect.left + 'px';
+    phantom.style.width = wrapRect.width + 'px';
+  }
+
+  // Sincroniza scroll entre os dois
+  let syncingFromPhantom = false, syncingFromScroll = false;
+  phantom.addEventListener('scroll', function(){
+    if(syncingFromScroll) return;
+    syncingFromPhantom = true;
+    scroll.scrollLeft = phantom.scrollLeft;
+    syncingFromPhantom = false;
+  });
+  scroll.addEventListener('scroll', function(){
+    if(syncingFromPhantom) return;
+    syncingFromScroll = true;
+    phantom.scrollLeft = scroll.scrollLeft;
+    syncingFromScroll = false;
+  });
+
+  window.addEventListener('scroll', updateVisibility, {passive:true});
+  window.addEventListener('resize', function(){ syncWidth(); updateVisibility(); });
+  // Observa mudanças no conteúdo da tabela
+  new MutationObserver(function(){ syncWidth(); updateVisibility(); })
+    .observe(scroll, {childList:true, subtree:true});
+
+  syncWidth();
+  updateVisibility();
+})();
+</script>
+</body>
+</html>
