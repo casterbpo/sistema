@@ -2649,7 +2649,7 @@ const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getD
     listaVenc.innerHTML = vencList.map(l => {
       const [y,m,d] = l.dtVencimento.split('-');
       const cls = l.dtVencimento === hoje ? 'hoje' : '';
-      const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+      const catNome = catNomeCompleto(cats, l.categoria);
       return `<div class="venc-item ${cls}" style="cursor:pointer;" onclick="abrirDetalheL('${l.id}')">
         <div class="venc-data">
           <div class="venc-dia">${d}</div>
@@ -2682,7 +2682,7 @@ const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getD
     badgeVenc.textContent = `${vencidasList.length} em atraso`;
     const hoje_ = new Date(hoje);
     tbodyVenc.innerHTML = vencidasList.map(l => {
-      const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+      const catNome = catNomeCompleto(cats, l.categoria);
       const vencDt = new Date(l.dtVencimento);
       const diasAtraso = Math.floor((hoje_ - vencDt) / 86400000);
       let parcelaHtml = '<span style="color:var(--texto-3);">—</span>';
@@ -2758,7 +2758,7 @@ const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getD
   const recentes = [...lancs].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,8);
   const tbody = document.getElementById('tbody-recentes');
   tbody.innerHTML = recentes.map(l => {
-    const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+    const catNome = catNomeCompleto(cats, l.categoria);
     const status = l.dtPagamento ? 'pago' : (l.dtVencimento < hoje ? 'vencido' : 'pendente');
     const tagCls = { pago:'tag-pago', vencido:'tag-vencido', pendente:'tag-pendente' }[status];
     const tagTxt = { pago:'Pago', vencido:'Vencido', pendente:'Pendente' }[status];
@@ -2820,7 +2820,7 @@ const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getD
   // ── GRÁFICO CATEGORIAS ────────────────────────────────
   const catMap = {};
   lPer.filter(l => l.tipo==='pagar' && l.dtPagamento).forEach(l => {
-    const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+    const cn = catNomeCompleto(cats, l.categoria) || 'Outros';
     catMap[cn] = (catMap[cn]||0) + l.valor;
   });
   const catLabels = Object.keys(catMap);
@@ -2851,7 +2851,7 @@ const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getD
   // ── GRÁFICO RECEITAS POR CATEGORIA ────────────────────
   const catMapRec = {};
   lPer.filter(l => l.tipo==='receber' && l.dtPagamento).forEach(l => {
-    const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+    const cn = catNomeCompleto(cats, l.categoria) || 'Outros';
     catMapRec[cn] = (catMapRec[cn]||0) + l.valor;
   });
   const catLabelsRec = Object.keys(catMapRec);
@@ -3174,6 +3174,11 @@ function getCodCat(allCats, c) {
   return `${codPai}.${filhos.findIndex(x => x.id === c.id) + 1}`;
 }
 
+function catNomeCompleto(cats, id) {
+  const c = cats.find(x => x.id === id);
+  if (!c) return '—';
+  return getCodCat(cats, c) + ' ' + c.nome;
+}  
 function popularCatSelect(selId, cats, maeFiltro) {
   const sel = document.getElementById(selId);
   if (!sel) return;
