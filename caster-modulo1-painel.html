@@ -2217,7 +2217,7 @@ async function carregarDB() {
         supa.from('lancamentos').select('*').eq('empresa_id', eid),
       ]);
       if (bancos.data) DB.bancos[eid]       = bancos.data;
-      if (cats.data)   DB.categorias[eid]   = cats.data;
+      if (cats.data)   DB.categorias[eid]   = cats.data.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
       if (centros.data)DB.centrosCusto[eid] = centros.data;
       if (forn.data) {
         if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
@@ -2443,7 +2443,7 @@ async function sincronizarEmpresa(id) {
       supa.from('lancamentos').select('*').eq('empresa_id', id),
     ]);
     if (bancos.data)  DB.bancos[id]       = bancos.data;
-    if (cats.data)    DB.categorias[id]   = cats.data;
+    if (cats.data)    DB.categorias[id]   = cats.data.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
     if (centros.data) DB.centrosCusto[id] = centros.data;
     if (forn.data) {
       if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
