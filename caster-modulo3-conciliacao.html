@@ -733,7 +733,7 @@ async function carregarDB(){
 
   if(emps?.data?.length) DB.empresas         =emps.data;
   if(bancos?.data)        DB.bancos[eid]      =bancos.data;
-  if(cats?.data)          DB.categorias[eid]  =cats.data.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
+  if(cats?.data)          DB.categorias[eid]  =cats.data.slice().sort((a,b)=>{ const oa=a.ordem??9999,ob=b.ordem??9999; return oa!==ob?oa-ob:(a.nome||'').localeCompare(b.nome||'','pt-BR'); });
   if(centros?.data)       DB.centrosCusto[eid]=centros.data;
   if(forn?.data)          DB.fornecedores[eid]=forn.data;
   if(lancs?.data) DB.lancamentos[eid]=lancs.data.map(l=>({
@@ -992,7 +992,11 @@ function parseCSV(txt){
     const iDesc=col.reduce((best,c,i)=>i!==iData&&i!==iVal&&c.length>=(col[best]||'').length?i:best,0);
     desc=col[iDesc]||'Sem descrição';
     if(data&&valor!==0){
-      itens.push({id:uid(),data,valor:Math.abs(valor),tipo:valor<0?'debito':'credito',descricao:desc,conciliado:false});
+      // Tenta obter FITID se presente na linha (coluna com valor numérico longo ou label 'id'/'fitid')
+      const fitidCol = col.find((c,i)=>i!==iData&&i!==iVal&&/^\d{6,}$/.test(c.replace(/\D/g,'')));
+      const fitid = fitidCol || null;
+      const jaConciliado = fitid ? fitidsConciliados.has(fitid) : false;
+      itens.push({id:fitid||uid(),data,valor:Math.abs(valor),tipo:valor<0?'debito':'credito',descricao:desc,conciliado:jaConciliado});
     }
   });
   return itens;
@@ -1008,6 +1012,33 @@ function processarTexto(){
     itens=parseCSV(txt);
   }
   if(!itens.length){toast('Não foi possível interpretar o extrato. Verifique o formato.','err');return;}
+
+  // Segunda passagem: garante que itens cujo FITID esteja no histórico do Supabase
+  // sejam marcados como conciliados, mesmo que o parser não tenha encontrado o FITID.
+  // Para CSV sem FITID, faz fallback por lançamento já conciliado com valor+data iguais.
+  const lancsEmp = DB.lancamentos[EMP.id] || [];
+  itens.forEach(item => {
+    if(item.conciliado) return; // já marcado pelo parser
+    // 1) Checa pelo FITID diretamente (OFX e CSV com coluna FITID)
+    if(fitidsConciliados.has(item.id)){
+      item.conciliado = true;
+      return;
+    }
+    // 2) Fallback para CSV: busca lançamento já conciliado com mesmo valor, tipo e data (±1 dia)
+    const dt = new Date(item.data);
+    const antes = new Date(dt); antes.setDate(dt.getDate()-1);
+    const depois = new Date(dt); depois.setDate(dt.getDate()+1);
+    const fmtD = d => d.toISOString().slice(0,10);
+    const tipoEquiv = item.tipo === 'credito' ? 'receber' : 'pagar';
+    const match = lancsEmp.find(l =>
+      l.conciliado &&
+      l.tipo === tipoEquiv &&
+      Math.abs((l.valor||0) - item.valor) < 0.01 &&
+      [item.data, fmtD(antes), fmtD(depois)].includes(l.dtPagamento || l.dt_pagamento)
+    );
+    if(match) item.conciliado = true;
+  });
+
   extratoItens=itens;
   paresConc=[];
   extratoSel=null; lancSel=null;
@@ -1439,19 +1470,68 @@ function autoPreencherFornecedorCriar(nome){
   }
 }
 
-function atualizarCatsCriar(){
-  const tipo = document.getElementById('criar-tipo').value;
-  const cats = DB.categorias[EMP.id]||[];
-  const maeFiltro = tipo === 'receber' ? 'Entradas' : 'Saídas';
-  const catsFiltradas = cats.filter(c => {
-    if(!c.pai) return c.mae === maeFiltro;
-    let cur = c;
-    while(cur.pai){ cur = cats.find(x=>x.id===cur.pai); if(!cur) return false; }
-    return cur.mae === maeFiltro;
+// ── Helpers de categoria (compartilhados) ────────────────────────────────
+function sortCats(arr){
+  return arr.slice().sort((a,b)=>{
+    const oa=a.ordem??9999,ob=b.ordem??9999;
+    return oa!==ob?oa-ob:(a.nome||'').localeCompare(b.nome||'','pt-BR');
   });
-  const catSel = document.getElementById('criar-cat');
-  catSel.innerHTML='<option value="">— selecione —</option>'+
-    catsFiltradas.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+}
+function getCodCat(allCats,c){
+  const sorted=sortCats(allCats);
+  const prefMae=c.mae==='Entradas'?'1':'2';
+  if(!c.pai){
+    const irmaos=sorted.filter(x=>x.mae===c.mae&&!x.pai);
+    const pos=irmaos.findIndex(x=>x.id===c.id);
+    return `${prefMae}.${pos>=0?pos+1:1}`;
+  }
+  const pai=sorted.find(x=>x.id===c.pai);
+  if(!pai) return prefMae;
+  const codPai=getCodCat(sorted,pai);
+  const filhos=sorted.filter(x=>x.pai===c.pai);
+  const pos=filhos.findIndex(x=>x.id===c.id);
+  return `${codPai}.${pos>=0?pos+1:1}`;
+}
+function popularCatSelect(selId,cats,maeFiltro,labelVazio){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  const valAtual=sel.value;
+  const sorted=sortCats(cats);
+  function getMae(c){
+    let cur=c;
+    while(cur.pai){cur=sorted.find(x=>x.id===cur.pai);if(!cur)return null;}
+    return cur?cur.mae:null;
+  }
+  const grupos=maeFiltro?[maeFiltro]:['Entradas','Saídas'];
+  const catsFiltradas=maeFiltro?sorted.filter(c=>getMae(c)===maeFiltro):sorted;
+  sel.innerHTML=`<option value="">${labelVazio||'— selecione —'}</option>`+
+    grupos.map(mae=>{
+      const nivel1=sortCats(catsFiltradas.filter(c=>c.mae===mae&&!c.pai));
+      if(!nivel1.length) return '';
+      return `<optgroup label="${mae}">`+
+        nivel1.map(c=>{
+          const cod1=getCodCat(sorted,c);
+          const subs=sortCats(catsFiltradas.filter(x=>x.pai===c.id));
+          return `<option value="${c.id}">${cod1} ${c.nome}</option>`+
+            subs.map(s=>{
+              const cod2=getCodCat(sorted,s);
+              const subs2=sortCats(catsFiltradas.filter(x=>x.pai===s.id));
+              return `<option value="${s.id}">&nbsp;&nbsp;↳ ${cod2} ${s.nome}</option>`+
+                subs2.map(s2=>{
+                  const cod3=getCodCat(sorted,s2);
+                  return `<option value="${s2.id}">&nbsp;&nbsp;&nbsp;&nbsp;↳ ${cod3} ${s2.nome}</option>`;
+                }).join('');
+            }).join('');
+        }).join('')+'</optgroup>';
+    }).join('');
+  if(valAtual&&catsFiltradas.find(c=>c.id===valAtual)) sel.value=valAtual;
+}
+
+function atualizarCatsCriar(){
+  const tipo=document.getElementById('criar-tipo').value;
+  const cats=DB.categorias[EMP.id]||[];
+  const maeFiltro=tipo==='receber'?'Entradas':'Saídas';
+  popularCatSelect('criar-cat',cats,maeFiltro);
 }
 
 function confirmarCriarOuTransferir(){
@@ -1481,6 +1561,15 @@ async function salvarTransferenciaConc(){
   const entrada={id:eid2,tipo:'receber',fornecedor:'Transferência entre contas',cnpj:'',descricao:desc,categoria:'',centroCusto:'',valor,dtCompetencia:data,dtVencimento:data,dtPagamento:data,bancoId:finalDestinoId,documento:'',obs,anexos:[],recorrencia:'nenhuma',conciliado:true,criadoEm:new Date().toISOString(),isTransferencia:true};
   if(!DB.lancamentos[EMP.id]) DB.lancamentos[EMP.id]=[];
   DB.lancamentos[EMP.id].unshift(saida,entrada);
+  // Normaliza campos snake_case no DB local para compatibilidade com outros módulos
+  [saida, entrada].forEach(l => {
+    l.banco_id       = l.bancoId;
+    l.centro_custo   = l.centroCusto;
+    l.dt_competencia = l.dtCompetencia;
+    l.dt_vencimento  = l.dtVencimento;
+    l.dt_pagamento   = l.dtPagamento;
+    l.criado_em      = l.criadoEm;
+  });
   // Vincula o lançamento ao par de conciliação
   const lancId = isCredito ? eid2 : sid;
   if(ext){ ext.conciliado=true; }
@@ -1490,6 +1579,9 @@ async function salvarTransferenciaConc(){
   toast('Transferência registrada e conciliada!','ok');
   const upsertT=async(l)=>{try{await supa.rpc('upsert_lancamento',{p_id:l.id,p_empresa_id:EMP.id,p_tipo:l.tipo,p_fornecedor:l.fornecedor,p_descricao:l.descricao||null,p_categoria:null,p_centro_custo:null,p_banco_id:l.bancoId||null,p_cnpj:null,p_dt_competencia:l.dtCompetencia||null,p_dt_vencimento:l.dtVencimento||null,p_dt_pagamento:l.dtPagamento||null,p_valor:l.valor,p_documento:null,p_conciliado:true,p_obs:l.obs||null,p_recorrencia:'nenhuma',p_serie_id:null});}catch(e){console.warn('Erro transf supabase:',e);}};
   await upsertT(saida); await upsertT(entrada);
+  // Notifica outros módulos
+  try { window.parent.postMessage({ tipo: 'lancamento_salvo', empresaId: EMP.id }, '*'); } catch(_){}
+  try { const bc=new BroadcastChannel('caster_bpo'); bc.postMessage({tipo:'lancamento_salvo',empresaId:EMP.id}); bc.close(); } catch(_){}
   // Salva FITID
   if(ext){
     try{
@@ -1613,7 +1705,28 @@ async function confirmarCriar(){
       console.warn('Erro ao salvar lançamento no Supabase:', error);
       toast('Lançamento salvo localmente, mas houve erro ao sincronizar com o servidor. Verifique sua conexão.', 'err');
     } else {
-      try { window.parent.postMessage({ tipo: 'lancamento_salvo' }, '*'); } catch(_){}
+      // Normaliza também os campos snake_case no DB local para que outros módulos
+      // que lêem do localStorage encontrem as mesmas chaves que o Supabase retorna
+      const lancIdx = (DB.lancamentos[EMP.id]||[]).findIndex(l=>l.id===lanc.id);
+      if(lancIdx>=0){
+        const l = DB.lancamentos[EMP.id][lancIdx];
+        l.banco_id       = l.bancoId;
+        l.centro_custo   = l.centroCusto;
+        l.dt_competencia = l.dtCompetencia;
+        l.dt_vencimento  = l.dtVencimento;
+        l.dt_pagamento   = l.dtPagamento;
+        l.criado_em      = l.criadoEm;
+        DB.lancamentos[EMP.id][lancIdx] = l;
+      }
+      salvarDB();
+      // Notifica o módulo pai (iframe) e outros módulos abertos na mesma aba
+      try { window.parent.postMessage({ tipo: 'lancamento_salvo', empresaId: EMP.id }, '*'); } catch(_){}
+      // Notifica via BroadcastChannel para módulos em outras abas/janelas
+      try {
+        const bc = new BroadcastChannel('caster_bpo');
+        bc.postMessage({ tipo: 'lancamento_salvo', empresaId: EMP.id });
+        bc.close();
+      } catch(_){}
     }
   } catch(e){ console.warn('Erro ao salvar lançamento no Supabase:', e); }
   // Persiste FITID como conciliado para não reaparecer em futuras importações
