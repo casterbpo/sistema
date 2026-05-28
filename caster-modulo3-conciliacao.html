@@ -733,7 +733,7 @@ async function carregarDB(){
 
   if(emps?.data?.length) DB.empresas         =emps.data;
   if(bancos?.data)        DB.bancos[eid]      =bancos.data;
-  if(cats?.data)          DB.categorias[eid]  =cats.data;
+  if(cats?.data)          DB.categorias[eid]  =cats.data.slice().sort((a,b)=>((a.ordem??0)-(b.ordem??0)));
   if(centros?.data)       DB.centrosCusto[eid]=centros.data;
   if(forn?.data)          DB.fornecedores[eid]=forn.data;
   if(lancs?.data) DB.lancamentos[eid]=lancs.data.map(l=>({
