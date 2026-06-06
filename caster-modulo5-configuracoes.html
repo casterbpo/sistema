@@ -833,7 +833,7 @@ function uid(){ return crypto.randomUUID(); }
 // (fixo para ser sempre o mesmo em todos os dispositivos)
 const PASSIVOS_ID = '00000000-0000-0000-0000-000000000001';
 
-function garantirPassivos() {
+async function garantirPassivos() {
   // Garante que a categoria-raiz "Passivos" sempre exista em Saídas
   if (!DB.categorias[EMP.id]) DB.categorias[EMP.id] = [];
   const cats = DB.categorias[EMP.id];
@@ -849,7 +849,7 @@ function garantirPassivos() {
       _protegido: true
     });
     salvarDB();
-    upsertCategoriaSupa(cats.find(c => c.id === PASSIVOS_ID), EMP.id);
+    await upsertCategoriaSupa(cats.find(c => c.id === PASSIVOS_ID), EMP.id);
   }
 }
 
@@ -860,7 +860,7 @@ function idCatCartao(cartaoId) {
   return '00000001-0000-0000-0000-' + hex.slice(0, 12).padEnd(12, '0');
 }
 
-function garantirCatCartao(cartao) {
+async function garantirCatCartao(cartao) {
   if (!DB.categorias[EMP.id]) DB.categorias[EMP.id] = [];
   const cats = DB.categorias[EMP.id];
   const catId = idCatCartao(cartao.id);
@@ -880,11 +880,11 @@ function garantirCatCartao(cartao) {
     };
     cats.push(nova);
     salvarDB();
-    upsertCategoriaSupa(nova, EMP.id);
+    await upsertCategoriaSupa(nova, EMP.id);
   } else if (existente.nome !== nome) {
     existente.nome = nome;
     salvarDB();
-    upsertCategoriaSupa(existente, EMP.id);
+    await upsertCategoriaSupa(existente, EMP.id);
   }
 }
 
@@ -898,10 +898,12 @@ function removerCatCartao(cartaoId) {
   supa.from('categorias').delete().eq('id', catId);
 }
 
-function sincronizarCatsCartoes() {
-  // Cria/atualiza cat-filha para cada cartão ativo, remove cats de cartões excluídos
+async function sincronizarCatsCartoes() {
   const cartoes = DB.cartoes[EMP.id] || [];
-  cartoes.forEach(c => garantirCatCartao(c));
+  await garantirPassivos();           // garante que o pai existe no Supabase antes dos filhos
+  for (const c of cartoes) {
+    await garantirCatCartao(c);
+  }
   // Remove cats órfãs
   const idsCartoes = cartoes.map(c => idCatCartao(c.id));
   (DB.categorias[EMP.id] || [])
