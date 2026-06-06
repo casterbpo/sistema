@@ -2120,25 +2120,29 @@ function atualizarSortHeaders(){
 function _btnAutoFatura(l){
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-  // Tenta extrair cid e anoMes do _autoFaturaKey ou do campo obs
-  // obs format: "__auto_fatura__{cartaoId}__{YYYY-MM}"
-  // key format: "auto_fatura_{cartaoId}_{YYYY-MM}"
   let cid = '', anoMes = '';
-  const key = l._autoFaturaKey || '';
-  if(key && key.startsWith('auto_fatura_')){
-    anoMes = key.slice(-7);
-    cid    = key.slice('auto_fatura_'.length, -8);
-  } else {
-    // Fallback: extrai do campo obs
-    const obs = l.obs || '';
-    const m = obs.match(/^__auto_fatura__([^_]+(?:__[^_]+)*)__(\d{4}-\d{2})$/);
-    if(!m){
-      // Tenta formato com separador simples __ entre cartaoId e anoMes
-      const m2 = obs.match(/^__auto_fatura__(.+)__(\d{4}-\d{2})$/);
-      if(m2){ cid = m2[1]; anoMes = m2[2]; }
-    } else {
-      cid = m[1]; anoMes = m[2];
+
+  // Prioridade 1: cartaoId direto no lançamento (mais confiável)
+  if(l.cartaoId){
+    cid = l.cartaoId;
+    // anoMes a partir do dtVencimento do lançamento auto-fatura
+    if(l.dtVencimento) anoMes = l.dtVencimento.slice(0,7);
+  }
+
+  // Prioridade 2: _autoFaturaKey
+  if(!cid || !anoMes){
+    const key = l._autoFaturaKey || '';
+    if(key && key.startsWith('auto_fatura_')){
+      anoMes = key.slice(-7);
+      cid    = key.slice('auto_fatura_'.length, -8);
     }
+  }
+
+  // Prioridade 3: campo obs (fallback legado)
+  if(!cid || !anoMes){
+    const obs = l.obs || '';
+    const m2 = obs.match(/^__auto_fatura__(.+)__(\d{4}-\d{2})$/);
+    if(m2){ cid = m2[1]; anoMes = m2[2]; }
   }
 
   const partes = anoMes.split('-');
@@ -2148,7 +2152,21 @@ function _btnAutoFatura(l){
   const onclick = cid && anoMes
     ? 'irParaFaturaCartao(' + JSON.stringify(cid) + ',' + parseInt(ano) + ',' + mesNum + ')'
     : "setTab('cartao',document.getElementById('tab-cartao'))";
-  return '<span class="tag" style="background:#ede9fe;color:#5b21b6;font-size:10px;cursor:pointer;" onclick="' + onclick + '" title="Ver fatura">\uD83D\uDCB3 Fatura ' + label + '</span>';
+  return '<span class="tag" style="background:#ede9fe;color:#5b21b6;font-size:10px;cursor:pointer;" onclick="' + onclick + '" title="Ver fatura deste cartão">\uD83D\uDCB3 Fatura ' + label + '</span>';
+}
+
+// Botão "Ver Fatura" para compras no cartão (cartaoId != null, !_isAutoFatura)
+function _btnVerFaturaCompra(l){
+  if(!l.cartaoId) return '';
+  const dtVenc = l.dtVencimento || '';
+  if(!dtVenc) return '';
+  const anoMes = dtVenc.slice(0,7);
+  const partes = anoMes.split('-');
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mesNum = parseInt(partes[1]||'0');
+  const ano = parseInt(partes[0]||'0');
+  const label = mesNum ? MESES[mesNum-1]+'/'+ano : anoMes;
+  return '<span class="tag" style="background:#ede9fe;color:#5b21b6;font-size:10px;cursor:pointer;" onclick="irParaFaturaCartao(' + JSON.stringify(l.cartaoId) + ',' + ano + ',' + mesNum + ')" title="Ver fatura do cartão">\uD83D\uDCB3 Fatura ' + label + '</span>';
 }
 
 // Navega direto para o cartão+mês correto sem resetar o estado
@@ -2159,20 +2177,6 @@ function irParaFaturaCartao(cid, ano, mes){
   cartaoNavModo  = 'fatura';
   cartaoNavEtapa = 'visao';
   setTab('cartao', document.getElementById('tab-cartao'), true);
-}
-
-// Botão "Ver Fatura" para lançamentos de compra no cartão (cartaoId != null, !_isAutoFatura)
-function _btnVerFaturaCompra(l){
-  const dtVenc = l.dtVencimento || '';
-  if(!dtVenc || !l.cartaoId) return '';
-  const anoMes = dtVenc.slice(0,7); // "YYYY-MM"
-  const partes = anoMes.split('-');
-  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const mesNum = parseInt(partes[1]||'0');
-  const ano = parseInt(partes[0]||'0');
-  const label = mesNum ? MESES[mesNum-1]+'/'+ano : anoMes;
-  const cid = l.cartaoId;
-  return `<span class="tag" style="background:#ede9fe;color:#5b21b6;font-size:10px;cursor:pointer;" onclick="irParaFaturaCartao(${JSON.stringify(cid)},${ano},${mesNum})" title="Ver fatura do cartão">💳 Fatura ${label}</span>`;
 }
 
 function renderTabela(){
@@ -2466,10 +2470,7 @@ function abrirModal(id=null){
     if(l.cartaoId){
       setTipo('cartao');
       setTimeout(()=>{
-        // Popula select e já seleciona o cartão (com fallback de recarga do Supabase)
-        popularSelectCartoes(l.cartaoId);
-        const selCartao = document.getElementById('m-cartao');
-        if(selCartao && selCartao.value !== l.cartaoId) selCartao.value = l.cartaoId;
+        popularSelectCartoes(l.cartaoId);  // popula select e seleciona o cartão (com fallback Supabase)
         const dtCompraEl = document.getElementById('m-dt-compra');
         if(dtCompraEl) dtCompraEl.value = l.dtCompra||l.dtCompetencia||'';
         const dtFaturaEl = document.getElementById('m-dt-fatura');
@@ -2667,16 +2668,14 @@ function _restaurarCamposDatas(){
   if(rowDatas) rowDatas.className = 'form-row fr-3';
 }
 
-function popularSelectCartoes(cartaoIdParaSelecionar){
+function popularSelectCartoes(cartaoIdSelecionado){
   const sel = document.getElementById('m-cartao');
   if(!sel||!EMP) return;
   const cartoes = (DB.cartoes||{})[EMP.id]||[];
   const ativos = cartoes.filter(c=>c.ativo!==false);
-  sel.innerHTML = '<option value="">— selecione o cartão —</option>' +
-    ativos.map(c=>`<option value="${c.id}">${c.nome} (${c.bandeira}) · Limite: R$ ${Math.max(0,c.limite-calcularLimiteUsadoMod2(c)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</option>`).join('');
-  sel.onchange = function(){ atualizarInfoCartao(this.value); };
-  // Se não há cartões no cache e temos empresa, tenta buscar do Supabase
-  if(!ativos.length && EMP){
+
+  // Se não há cartões no cache, busca do Supabase e re-popula
+  if(!ativos.length){
     supa.from('cartoes').select('*').eq('empresa_id', EMP.id).then(({data})=>{
       if(data && data.length){
         if(!DB.cartoes) DB.cartoes = {};
@@ -2687,13 +2686,18 @@ function popularSelectCartoes(cartaoIdParaSelecionar){
           obs:c.obs, ativo:c.ativo!==false
         }));
         salvarDB();
-        // Re-popula o select com os dados recém-carregados
-        popularSelectCartoes(cartaoIdParaSelecionar);
+        popularSelectCartoes(cartaoIdSelecionado);
+      } else {
+        sel.innerHTML = '<option value="">— nenhum cartão cadastrado —</option>';
       }
     });
     return;
   }
-  if(cartaoIdParaSelecionar) sel.value = cartaoIdParaSelecionar;
+
+  sel.innerHTML = '<option value="">— selecione o cartão —</option>' +
+    ativos.map(c=>`<option value="${c.id}">${c.nome} (${c.bandeira}) · Limite: R$ ${Math.max(0,c.limite-calcularLimiteUsadoMod2(c)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</option>`).join('');
+  sel.onchange = function(){ atualizarInfoCartao(this.value); };
+  if(cartaoIdSelecionado) sel.value = cartaoIdSelecionado;
 }
 
 function calcularLimiteUsadoMod2(cartao){
@@ -2769,20 +2773,10 @@ async function salvar(){
   const venc  = document.getElementById('m-venc').value;
   const banco = document.getElementById('m-banco').value;
   const isCartao = tipoAtual === 'cartao';
-
-  // Para cartão: valida seleção do cartão antes de calcular datas
-  if(isCartao){
-    const cartaoSelPre = document.getElementById('m-cartao')?.value;
-    if(!cartaoSelPre){ toast('Selecione o cartão de crédito','err'); return; }
-  }
-
-  // Para cartão, dt-fatura (calculada) substitui vencimento
-  const vencEfetivo = isCartao ? (document.getElementById('m-dt-fatura')?.value || venc) : venc;
-  if(!forn||!valor||(!vencEfetivo&&!isCartao)){ toast('Preencha fornecedor/cliente, valor e vencimento', 'err'); return; }
-  if(!forn||!valor){ toast('Preencha fornecedor/cliente e valor', 'err'); return; }
+  if(!forn||!valor){ toast('Preencha fornecedor/cliente e valor','err'); return; }
   if(!banco && !isCartao){ toast('Selecione a conta bancária','err'); return; }
 
-  // Validação adicional de cartão
+  // Para cartão: valida seleção antes de depender de datas calculadas
   if(isCartao){
     const cartaoSel = document.getElementById('m-cartao')?.value;
     if(!cartaoSel){ toast('Selecione o cartão de crédito','err'); return; }
@@ -3296,6 +3290,7 @@ function _gerarLancAutoFatura(cartaoId, anoMes){
     existente.dtCompetencia = dtComp;
     existente.fornecedor = ct.banco || ct.nome;
     existente.descricao = `Fatura ${ct.nome} — ${_labelFatura}`;
+    existente.cartaoId = cartaoId;  // garante vínculo com o cartão
     // Garante flags em memória (podem faltar quando vem do Supabase)
     existente._isAutoFatura  = true;
     existente._autoFaturaKey = key;
@@ -3322,7 +3317,7 @@ function _gerarLancAutoFatura(cartaoId, anoMes){
       recorrencia: 'nenhuma',
       serie_id: null,
       anexos: [],
-      cartaoId: null,
+      cartaoId: cartaoId,  // vínculo com o cartão para integração de limite e fatura
       faturaQuitada: false,
       dtCompra: null,
       criadoEm: new Date().toISOString(),
