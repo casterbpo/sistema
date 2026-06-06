@@ -1355,6 +1355,11 @@ async function carregarDB(){
   cartaoId:      l.cartaoId      ?? l.cartao_id      ?? null,
   faturaQuitada: l.faturaQuitada === true || l.fatura_quitada === true || l.faturaQuitada === 'true' || false,
   dtCompra:      l.dtCompra      ?? l.dt_compra      ?? null,
+  // Reconstrói flags locais de lançamentos automáticos de fatura
+    _isAutoFatura:  (l.obs||'').startsWith('__auto_fatura__') || l._isAutoFatura || false,
+    _autoFaturaKey: (l.obs||'').startsWith('__auto_fatura__')
+      ? (() => { const p=(l.obs||'').replace('__auto_fatura__','').split('__'); return p.length>=2?`auto_fatura_${p[0]}_${p[1]}`:null; })()
+      : (l._autoFaturaKey||null),
 }));
   localStorage.setItem(CHAVE, JSON.stringify(DB));
   // Regenerar lançamentos automáticos de fatura para garantir sincronismo
@@ -2730,10 +2735,16 @@ async function salvar(){
   if(isCartao && !categoriaFinal){
     const cartaoIdSel = document.getElementById('m-cartao')?.value;
     if(cartaoIdSel){
-      const catId = '__cartao_cat__' + cartaoIdSel;
       const cats = DB.categorias[EMP.id]||[];
-      // Só usa a categoria automática se ela já existir no banco (sincronizada pelo módulo 5)
-      categoriaFinal = cats.find(c=>c.id===catId) ? catId : null;
+      // Busca a categoria pelo nome "Cartão: <nome do cartão>" (criada pelo módulo 5 com UUID real)
+      const cartoes = (DB.cartoes||{})[EMP.id]||[];
+      const ct = cartoes.find(c=>c.id===cartaoIdSel);
+      const catNomeEsperado = ct ? `Cartão: ${ct.nome}` : null;
+      const catEncontrada = catNomeEsperado
+        ? cats.find(c => c.nome === catNomeEsperado || c.nome === ct.nome)
+        : null;
+      // Só usa se encontrou uma categoria com UUID real
+      categoriaFinal = catEncontrada ? catEncontrada.id : null;
     }
   }
 
@@ -2867,7 +2878,7 @@ async function salvar(){
       const extras = (DB.lancamentos[EMP.id]||[]).filter(l => l !== lanc && l._batchId === lanc.id);
       for (const e of extras) { await upsertRPC(e); }
     }
-  } catch(e) { console.warn('Erro ao salvar lançamento no Supabase:',e); }
+  } catch(e) {     console.error('Erro ao salvar lançamento no Supabase:', e);     toast('Erro ao salvar no servidor: ' + (e?.message || String(e)), 'err');   }
 
   const _editandoId = editandoId;
   salvarDB(); fecharModal(); renderKPIs(); filtrar();
@@ -3198,7 +3209,7 @@ function _gerarLancAutoFatura(cartaoId, anoMes){
 
   const key = _keyAutoFatura(cartaoId, anoMes);
   // Verificar se já existe
-  const existente = lancs.find(l=>l._autoFaturaKey===key);
+  const existente = lancs.find(l=>     l._autoFaturaKey===key ||     (l.obs||'')=== `__auto_fatura__${cartaoId}__${anoMes}`   );
 
   if(existente){
     existente.valor = total;
@@ -3225,7 +3236,7 @@ function _gerarLancAutoFatura(cartaoId, anoMes){
       valor: total,
       documento: null,
       conciliado: false,
-      obs: null,
+      obs: `__auto_fatura__${cartaoId}__${anoMes}`,
       recorrencia: 'nenhuma',
       serie_id: null,
       anexos: [],
