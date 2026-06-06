@@ -746,8 +746,8 @@ td.mono{font-family:var(--fonte-m);}
             <div class="export-menu">
               <div class="export-menu-titulo">Formato</div>
               <div class="export-item" onclick="abrirModalExportar('fluxo','pdf')"><div class="export-item-ico" style="background:#fee2e2;color:#dc2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg></div><div><div class="export-item-titulo">PDF</div><div class="export-item-sub">Relatório formatado</div></div></div>
-              <div class="export-item" onclick="abrirModalDetSemanal();document.getElementById('exp-fluxo').classList.remove('open')"><div class="export-item-ico" style="background:#ecfdf5;color:#065f46;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="export-item-titulo">Detalhamento Semanal</div><div class="export-item-sub">Uma semana por página</div></div></div>
-              <div class="export-item" onclick="abrirModalExportar('fluxo','csv')"><div class="export-item-ico" style="background:#d1fae5;color:#065f46;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg></div><div><div class="export-item-titulo">Excel / CSV</div><div class="export-item-sub">Planilha detalhada</div></div></div>
+              <div class="export-item" onclick="abrirModalDetSemanal();document.getElementById('exp-fluxo').classList.remove('open')"><div class="export-item-ico" style="background:#ecfdf5;color:#065f46;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="export-item-titulo">amento Semanal</div><div class="export-item-sub">Uma semana por página</div></div></div>
+              <div class="export-item" onclick="abrirModalExportar('fluxo','csv')"><div class="export-item-ico" style="background:#d1fae5;color:#065f46;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg></div><div><div class="export-item-titulo">Excel / CSV</div><div class="export-item-sub">Planilha ada</div></div></div>
             </div>
           </div>
           <button class="btn-s" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir</button>
@@ -4192,13 +4192,16 @@ function gerarDetalhamentoSemanal(nivel){
 <div class="pagina${semIdx>0?' pg-break':''}">
   <div class="hdr">
     <div class="hdr-l">
-      <div class="hdr-rel">Detalhamento Semanal — Fluxo de Caixa${visaoLabel}${nivelLabel}</div>
-      <div class="hdr-emp">${nomeEmp}</div>
-      ${EMP.cnpj?`<div class="hdr-cnpj">CNPJ: ${EMP.cnpj}</div>`:''}
-      <div class="hdr-data">Gerado em: ${dataEmissao} | Período total: ${periodoLabel}</div>
-    </div>
-    <div class="hdr-r" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><img src=\"https://mojqonunykhrdmunojzu.supabase.co/storage/v1/object/public/CasterBPO%20Financeiro/CasterBPO.png\" alt=\"CasterBPO\" style=\"height:40px;width:40px;object-fit:cover;border-radius:7px;\" /><strong class="periodo-label" style="font-size:12px;color:#1a3d28;margin-top:2px;">Detalhamento Semanal</strong><strong style="font-size:11px;color:#111;">${semLabel}</strong>${_logoEmpHtml2}</div>
-  </div>
+  ${_logoEmpHtml2}
+  <div class="hdr-emp">${nomeEmp}</div>
+  ${EMP.cnpj?`<div class="hdr-cnpj">CNPJ: ${EMP.cnpj}</div>`:''}
+  <div class="hdr-data">Gerado em: ${dataEmissao} | Período total: ${periodoLabel}</div>
+</div>
+<div class="hdr-r" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+  <img src=\"...CasterBPO.png\" ... />
+  <strong class="periodo-label" style="font-size:12px;color:#1a3d28;margin-top:2px;">Detalhamento Semanal</strong>
+  <strong style="font-size:11px;color:#111;">${semLabel}</strong>
+</div>
 
   <div class="resumo-sem">
     <div class="rs-item"><div class="rs-lbl">Saldo Inicial</div><div class="rs-val">${fmtS(saldoIniSem)}</div></div>
