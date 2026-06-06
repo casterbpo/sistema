@@ -4192,16 +4192,17 @@ function gerarDetalhamentoSemanal(nivel){
 <div class="pagina${semIdx>0?' pg-break':''}">
   <div class="hdr">
     <div class="hdr-l">
-  ${_logoEmpHtml2}
-  <div class="hdr-emp">${nomeEmp}</div>
-  ${EMP.cnpj?`<div class="hdr-cnpj">CNPJ: ${EMP.cnpj}</div>`:''}
-  <div class="hdr-data">Gerado em: ${dataEmissao} | Período total: ${periodoLabel}</div>
-</div>
-<div class="hdr-r" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-  <img src="https://mojqonunykhrdmunojzu.supabase.co/storage/v1/object/public/CasterBPO%20Financeiro/CasterBPO.png" alt="CasterBPO" style="height:40px;width:40px;object-fit:cover;border-radius:7px;" />
-  <strong class="periodo-label" style="font-size:12px;color:#1a3d28;margin-top:2px;">Detalhamento Semanal</strong>
-  <strong style="font-size:11px;color:#111;">${semLabel}</strong></div>
-</div>
+      ${_logoEmpHtml2}
+      <div class="hdr-emp">${nomeEmp}</div>
+      ${EMP.cnpj?`<div class="hdr-cnpj">CNPJ: ${EMP.cnpj}</div>`:''}
+      <div class="hdr-data">Gerado em: ${dataEmissao} | Período total: ${periodoLabel}</div>
+    </div>
+    <div class="hdr-r" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <img src="https://mojqonunykhrdmunojzu.supabase.co/storage/v1/object/public/CasterBPO%20Financeiro/CasterBPO.png" alt="CasterBPO" style="height:40px;width:40px;object-fit:cover;border-radius:7px;" />
+      <strong class="periodo-label" style="font-size:12px;color:#1a3d28;margin-top:2px;">Detalhamento Semanal</strong>
+      <strong style="font-size:11px;color:#111;">${semLabel}</strong>
+    </div>
+  </div>
 
   <div class="resumo-sem">
     <div class="rs-item"><div class="rs-lbl">Saldo Inicial</div><div class="rs-val">${fmtS(saldoIniSem)}</div></div>
