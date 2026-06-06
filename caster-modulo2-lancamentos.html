@@ -2833,7 +2833,7 @@ async function salvar(){
     centroCusto: document.getElementById('m-cc').value || null,
     valor,
     dtCompetencia: dtCompra || document.getElementById('m-comp').value,
-    dtVencimento: dtFatura || vencEfetivo || venc,
+    dtVencimento: dtFatura || venc,
     dtPagamento: document.getElementById('m-pag').value||null,
     bancoId: document.getElementById('m-banco').value || null,
     cartaoId: cartaoId || (editandoId ? ((DB.lancamentos[EMP.id]||[]).find(l=>l.id===editandoId)||{}).cartaoId||null : null),
@@ -4013,8 +4013,10 @@ document.addEventListener('keydown', e => {
     fecharCadastroRapido();
   }
 });
-const eid = sessionStorage.getItem('empresa_ativa');
-if(!eid && DB.empresas.length) sessionStorage.setItem('empresa_ativa', DB.empresas[0].id);
+const _cache = localStorage.getItem(CHAVE);
+if(_cache) try { DB = JSON.parse(_cache); } catch(e){}
+const _eid = sessionStorage.getItem('empresa_ativa');
+if(!_eid && DB.empresas.length) sessionStorage.setItem('empresa_ativa', DB.empresas[0].id);
 
 // ── Sincronização: escuta todos os tipos de atualização dos outros módulos ──
 const _tiposSync = ['lancamento_salvo','lancamento_excluido','banco_atualizado','dados_atualizados','cartao_atualizado'];
