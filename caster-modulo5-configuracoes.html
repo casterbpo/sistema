@@ -423,8 +423,7 @@ input:checked+.slider:before{transform:translateX(16px);}
         <div class="card-header">
           <div class="card-titulo">Todos os Cartões</div>
           <div style="display:flex;gap:.5rem;">
-            <button class="btn-s" onclick="exportarCartoesCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar CSV</button>
-            <button class="btn-s" onclick="exportarCartoesJSON()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar JSON</button>
+            "2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar JSON</button>
           </div>
         </div>
         <div style="overflow-x:auto;">
@@ -518,9 +517,7 @@ input:checked+.slider:before{transform:translateX(16px);}
         <div class="card-body">
           <p style="font-size:13px;color:var(--texto2);margin-bottom:1.2rem;">Faça backup completo de todos os dados desta empresa em formato JSON.</p>
           <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
-            <button class="btn-p" onclick="exportarBackup()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar JSON (backup completo)</button>
-            <button class="btn-s" onclick="exportarTodosCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar lançamentos CSV</button>
-          </div>
+              </div>
         </div>
       </div>
       <div class="card" style="margin-bottom:1rem;">
@@ -1278,8 +1275,8 @@ async function upsertCartaoSupa(c, eid) {
   const { error } = await supa.from('cartoes').upsert({
     id: c.id, empresa_id: eid, nome: c.nome, bandeira: c.bandeira,
     banco: c.banco, limite: c.limite || 0, fechamento: c.fechamento,
-    vencimento: c.vencimento, faturaAtual: c.faturaAtual || 0,
-    faturaRef: c.faturaRef || null, obs: c.obs, ativo: c.ativo !== false
+    vencimento: c.vencimento, fatura_atual: c.faturaAtual || 0,
+fatura_ref: c.faturaRef || null, obs: c.obs, ativo: c.ativo !== false
   }, { onConflict: 'id' });
   if (error) console.warn('Erro Supabase cartoes:', error);
 }
