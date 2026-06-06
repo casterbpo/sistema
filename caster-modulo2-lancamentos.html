@@ -2163,8 +2163,8 @@ function _btnAutoFatura(l){
 // Botão "Ver Fatura" para compras no cartão (cartaoId != null, !_isAutoFatura)
 function _btnVerFaturaCompra(l){
   if(!l.cartaoId) return '';
-  const dtVenc = l.dtVencimento || '';
-  if(!dtVenc) return '';
+  const dtVenc = l.dtVencimento || l.dtCompra || '';
+if(!dtVenc) return '';
   const anoMes = dtVenc.slice(0,7);
   const partes = anoMes.split('-');
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -2708,7 +2708,7 @@ function popularSelectCartoes(cartaoIdSelecionado){
 function calcularLimiteUsadoMod2(cartao){
   if(!EMP) return 0;
   const lancs = DB.lancamentos[EMP.id]||[];
-  const pendentes = lancs.filter(l => l.cartaoId === cartao.id && !l.faturaQuitada);
+  const pendentes = lancs.filter(l => l.cartaoId === cartao.id && !l.faturaQuitada && !l._isAutoFatura);
   return pendentes.reduce((s,l)=>s+l.valor,0) + (cartao.faturaAtual||0);
 }
 
