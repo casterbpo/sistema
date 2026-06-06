@@ -3226,7 +3226,7 @@ function _gerarLancAutoFatura(cartaoId, anoMes){
       tipo: 'pagar',
       fornecedor: ct.banco || ct.nome,
       descricao: `Fatura ${ct.nome} — ${_labelFatura}`,
-      categoria: (()=>{ const _cid='__cartao_cat__'+cartaoId; return (DB.categorias[EMP.id]||[]).find(c=>c.id===_cid)?_cid:null; })(),
+      categoria: (()=>{   const cats = DB.categorias[EMP.id]||[];   const cartoes = (DB.cartoes||{})[EMP.id]||[];   const ct2 = cartoes.find(c=>c.id===cartaoId);   const catEnc = ct2 ? cats.find(c=>c.nome===`Cartão: ${ct2.nome}`||c.nome===ct2.nome) : null;   return catEnc ? catEnc.id : null; })(),
       centroCusto: null,
       bancoId: null,
       cnpj: null,
