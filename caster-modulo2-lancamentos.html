@@ -2076,6 +2076,8 @@ function setTipo(tipo){
     if(ctBtn){ctBtn.classList.add('ativo'); ctBtn.style.background='#1a1f71'; ctBtn.style.color='#fff'; ctBtn.style.fontWeight='600';}
     recBtn.style.background='var(--bg-card)'; recBtn.style.color='var(--texto3)'; recBtn.style.fontWeight='400';
     pagBtn.style.background='var(--bg-card)'; pagBtn.style.color='var(--texto3)'; pagBtn.style.fontWeight='400';
+  const secRecorr = document.getElementById('secao-recorr');
+    if(secRecorr) secRecorr.style.display = 'none';
   }
   // Painel campos cartão
   const painelCartao = document.getElementById('painel-cartao-campos');
