@@ -3766,16 +3766,15 @@ const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 </style></head><body>
 <div class="hdr">
   <div class="hdr-left">
-    <div class="hdr-rel">Fluxo de Caixa${visaoLabel}</div>
+    ${_logoEmpHtml}
     <div class="hdr-emp">${nomeEmp}</div>
-    <div class="hdr-cnpj">${EMP.cnpj?'CNPJ: '+EMP.cnpj:''}</div>
+    ${EMP.cnpj?`<div class="hdr-cnpj">CNPJ: ${EMP.cnpj}</div>`:''}
     <div class="hdr-data">Gerado em: ${dataEmissao}</div>
   </div>
   <div class="hdr-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right;">
     <img src=\"https://mojqonunykhrdmunojzu.supabase.co/storage/v1/object/public/CasterBPO%20Financeiro/CasterBPO.png\" alt=\"CasterBPO\" style=\"height:48px;width:48px;object-fit:cover;border-radius:8px;\" />
     <strong style="display:block;font-size:12px;color:#1a3d28;">Fluxo de Caixa${visaoLabel}</strong>
-    <strong style="display:block;font-size:11px;color:#111;">Período: ${periodoLabel}</strong>
-    ${_logoEmpHtml}
+    <strong style="display:block;font-size:11px;color:#444;">Período: ${periodoLabel}</strong>
   </div>
 </div>
 
