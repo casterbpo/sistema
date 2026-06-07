@@ -790,7 +790,7 @@ body {
 /* KPI CARDS */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.8rem;
   margin-bottom: 1.2rem;
 }
@@ -1117,8 +1117,53 @@ body {
 }
 .btn-excluir-empresa svg { width: 12px; height: 12px; }
 
-/* BANCO LIMITE BARRA */
-.banco-limite-wrap {
+/* CARTÃO LIMIT SECTION */
+.cartao-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 1.2rem;
+  border-bottom: 1px solid var(--borda);
+}
+.cartao-item:last-child { border-bottom: none; }
+.cartao-item:hover { background: var(--n050); }
+.cartao-item-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cartao-esq { display: flex; align-items: center; gap: 10px; }
+.cartao-icone {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: #ede9fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.cartao-nome { font-size: 12px; font-weight: 500; color: var(--n800); }
+.cartao-tipo { font-size: 10px; color: var(--texto-3); }
+.cartao-limite-wrap {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--texto-3);
+}
+.cartao-limite-barra {
+  height: 3px;
+  background: var(--n100);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 3px 0;
+}
+.cartao-limite-barra-inner {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.kpi-card.k-fatura::before { background: #5b21b6; }
+.k-fatura .kpi-icone { background: #ede9fe; color: #5b21b6; }
   margin-top: 4px;
   font-size: 10px;
   color: var(--texto-3);
@@ -1363,7 +1408,7 @@ body {
   .dash-lateral { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 }
 @media (max-width: 800px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .topbar-nav .tnav-btn span { display: none; }
 }
 @media (max-width: 560px) {
@@ -1536,6 +1581,14 @@ body {
             <div class="kpi-val" id="kpi-resultado">—</div>
             <div class="kpi-delta"><span id="kpi-res-delta">—</span></div>
           </div>
+          <div class="kpi-card k-fatura">
+            <div class="kpi-icone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="7" y1="15" x2="10" y2="15"/><line x1="14" y1="15" x2="17" y2="15"/></svg>
+            </div>
+            <div class="kpi-lbl">Fatura em aberto</div>
+            <div class="kpi-val" id="kpi-fatura">—</div>
+            <div class="kpi-delta"><span id="kpi-fat-delta" style="color:var(--texto-3);">cartões no período</span></div>
+          </div>
           <div class="kpi-card k-saldo">
             <div class="kpi-icone">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -1670,6 +1723,17 @@ body {
           </div>
           <div id="lista-bancos">
             <div style="padding:1.2rem; text-align:center; color:var(--texto-3); font-size:12px;">Cadastre bancos em Configurações</div>
+          </div>
+        </div>
+
+        <!-- Cartões de crédito -->
+        <div class="card" id="card-cartoes-dashboard" style="display:none;">
+          <div class="card-header">
+            <div class="card-titulo">💳 Cartões</div>
+            <span style="font-size:11px; color:var(--texto-3);">limite e uso</span>
+          </div>
+          <div id="lista-cartoes-dash">
+            <div style="padding:1.2rem; text-align:center; color:var(--texto-3); font-size:12px;">Nenhum cartão cadastrado</div>
           </div>
         </div>
 
@@ -2141,6 +2205,67 @@ body {
   </div>
 </div>
 
+<!-- ═══════════════ MODAL: DETALHE LANÇAMENTO CARTÃO (somente leitura) ═══════════════ -->
+<div class="overlay" id="overlay-detalhe-cartao">
+  <div class="modal" style="width:500px;">
+    <div class="modal-header" style="background:#1a1f71;">
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span class="modal-titulo" style="color:#c7d2fe;" id="dc-titulo">Lançamento no Cartão</span>
+        <div style="display:flex;gap:6px;" id="dc-badges"></div>
+      </div>
+      <button class="modal-fechar" onclick="fecharModal('overlay-detalhe-cartao')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:var(--r-md);padding:.75rem 1rem;margin-bottom:1rem;font-size:12px;color:#5b21b6;display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Este é um lançamento registrado em cartão de crédito. Para editar, acesse a fatura correspondente.
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Fornecedor / Cliente</label>
+          <div id="dc-forn" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;color:var(--texto);"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor</label>
+          <div id="dc-valor" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;font-weight:700;"></div>
+        </div>
+      </div>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <div id="dc-desc" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;color:var(--texto);"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <div id="dc-cat" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;"></div>
+        </div>
+      </div>
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label class="form-label">Dt. Compra</label>
+          <div id="dc-dtcompra" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cartão</label>
+          <div id="dc-cartao" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;color:#5b21b6;font-weight:600;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parcela</label>
+          <div id="dc-parcela" style="padding:9px 12px;background:var(--n050);border-radius:var(--r-md);font-size:13px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button class="btn-secundario" onclick="fecharModal('overlay-detalhe-cartao')">Fechar</button>
+      <button class="btn-primario" id="dc-btn-fatura" onclick="irParaFaturaDoCartao()"
+        style="background:linear-gradient(135deg,#4c1d95,#2e1065);color:#e9d5ff;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Ver Fatura
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-container" id="toasts"></div>
 
@@ -2169,7 +2294,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 let DB = {
   empresas: [], bancos: {}, lancamentos: {}, categorias: {},
-  centrosCusto: {}, fornecedores: {}, fornecedoresObj: {}, orcamentos: {}
+  centrosCusto: {}, fornecedores: {}, fornecedoresObj: {}, orcamentos: {}, cartoes: {}
 };
 let empresaAtiva = null;
 let periodoAtivo = 'mes-atual';
@@ -2188,7 +2313,8 @@ function estruturaInicial() {
     centrosCusto: {},
     fornecedores: {},
     fornecedoresObj: {},
-    orcamentos: {}
+    orcamentos: {},
+    cartoes: {}
   };
 }
 
@@ -2209,6 +2335,28 @@ async function carregarDB() {
     const eid = sessionStorage.getItem('empresa_ativa');
     const { data: emps } = await supa.from('empresas').select('*');
     if (emps && emps.length) DB.empresas = emps;
+
+    // Carrega lançamentos e bancos de TODAS as empresas para que o painel
+    // mostre os alertas corretos logo no primeiro acesso (sem precisar abrir empresa).
+    const todasEmps = (emps && emps.length) ? emps : (DB.empresas||[]);
+    await Promise.all(todasEmps.filter(emp => !eid || emp.id !== eid).map(async emp => {
+      try {
+        const [bRes, lRes] = await Promise.all([
+          supa.from('bancos').select('*').eq('empresa_id', emp.id),
+          supa.from('lancamentos').select('id,tipo,dt_vencimento,dt_pagamento,valor,obs,fatura_quitada,cartao_id').eq('empresa_id', emp.id)
+        ]);
+        if (bRes.data) DB.bancos[emp.id] = bRes.data;
+        if (lRes.data) DB.lancamentos[emp.id] = lRes.data.map(l => ({
+          ...l,
+          dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
+          dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
+          cartaoId:      l.cartaoId      ?? l.cartao_id ?? null,
+          faturaQuitada: l.faturaQuitada===true||l.fatura_quitada===true||false,
+          _isAutoFatura: (l.obs||'').startsWith('__auto_fatura__')||false,
+        }));
+      } catch(_) {}
+    }));
+
     if (eid) {
       const [bancos, cats, centros, forn, lancs] = await Promise.all([
         supa.from('bancos').select('*').eq('empresa_id', eid),
@@ -2237,7 +2385,14 @@ async function carregarDB() {
   descricao:     l.descricao     ?? null,
   documento:     l.documento     ?? null,
   cnpj:          l.cnpj          ?? null,
-  serie_id:      l.serie_id      ?? null
+  serie_id:      l.serie_id      ?? null,
+  cartaoId:      l.cartaoId      ?? l.cartao_id      ?? null,
+  faturaQuitada: l.faturaQuitada===true||l.fatura_quitada===true||l.faturaQuitada==='true'||false,
+  dtCompra:      l.dtCompra      ?? l.dt_compra      ?? null,
+  _isAutoFatura: (l.obs||'').startsWith('__auto_fatura__')||l._isAutoFatura||false,
+  _autoFaturaKey:(l.obs||'').startsWith('__auto_fatura__')
+    ? (() => { const p=(l.obs||'').replace('__auto_fatura__','').split('__'); return p.length>=2?`auto_fatura_${p[0]}_${p[1]}`:null; })()
+    : (l._autoFaturaKey||null),
 }));
     }
     localStorage.setItem(CHAVE_DB, JSON.stringify(DB));
@@ -2441,12 +2596,13 @@ function renderPainel() {
 // ── ENTRAR NA EMPRESA ──────────────────────────────────
 async function sincronizarEmpresa(id) {
   try {
-    const [bancos, cats, centros, forn, lancs] = await Promise.all([
+    const [bancos, cats, centros, forn, lancs, cartoes] = await Promise.all([
       supa.from('bancos').select('*').eq('empresa_id', id),
       supa.from('categorias').select('*').eq('empresa_id', id),
       supa.from('centros_custo').select('*').eq('empresa_id', id),
       supa.from('fornecedores').select('*').eq('empresa_id', id),
       supa.from('lancamentos').select('*').eq('empresa_id', id),
+      supa.from('cartoes').select('*').eq('empresa_id', id),
     ]);
     if (bancos.data)  DB.bancos[id]       = bancos.data;
     if (cats.data)    DB.categorias[id]   = cats.data;
@@ -2455,6 +2611,16 @@ async function sincronizarEmpresa(id) {
       if(!DB.fornecedoresObj) DB.fornecedoresObj = {};
       DB.fornecedoresObj[id] = forn.data.map(f => ({ id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs }));
       DB.fornecedores[id] = forn.data.map(f => f.nome);
+    }
+    if (cartoes.data) {
+      if (!DB.cartoes) DB.cartoes = {};
+      DB.cartoes[id] = cartoes.data.map(c => ({
+        ...c,
+        limite:     c.limite     ?? 0,
+        faturaAtual:c.fatura_atual ?? c.faturaAtual ?? 0,
+        faturaRef:  c.fatura_ref  ?? c.faturaRef    ?? null,
+        bandeira:   c.bandeira    ?? null,
+      }));
     }
     if (lancs.data) DB.lancamentos[id] = lancs.data.map(l => ({
       ...l,
@@ -2468,7 +2634,14 @@ async function sincronizarEmpresa(id) {
       descricao:     l.descricao     ?? null,
       documento:     l.documento     ?? null,
       cnpj:          l.cnpj          ?? null,
-      serie_id:      l.serie_id      ?? null
+      serie_id:      l.serie_id      ?? null,
+      cartaoId:      l.cartaoId      ?? l.cartao_id      ?? null,
+      faturaQuitada: l.faturaQuitada===true||l.fatura_quitada===true||l.faturaQuitada==='true'||false,
+      dtCompra:      l.dtCompra      ?? l.dt_compra      ?? null,
+      _isAutoFatura: (l.obs||'').startsWith('__auto_fatura__')||l._isAutoFatura||false,
+      _autoFaturaKey:(l.obs||'').startsWith('__auto_fatura__')
+        ? (() => { const p=(l.obs||'').replace('__auto_fatura__','').split('__'); return p.length>=2?`auto_fatura_${p[0]}_${p[1]}`:null; })()
+        : (l._autoFaturaKey||null),
     }));
     salvarDB();
   } catch(e) {
@@ -2479,7 +2652,26 @@ async function sincronizarEmpresa(id) {
 async function sincronizarPainel() {
   try {
     const { data: emps } = await supa.from('empresas').select('*');
-    if (emps && emps.length) { DB.empresas = emps; salvarDB(); }
+    if (emps && emps.length) { DB.empresas = emps; }
+    // Atualiza lançamentos e bancos de todas as empresas para alertas em tempo real
+    await Promise.all((emps||DB.empresas).map(async emp => {
+      try {
+        const [bRes, lRes] = await Promise.all([
+          supa.from('bancos').select('*').eq('empresa_id', emp.id),
+          supa.from('lancamentos').select('id,tipo,dt_vencimento,dt_pagamento,valor,obs,fatura_quitada,cartao_id').eq('empresa_id', emp.id)
+        ]);
+        if (bRes.data) DB.bancos[emp.id] = bRes.data;
+        if (lRes.data) DB.lancamentos[emp.id] = lRes.data.map(l => ({
+          ...l,
+          dtVencimento:  l.dtVencimento  ?? l.dt_vencimento,
+          dtPagamento:   l.dtPagamento   ?? l.dt_pagamento,
+          cartaoId:      l.cartaoId      ?? l.cartao_id ?? null,
+          faturaQuitada: l.faturaQuitada===true||l.fatura_quitada===true||false,
+          _isAutoFatura: (l.obs||'').startsWith('__auto_fatura__')||false,
+        }));
+      } catch(_) {}
+    }));
+    salvarDB();
   } catch(e) {
     console.warn('Erro ao sincronizar painel:', e);
   }
@@ -2575,7 +2767,458 @@ function renderDashboard() {
   const lancs = DB.lancamentos[emp.id] || [];
   const bancos = DB.bancos[emp.id] || [];
   const cats = DB.categorias[emp.id] || [];
+  const cartoes = (DB.cartoes||{})[emp.id] || [];
   const hoje = dataHoje();
+
+  document.getElementById('dash-empresa-titulo').textContent = emp.fantasia || emp.razao;
+  document.getElementById('dash-empresa-sub').textContent = `${emp.segmento} · CNPJ: ${emp.cnpj || '—'}`;
+
+  // Filtro de período — usa dtPagamento para receitas/despesas efetivadas
+  const { inicio, fim } = getPeriodoDatas();
+
+  // Lançamentos que NÃO são auto-fatura de cartão
+  const lancsReais = lancs.filter(l => !l._isAutoFatura);
+
+  const receitas  = lancsReais.filter(l => l.tipo==='receber' && l.dtPagamento >= inicio && l.dtPagamento <= fim).reduce((s,l)=>s+l.valor,0);
+  const despesas  = lancsReais.filter(l => l.tipo==='pagar'   && l.dtPagamento >= inicio && l.dtPagamento <= fim).reduce((s,l)=>s+l.valor,0);
+
+  // lPer: período por vencimento (para resumo financeiro etc.)
+  const lPer = lancsReais.filter(l => {
+    const d = l.dtVencimento || '';
+    return d >= inicio && d <= fim;
+  });
+  const resultado = receitas - despesas;
+
+  // Saldo acumulado até o fim do período selecionado (só contas banco/caixa, não cartão)
+  const saldoTotal = bancos.reduce((s,b) => {
+    const movs = lancsReais.filter(l => l.bancoId === b.id && l.dtPagamento && l.dtPagamento <= fim);
+    const saldoCalc = movs.reduce((acc,l) => acc + (l.tipo==='receber' ? l.valor : -l.valor), b.saldo||0);
+    return s + saldoCalc;
+  }, 0);
+
+  // ── FATURA EM ABERTO (Ação 1) ────────────────────────────────────────────
+  // Soma os lançamentos de cartão que NÃO estão quitados e cuja dtCompra
+  // (ou dtVencimento como fallback) está dentro do período selecionado OU em meses anteriores ainda em aberto.
+  // "Em aberto" = faturaQuitada !== true  e  não possui auto-fatura quitada correspondente
+  const faturaEmAberto = lancsReais.filter(l => {
+    if (!l.cartaoId || l._isAutoFatura) return false;
+    if (l.faturaQuitada) return false;
+    // A data de referência da compra
+    const dtRef = l.dtCompra || l.dtVencimento || '';
+    // Inclui compras do início do período até o fim + quaisquer compras anteriores ainda abertas
+    return dtRef <= fim;
+  }).reduce((s,l) => s + l.valor, 0);
+
+  document.getElementById('kpi-receitas').textContent  = fmtM(receitas);
+  document.getElementById('kpi-despesas').textContent  = fmtM(despesas);
+  document.getElementById('kpi-resultado').textContent = fmtM(resultado);
+  const saldoEl = document.getElementById('kpi-saldo');
+  saldoEl.textContent = (saldoTotal < 0 ? '−' : '') + fmtM(saldoTotal);
+  saldoEl.className = 'kpi-val ' + (saldoTotal < 0 ? 'valor-neg' : '');
+
+  // KPI Fatura em aberto
+  const fatEl = document.getElementById('kpi-fatura');
+  fatEl.textContent = fmtM(faturaEmAberto);
+  fatEl.className = 'kpi-val' + (faturaEmAberto > 0 ? ' valor-neg' : '');
+  document.getElementById('kpi-fat-delta').textContent =
+    faturaEmAberto > 0 ? 'faturas abertas até o fim do período' : 'nenhuma fatura em aberto';
+
+  const resEl = document.getElementById('kpi-resultado');
+  resEl.className = 'kpi-val ' + (resultado >= 0 ? 'valor-pos' : 'valor-neg');
+
+  const deltas = [
+    { id: 'kpi-rec-delta',  val: receitas,  txt: 'total recebido no período' },
+    { id: 'kpi-desp-delta', val: despesas,  txt: 'total pago no período' },
+    { id: 'kpi-res-delta',  val: resultado, txt: resultado >= 0 ? 'resultado positivo ✓' : 'resultado negativo ✗' },
+  ];
+  deltas.forEach(d => {
+    document.getElementById(d.id).textContent = d.txt;
+    document.getElementById(d.id).className = d.val >= 0 ? 'delta-up' : 'delta-down';
+  });
+
+  // Alerta do dia — apenas lançamentos normais (não cartão automático)
+  const hojePag  = lancsReais.filter(l => l.dtVencimento === hoje && !l.dtPagamento && l.tipo === 'pagar' && !l.cartaoId);
+  const hojeRec  = lancsReais.filter(l => l.dtVencimento === hoje && !l.dtPagamento && l.tipo === 'receber' && !l.cartaoId);
+  // Auto-faturas de cartão com vencimento hoje
+  const hojeAutoFat = lancs.filter(l => l._isAutoFatura && l.dtVencimento === hoje && !l.dtPagamento);
+  const vencidasHoje = lancsReais.filter(l => !l.dtPagamento && l.dtVencimento < hoje && !l.cartaoId);
+  const alertaEl = document.getElementById('alerta-hoje');
+  if (hojePag.length || hojeRec.length || vencidasHoje.length || hojeAutoFat.length) {
+    alertaEl.classList.remove('hidden');
+    const partes = [];
+    if (hojePag.length)      partes.push(`${hojePag.length} a pagar hoje (${fmtM(hojePag.reduce((s,l)=>s+l.valor,0))})`);
+    if (hojeRec.length)      partes.push(`${hojeRec.length} a receber hoje (${fmtM(hojeRec.reduce((s,l)=>s+l.valor,0))})`);
+    if (hojeAutoFat.length)  partes.push(`${hojeAutoFat.length} fatura(s) de cartão vence(m) hoje`);
+    if (vencidasHoje.length) partes.push(`${vencidasHoje.length} conta(s) vencida(s) em aberto`);
+    document.getElementById('alerta-hoje-itens').textContent = partes.join(' · ');
+  } else {
+    alertaEl.classList.add('hidden');
+  }
+
+  // Resumo lateral — A receber/pagar pelo dia de hoje (apenas não-cartão)
+  const aReceber = lancsReais.filter(l => l.tipo==='receber' && !l.dtPagamento && l.dtVencimento === hoje && !l.cartaoId).reduce((s,l)=>s+l.valor,0);
+  const aPagar   = lancsReais.filter(l => l.tipo==='pagar'   && !l.dtPagamento && l.dtVencimento === hoje && !l.cartaoId).reduce((s,l)=>s+l.valor,0);
+  const vencidosReceber = lancsReais.filter(l => !l.dtPagamento && l.dtVencimento < hoje && l.tipo==='receber' && !l.cartaoId).reduce((s,l)=>s+l.valor,0);
+  const vencidosPagar   = lancsReais.filter(l => !l.dtPagamento && l.dtVencimento < hoje && l.tipo==='pagar' && !l.cartaoId).reduce((s,l)=>s+l.valor,0);
+  // Auto-faturas de cartão a pagar hoje
+  const aPagarAutoFat = lancs.filter(l => l._isAutoFatura && !l.dtPagamento && l.dtVencimento === hoje).reduce((s,l)=>s+l.valor,0);
+  const posicao  = aReceber - aPagar - aPagarAutoFat;
+
+  document.getElementById('res-a-receber').textContent = fmtM(aReceber);
+  document.getElementById('res-a-pagar').textContent   = fmtM(aPagar + aPagarAutoFat);
+  document.getElementById('res-vencidos-receber').textContent = fmtM(vencidosReceber);
+  document.getElementById('res-vencidos-pagar').textContent   = fmtM(vencidosPagar);
+  const posEl = document.getElementById('res-posicao');
+  posEl.textContent = fmtM(posicao);
+  posEl.className = posicao >= 0 ? 'valor-pos' : 'valor-neg';
+
+  // Total a pagar lateral — inclui auto-faturas de cartão
+  const em30 = new Date(); em30.setDate(em30.getDate()+30);
+const pad = n => String(n).padStart(2,'0');
+const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getDate())}`;
+  // Próximos vencimentos (contas normais + auto-faturas cartão)
+  const pagProxNormal = lancsReais.filter(l => l.tipo==='pagar' && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str && !l.cartaoId);
+  const pagProxCartao = lancs.filter(l => l._isAutoFatura && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str);
+  document.getElementById('lat-total-pagar').textContent = fmtK(
+    [...pagProxNormal, ...pagProxCartao].reduce((s,l)=>s+l.valor,0)
+  );
+
+  const recProx = lancsReais.filter(l => l.tipo==='receber' && !l.dtPagamento && l.dtVencimento >= hoje && l.dtVencimento <= em30str);
+  document.getElementById('lat-total-receber').textContent = fmtK(recProx.reduce((s,l)=>s+l.valor,0));
+
+  // ── PRÓXIMOS VENCIMENTOS (Ação 4) ─────────────────────────────────────────
+  // Inclui lançamentos normais (sem cartaoId) + auto-faturas de cartão
+  // NÃO inclui lançamentos individuais de cartão (com cartaoId mas não _isAutoFatura)
+  const vencList = [...lancs]
+    .filter(l => !l.dtPagamento && l.dtVencimento >= hoje && (!l.cartaoId || l._isAutoFatura))
+    .sort((a,b) => a.dtVencimento.localeCompare(b.dtVencimento))
+    .slice(0, 10);
+
+  const listaVenc = document.getElementById('lista-vencimentos');
+  if (!vencList.length) {
+    listaVenc.innerHTML = '<div style="padding:1.2rem;text-align:center;color:var(--texto-3);font-size:12px;">Nenhum vencimento pendente</div>';
+  } else {
+    const meses3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    listaVenc.innerHTML = vencList.map(l => {
+      const [y,m,d] = l.dtVencimento.split('-');
+      const cls = l.dtVencimento === hoje ? 'hoje' : '';
+      const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+      const isCartaoAuto = l._isAutoFatura;
+      const clickAction = isCartaoAuto
+        ? `onclick="irParaFaturaViaAuto('${l.id}')"`
+        : `onclick="abrirDetalheL('${l.id}')"`;
+      const cartaoLabel = isCartaoAuto ? '<div style="font-size:9px;color:#5b21b6;font-weight:700;text-align:right;">💳 FATURA</div>' : '';
+      return `<div class="venc-item ${cls}" style="cursor:pointer;" ${clickAction}>
+        <div class="venc-data">
+          <div class="venc-dia">${d}</div>
+          <div class="venc-mes">${meses3[parseInt(m)-1]}</div>
+        </div>
+        <div class="venc-info">
+          <div class="venc-desc">${l.descricao || l.fornecedor}</div>
+          <div class="venc-forn">${l.fornecedor} · ${catNome}</div>
+        </div>
+        <div style="text-align:right;white-space:nowrap;">
+          <div class="venc-valor ${l.tipo==='receber'?'valor-pos':'valor-neg'}">${l.tipo==='receber'?'+':'−'}${fmtK(l.valor)}</div>
+          ${cls==='hoje'?'<div style="font-size:9px;color:var(--d600);text-align:right;margin-top:2px;font-weight:700;">HOJE</div>':''}
+          ${cartaoLabel}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── CONTAS VENCIDAS (Ação 4) ─────────────────────────────────────────────
+  // Apenas lançamentos normais + auto-faturas; não inclui lançamentos individuais de cartão
+  const vencidasList = [...lancs]
+    .filter(l => !l.dtPagamento && l.dtVencimento < hoje && (!l.cartaoId || l._isAutoFatura))
+    .sort((a,b) => a.dtVencimento.localeCompare(b.dtVencimento));
+
+  const tbodyVenc = document.getElementById('tbody-vencidas');
+  const badgeVenc = document.getElementById('badge-vencidas');
+  if (!vencidasList.length) {
+    tbodyVenc.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--texto-3);">Nenhuma conta vencida em aberto ✓</td></tr>';
+    badgeVenc.style.display = 'none';
+  } else {
+    badgeVenc.style.display = '';
+    badgeVenc.textContent = `${vencidasList.length} em atraso`;
+    const hoje_ = new Date(hoje);
+    tbodyVenc.innerHTML = vencidasList.map(l => {
+      const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+      const vencDt = new Date(l.dtVencimento);
+      const diasAtraso = Math.floor((hoje_ - vencDt) / 86400000);
+      let parcelaHtml = '<span style="color:var(--texto-3);">—</span>';
+      if (l.serie_id) {
+        const serie = lancs.filter(x => x.serie_id === l.serie_id).sort((a,b) => (a.dtVencimento||'').localeCompare(b.dtVencimento||''));
+        const idxP = serie.findIndex(x => x.id === l.id);
+        if (idxP >= 0) parcelaHtml = `<span style="font-size:10px;font-weight:700;background:rgba(201,168,76,0.12);color:var(--d700);padding:2px 7px;border-radius:100px;white-space:nowrap;">${idxP+1}/${serie.length}</span>`;
+      }
+      const isCartaoAuto = l._isAutoFatura;
+      const clickAction = isCartaoAuto
+        ? `onclick="irParaFaturaViaAuto('${l.id}')"`
+        : `onclick="abrirDetalheL('${l.id}')"`;
+      const tipoLabel = isCartaoAuto ? '<span class="tag" style="background:#ede9fe;color:#5b21b6;">💳 Fatura</span>' : `<span class="tag ${l.tipo==='receber'?'tag-receber':'tag-pagar'}">${l.tipo==='receber'?'Receber':'Pagar'}</span>`;
+      return `<tr style="cursor:pointer;" ${clickAction}>
+        <td style="white-space:nowrap;color:#991b1b;font-weight:600;">${fmtDt(l.dtVencimento)}</td>
+        <td>${l.descricao || '—'}</td>
+        <td style="color:var(--texto-2);">${l.fornecedor}</td>
+        <td><span class="tag" style="background:var(--n050);color:var(--texto-2);">${catNome}</span></td>
+        <td style="text-align:center;">${parcelaHtml}</td>
+        <td>${tipoLabel}</td>
+        <td class="${l.tipo==='receber'?'valor-pos':'valor-neg'}" style="font-family:var(--fonte-mono);white-space:nowrap;">${l.tipo==='receber'?'+':'−'}${fmtM(l.valor)}</td>
+        <td><span class="tag tag-vencido">${diasAtraso} dia${diasAtraso!==1?'s':''}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Bancos
+  const listaBancos = document.getElementById('lista-bancos');
+  if (!bancos.length) {
+    listaBancos.innerHTML = '<div style="padding:1.2rem;text-align:center;color:var(--texto-3);font-size:12px;">Cadastre bancos em Configurações</div>';
+  } else {
+    listaBancos.innerHTML = bancos.map(b => {
+      // Saldo calculado com movimentos
+      const movs = lancsReais.filter(l => l.bancoId === b.id && l.dtPagamento);
+      const saldoCalc = movs.reduce((s,l) => s + (l.tipo==='receber' ? l.valor : -l.valor), b.saldo||0);
+      const saldoDisplay = saldoCalc;
+
+      const limite = b.limite || 0;
+      const dispTotal = saldoDisplay + limite;
+      const limiteEsgotado = dispTotal < 0;
+      const limiteUsado = saldoDisplay < 0 ? Math.min(limite, Math.abs(saldoDisplay)) : 0;
+      const pctUsado = limite > 0 ? Math.min(100, (limiteUsado/limite)*100) : 0;
+      const corBarra = pctUsado >= 90 ? 'var(--vermelho)' : pctUsado >= 60 ? 'var(--amarelo)' : 'var(--g400)';
+
+      const limiteHtml = limite > 0 ? `
+        <div class="banco-limite-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+            <span style="color:${limiteEsgotado?'var(--vermelho)':'var(--texto-3)'}">${limiteEsgotado?`Limite de ${fmtM(limite)} esgotado`:`+Limite disponível: ${fmtM(limite)}`}</span>
+            <span>Saldo disponível: <strong style="color:${dispTotal>=0?'var(--g500)':'var(--vermelho)'}">${(dispTotal<0?'−':'')+fmtM(Math.abs(dispTotal))}</strong></span>
+          </div>
+          <div class="banco-limite-barra">
+            <div class="banco-limite-barra-inner" style="width:${pctUsado}%;background:${corBarra};"></div>
+          </div>
+          ${limiteUsado > 0 ? `<span style="color:${corBarra};">Usando ${fmtM(limiteUsado)} do limite (${pctUsado.toFixed(0)}%)</span>` : ''}
+        </div>` : '';
+
+      const saldoNeg = saldoDisplay < 0;
+      const saldoStr = (saldoNeg ? '−' : '') + fmtM(saldoDisplay);
+
+      return `
+      <div class="banco-item">
+        <div class="banco-item-topo">
+          <div class="banco-esq">
+            <div class="banco-icone">${(b.banco||'??').slice(0,2).toUpperCase()}</div>
+            <div>
+              <div class="banco-nome">${b.nome}</div>
+              <div class="banco-tipo">${b.tipo}</div>
+            </div>
+          </div>
+          <div class="banco-saldo ${saldoNeg ? 'valor-neg' : 'valor-pos'}" style="white-space:nowrap;flex-shrink:0;">${saldoStr}</div>
+        </div>
+        ${limiteHtml}
+      </div>`;
+    }).join('');
+  }
+
+  // ── CARTÕES (Ação 5) ──────────────────────────────────────────────────────
+  const cardCartoes = document.getElementById('card-cartoes-dashboard');
+  const listaCartoesDash = document.getElementById('lista-cartoes-dash');
+  if (cartoes.length) {
+    cardCartoes.style.display = '';
+    listaCartoesDash.innerHTML = cartoes.map(c => {
+      const limiteTotal = c.limite || 0;
+      // Usos: compras de cartão não quitadas (faturaQuitada !== true)
+      const comprasAbertas = lancsReais.filter(l => l.cartaoId === c.id && !l._isAutoFatura && !l.faturaQuitada);
+      const usoAtual = comprasAbertas.reduce((s,l) => s + l.valor, 0);
+      const limiteDisp = limiteTotal - usoAtual;
+      const pct = limiteTotal > 0 ? Math.min(100, (usoAtual / limiteTotal) * 100) : 0;
+      const corBarra = pct >= 90 ? 'var(--vermelho)' : pct >= 60 ? 'var(--amarelo)' : '#5b21b6';
+
+      return `
+      <div class="cartao-item">
+        <div class="cartao-item-topo">
+          <div class="cartao-esq">
+            <div class="cartao-icone">💳</div>
+            <div>
+              <div class="cartao-nome">${c.nome}</div>
+              <div class="cartao-tipo">${c.bandeira||c.tipo||'Cartão de Crédito'}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:var(--texto-3);">Uso atual</div>
+            <div style="font-family:var(--fonte-mono);font-size:13px;font-weight:600;color:${pct>=90?'var(--vermelho)':'#5b21b6'}">${fmtM(usoAtual)}</div>
+          </div>
+        </div>
+        <div class="cartao-limite-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+            <span>Limite total: <strong>${fmtM(limiteTotal)}</strong></span>
+            <span>Disponível: <strong style="color:${limiteDisp>=0?'var(--g500)':'var(--vermelho)'};">${(limiteDisp<0?'−':'')+fmtM(Math.abs(limiteDisp))}</strong></span>
+          </div>
+          <div class="cartao-limite-barra">
+            <div class="cartao-limite-barra-inner" style="width:${pct}%;background:${corBarra};"></div>
+          </div>
+          ${pct > 0 ? `<span style="color:${corBarra};">${pct.toFixed(0)}% do limite utilizado</span>` : '<span>Nenhum uso registrado</span>'}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    cardCartoes.style.display = 'none';
+  }
+
+  // ── LANÇAMENTOS RECENTES (Ação 4) ─────────────────────────────────────────
+  // Apenas lançamentos normais (sem cartaoId) + auto-faturas de cartão
+  const recentes = [...lancs]
+    .filter(l => !l.cartaoId || l._isAutoFatura)
+    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,8);
+  const tbody = document.getElementById('tbody-recentes');
+  tbody.innerHTML = recentes.map(l => {
+    const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+    const status = l.dtPagamento ? 'pago' : (l.dtVencimento < hoje ? 'vencido' : 'pendente');
+    const tagCls = { pago:'tag-pago', vencido:'tag-vencido', pendente:'tag-pendente' }[status];
+    const tagTxt = { pago:'Pago', vencido:'Vencido', pendente:'Pendente' }[status];
+    let parcelaHtml = '<span style="color:var(--texto-3);">—</span>';
+    if (l.serie_id) {
+      const serie = lancs.filter(x => x.serie_id === l.serie_id).sort((a,b) => (a.dtVencimento||'').localeCompare(b.dtVencimento||''));
+      const idxP = serie.findIndex(x => x.id === l.id);
+      if (idxP >= 0) parcelaHtml = `<span style="font-size:10px;font-weight:700;background:rgba(201,168,76,0.12);color:var(--d700);padding:2px 7px;border-radius:100px;white-space:nowrap;">${idxP+1}/${serie.length}</span>`;
+    }
+    const isCartaoAuto = l._isAutoFatura;
+    const clickAction = isCartaoAuto
+      ? `onclick="irParaFaturaViaAuto('${l.id}')"`
+      : `onclick="abrirDetalheL('${l.id}')"`;
+    const tipoLabel = isCartaoAuto
+      ? '<span class="tag" style="background:#ede9fe;color:#5b21b6;">💳 Fatura</span>'
+      : `<span class="tag ${l.tipo==='receber'?'tag-receber':'tag-pagar'}">${l.tipo==='receber'?'Receber':'Pagar'}</span>`;
+    return `<tr style="cursor:pointer;" ${clickAction}>
+      <td style="white-space:nowrap;">${fmtDt(l.dtVencimento)}</td>
+      <td>${l.descricao || '—'}</td>
+      <td style="color:var(--texto-2);">${l.fornecedor}</td>
+      <td><span class="tag" style="background:var(--n050);color:var(--texto-2);">${catNome}</span></td>
+      <td style="text-align:center;">${parcelaHtml}</td>
+      <td>${tipoLabel}</td>
+      <td class="${l.tipo==='receber'?'valor-pos':'valor-neg'}" style="font-family:var(--fonte-mono);white-space:nowrap;">${l.tipo==='receber'?'+':'−'}${fmtM(l.valor)}</td>
+      <td><span class="tag ${tagCls}">${tagTxt}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--texto-3);">Nenhum lançamento ainda</td></tr>';
+
+  // ── GRÁFICO EVOLUÇÃO (Ação 2) ──────────────────────────────────────────────
+  // Receitas: lançamentos receber, usa dtPagamento
+  // Despesas: lançamentos pagar normais (dtPagamento) + compras de cartão por dtCompra (não auto-fatura)
+  const mesesLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const anoAtual = new Date().getFullYear();
+  document.getElementById('grafico-ano-label').textContent = anoAtual;
+
+  const recMes = mesesLabels.map((_, i) => {
+    const m = String(i+1).padStart(2,'0');
+    return parseFloat(lancsReais.filter(l=>l.tipo==='receber'&&l.dtPagamento?.startsWith(`${anoAtual}-${m}`)).reduce((s,l)=>s+l.valor,0).toFixed(2));
+  });
+  const despMes = mesesLabels.map((_,i) => {
+    const m = String(i+1).padStart(2,'0');
+    const prefixo = `${anoAtual}-${m}`;
+    // Despesas normais (sem cartão): usa dtPagamento
+    const despNormal = lancsReais.filter(l=>l.tipo==='pagar'&&!l.cartaoId&&l.dtPagamento?.startsWith(prefixo)).reduce((s,l)=>s+l.valor,0);
+    // Compras de cartão (não auto-fatura): usa dtCompra (data da compra)
+    const despCartao = lancsReais.filter(l=>l.cartaoId&&!l._isAutoFatura&&(l.dtCompra||l.dtVencimento||'').startsWith(prefixo)).reduce((s,l)=>s+l.valor,0);
+    return parseFloat((despNormal + despCartao).toFixed(2));
+  });
+  const resMes = recMes.map((r,i) => parseFloat((r - despMes[i]).toFixed(2)));
+
+  if (chartEvolucao) chartEvolucao.destroy();
+  const ctx1 = document.getElementById('chart-evolucao').getContext('2d');
+  chartEvolucao = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: mesesLabels,
+      datasets: [
+        { label: 'Receitas',  data: recMes,  backgroundColor: '#2e6a44', borderRadius: 4, order: 2 },
+        { label: 'Despesas',  data: despMes, backgroundColor: '#c0392b', borderRadius: 4, order: 2 },
+        { label: 'Resultado', data: resMes,  type: 'line', borderColor: '#d4a832', backgroundColor: 'rgba(212,168,50,0.08)', tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#d4a832', order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { color: '#737c84', callback: v => 'R$' + (Math.abs(v)>=1000 ? (v/1000).toFixed(0)+'k' : v) }, grid: { color: '#f0ede7' } },
+        x: { ticks: { color: '#737c84' }, grid: { display: false } }
+      }
+    }
+  });
+
+  // ── GRÁFICO CATEGORIAS (Ação 3) ────────────────────────────────────────────
+  // Despesas por categoria: lançamentos normais pagos + compras de cartão por dtCompra
+  // Usa dtCompra para cartão, dtPagamento para normais, sem considerar auto-faturas
+  const catMap = {};
+  // Despesas normais do período (sem cartão)
+  lPer.filter(l => l.tipo==='pagar' && l.dtPagamento && !l.cartaoId).forEach(l => {
+    const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+    catMap[cn] = (catMap[cn]||0) + l.valor;
+  });
+  // Compras de cartão: usa dtCompra para filtrar no período
+  lancsReais.filter(l => l.cartaoId && !l._isAutoFatura && l.tipo==='pagar').forEach(l => {
+    const dtRef = l.dtCompra || l.dtVencimento || '';
+    if (dtRef >= inicio && dtRef <= fim) {
+      const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+      catMap[cn] = (catMap[cn]||0) + l.valor;
+    }
+  });
+  const catLabels = Object.keys(catMap);
+  const catData   = catLabels.map(c => parseFloat(catMap[c].toFixed(2)));
+  const cores = ['#2e6a44','#c9a832','#c0392b','#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#4f46e5'];
+
+  if (chartCats) chartCats.destroy();
+  const ctx2 = document.getElementById('chart-categorias').getContext('2d');
+  chartCats = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: catLabels,
+      datasets: [{ data: catData, backgroundColor: cores.slice(0, catLabels.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  document.getElementById('leg-categorias').innerHTML = catLabels.map((c,i) =>
+    `<div class="legenda-item">
+      <span class="legenda-cor" style="background:${cores[i]}"></span>
+      <span>${c}</span>
+    </div>`
+  ).join('');
+
+  // ── GRÁFICO RECEITAS POR CATEGORIA ────────────────────────────────────────
+  const catMapRec = {};
+  lPer.filter(l => l.tipo==='receber' && l.dtPagamento && !l.cartaoId).forEach(l => {
+    const cn = (cats.find(c=>c.id===l.categoria)||{}).nome || 'Outros';
+    catMapRec[cn] = (catMapRec[cn]||0) + l.valor;
+  });
+  const catLabelsRec = Object.keys(catMapRec);
+  const catDataRec   = catLabelsRec.map(c => parseFloat(catMapRec[c].toFixed(2)));
+  const coresRec = ['#2e6a44','#3d8a5a','#5aaa76','#8dcca4','#0891b2','#059669','#2563eb','#7c3aed','#d4a832','#4f46e5'];
+
+  if (chartCatsRec) chartCatsRec.destroy();
+  const ctx3 = document.getElementById('chart-categorias-rec').getContext('2d');
+  chartCatsRec = new Chart(ctx3, {
+    type: 'doughnut',
+    data: {
+      labels: catLabelsRec,
+      datasets: [{ data: catDataRec, backgroundColor: coresRec.slice(0, catLabelsRec.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  document.getElementById('leg-categorias-rec').innerHTML = catLabelsRec.length
+    ? catLabelsRec.map((c,i) =>
+        `<div class="legenda-item">
+          <span class="legenda-cor" style="background:${coresRec[i]}"></span>
+          <span>${c}</span>
+        </div>`
+      ).join('')
+    : '<span style="font-size:11px;color:var(--texto-3);">Nenhuma receita recebida no período</span>';
+}
 
   document.getElementById('dash-empresa-titulo').textContent = emp.fantasia || emp.razao;
   document.getElementById('dash-empresa-sub').textContent = `${emp.segmento} · CNPJ: ${emp.cnpj || '—'}`;
@@ -2905,6 +3548,76 @@ const em30str = `${em30.getFullYear()}-${pad(em30.getMonth()+1)}-${pad(em30.getD
         </div>`
       ).join('')
     : '<span style="font-size:11px;color:var(--texto-3);">Nenhuma receita recebida no período</span>';
+}
+
+// ── HELPERS CARTÃO ────────────────────────────────────
+let _cartaoDetalheAutoId = null; // id do auto-fatura para navegação
+
+// Abre o modal de detalhe somente-leitura de um lançamento de cartão
+function abrirDetalheCartao(id) {
+  if (!empresaAtiva) return;
+  const lancs = DB.lancamentos[empresaAtiva.id] || [];
+  const cats  = DB.categorias[empresaAtiva.id] || [];
+  const cartoes = (DB.cartoes||{})[empresaAtiva.id] || [];
+  const l = lancs.find(x => x.id === id);
+  if (!l) return;
+
+  const catNome = (cats.find(c=>c.id===l.categoria)||{}).nome || '—';
+  const cartaoObj = cartoes.find(c=>c.id===l.cartaoId);
+  const cartaoNome = cartaoObj ? cartaoObj.nome : (l.cartaoId ? '💳 Cartão' : '—');
+
+  // Parcela
+  let parcelaStr = '—';
+  if (l.serie_id) {
+    const serie = lancs.filter(x=>x.serie_id===l.serie_id).sort((a,b)=>(a.dtVencimento||'').localeCompare(b.dtVencimento||''));
+    const idx = serie.findIndex(x=>x.id===id);
+    if (idx>=0) parcelaStr = `${idx+1} / ${serie.length}`;
+  }
+
+  document.getElementById('dc-titulo').textContent = l.descricao || l.fornecedor || 'Lançamento no Cartão';
+  document.getElementById('dc-badges').innerHTML =
+    `<span class="tag tag-pagar">A Pagar</span>
+     <span class="tag" style="background:#ede9fe;color:#5b21b6;">💳 Cartão</span>`;
+  document.getElementById('dc-forn').textContent  = l.fornecedor || '—';
+  document.getElementById('dc-valor').textContent = fmtM(l.valor);
+  document.getElementById('dc-valor').style.color = '#c0392b';
+  document.getElementById('dc-desc').textContent  = l.descricao || '—';
+  document.getElementById('dc-cat').textContent   = catNome;
+  document.getElementById('dc-dtcompra').textContent = l.dtCompra ? fmtDt(l.dtCompra) : (l.dtVencimento ? fmtDt(l.dtVencimento) : '—');
+  document.getElementById('dc-cartao').textContent = cartaoNome;
+  document.getElementById('dc-parcela').textContent = parcelaStr;
+
+  // Guarda qual auto-fatura corresponde para navegação
+  // Tenta encontrar o auto-fatura do cartão + mês da compra
+  const dtRef = l.dtCompra || l.dtVencimento || '';
+  const anoMes = dtRef.slice(0,7); // YYYY-MM
+  const autoFat = lancs.find(x =>
+    x._isAutoFatura &&
+    (x._autoFaturaKey === `auto_fatura_${l.cartaoId}_${anoMes}` ||
+     (x.obs||'').includes(`__auto_fatura__${l.cartaoId}__${anoMes}`))
+  );
+  _cartaoDetalheAutoId = autoFat ? autoFat.id : null;
+
+  document.getElementById('overlay-detalhe-cartao').classList.add('aberto');
+}
+
+// Navega para a aba de Lançamentos para ver a fatura (via módulo 2)
+function irParaFaturaDoCartao() {
+  fecharModal('overlay-detalhe-cartao');
+  irAba('lancamentos', document.getElementById('sb-lancamentos'));
+  // Envia mensagem ao iframe do módulo 2 para abrir a fatura
+  setTimeout(() => {
+    const frame = document.getElementById('frame-lancamentos');
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage({ tipo: 'abrir_fatura', autoId: _cartaoDetalheAutoId }, '*');
+    }
+  }, 800);
+}
+
+// Chamado quando clica em item de auto-fatura nas listas de vencimentos/vencidas/recentes
+function irParaFaturaViaAuto(autoId) {
+  _cartaoDetalheAutoId = autoId;
+  irParaFaturaDoCartao();
 }
 
 // ── PERÍODO ────────────────────────────────────────────
@@ -3676,7 +4389,20 @@ let lancDetalheId = null;
 
 function abrirDetalheL(id) {
   if (!empresaAtiva) return;
-  // Abre o modal de edição diretamente
+  const lancs = DB.lancamentos[empresaAtiva.id] || [];
+  const l = lancs.find(x => x.id === id);
+  if (!l) return;
+  // Se for lançamento de cartão individual (não auto-fatura), abre modal somente-leitura
+  if (l.cartaoId && !l._isAutoFatura) {
+    abrirDetalheCartao(id);
+    return;
+  }
+  // Se for auto-fatura, navega para a fatura no módulo 2
+  if (l._isAutoFatura) {
+    irParaFaturaViaAuto(id);
+    return;
+  }
+  // Lançamento normal: abre modal de edição
   abrirModalLancamento(id);
 }
 
