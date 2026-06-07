@@ -2767,6 +2767,12 @@ function setTipo(tipo){
     // Ajustar grid para 1 coluna (só vencimento fica)
     const rowDatas = document.getElementById('row-datas-normal');
     if(rowDatas) rowDatas.className = 'form-row fr-1';
+    // Bloqueia imediatamente ao entrar no modo cartão
+    const campoVencCt = document.getElementById('m-venc');
+    campoVencCt.readOnly = true;
+    campoVencCt.style.opacity = '0.5';
+    campoVencCt.style.cursor = 'not-allowed';
+    campoVencCt.title = 'Vencimento calculado automaticamente pelo cartão';
   }
   // Painel campos cartão
   const painelCartao = document.getElementById('painel-cartao-campos');
