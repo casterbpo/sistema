@@ -1916,6 +1916,8 @@ function renderDRE(){
     const d=comp==='pagamento'?l.dtPagamento:l.dtVencimento;
     return d&&d>=de&&d<=ate&&(comp==='vencimento'||l.dtPagamento);
   });
+  // Preserva estado de expansão entre renderizações
+const estadoAnterior = {...dreSectionsVisible};
   // Para o DRE: auto-faturas são excluídas (o cartão já é representado pelos lançamentos individuais)
   const lancs=_lancsRaw.filter(l=>!l._isAutoFatura);
   const cats=DB.categorias[EMP.id]||[];
@@ -2039,7 +2041,15 @@ function renderDRE(){
     lRow('5. EBITDA',ebitda,'tr-subtotal')+
     lRow(`(-) IR e CSLL (${dreConfig.pctIr}%)`,-ir,'',true)+
     `<tr class="tr-total"><td>LUCRO LÍQUIDO DO PERÍODO</td><td class="right mono">${ll<0?'('+fmtM(Math.abs(ll))+')':fmtM(ll)}</td><td class="right" style="font-size:11px;">${pct(Math.abs(ll))}</td></tr>`;
-
+// Reaplicar estado de expansão após reconstrução do HTML
+Object.keys(estadoAnterior).forEach(section => {
+  if (estadoAnterior[section]) {
+    document.querySelectorAll(`[data-dre-section="${section}"]`).forEach(tr => { tr.style.display = ''; });
+    const ico = document.getElementById(`dre-toggle-${section}`);
+    if (ico) ico.style.transform = 'rotate(90deg)';
+    dreSectionsVisible[section] = true;
+  }
+});
   const anoAtual=new Date().getFullYear();
   const allLancs=(DB.lancamentos[EMP.id]||[]).filter(l=>!l._isAutoFatura); // exclui auto-faturas do gráfico
   const mesesL=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
