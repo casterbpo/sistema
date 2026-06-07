@@ -428,7 +428,7 @@ input:checked+.slider:before{transform:translateX(16px);}
         </div>
         <div style="overflow-x:auto;">
           <table>
-            <thead><tr><th>Nome do Cartão</th><th>Bandeira</th><th>Fechamento</th><th>Vencimento</th><th>Limite Total</th><th>Disponível</th><th>Fatura Atual</th><th class="center">Ativo</th><th class="center">Ações</th></tr></thead>
+            <thead><tr><th>Nome do Cartão</th><th>Bandeira</th><th>Fechamento</th><th>Vencimento</th><th>Limite Total</th><th>Disponível</th><th class="center">Ativo</th><th class="center">Ações</th></tr></thead>
             <tbody id="tbody-cartoes"></tbody>
           </table>
         </div>
@@ -1448,11 +1448,6 @@ function renderCartoes() {
       <td style="font-family:var(--fonte-m);font-size:12px;">Dia ${c.vencimento}</td>
       <td style="font-family:var(--fonte-m);font-size:12px;">${fmtM(limite)}</td>
       <td style="font-family:var(--fonte-m);font-size:12px;color:${corDisp};font-weight:600;">${fmtM(disponivel)}</td>
-      <td>
-        ${limiteUsado > 0
-          ? `<span class="fatura-badge fatura-aberta">R$ ${limiteUsado.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} em aberto</span>`
-          : `<span class="fatura-badge fatura-paga">Sem saldo pendente</span>`}
-      </td>
       <td class="center"><label class="switch"><input type="checkbox" ${c.ativo !== false ? 'checked' : ''} onchange="toggleCartao('${c.id}',this.checked)"><span class="slider"></span></label></td>
       <td class="center">
         <div style="display:flex;gap:4px;justify-content:center;">
