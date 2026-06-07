@@ -2596,6 +2596,12 @@ function abrirModal(id=null){
         const dtFaturaEl = document.getElementById('m-dt-fatura');
         if(dtFaturaEl) dtFaturaEl.value = l.dtVencimento||'';
         atualizarInfoCartao(l.cartaoId);
+        // Bloqueia vencimento para compras de cartão (calculado automaticamente)
+        const campoVenc = document.getElementById('m-venc');
+        campoVenc.readOnly = true;
+        campoVenc.style.opacity = '0.5';
+        campoVenc.style.cursor = 'not-allowed';
+        campoVenc.title = 'Vencimento calculado automaticamente pelo cartão';
       }, 50);
     }
   } else {
@@ -2781,6 +2787,14 @@ function setTipo(tipo){
   filtrarCatsPorTipo(tipo==='cartao'?'pagar':tipo, _cartaoIdFiltro);
   // Popula select de cartões
   if(tipo==='cartao') popularSelectCartoes();
+  // Desbloqueia vencimento quando não é cartão
+  if (tipo !== 'cartao') {
+    const campoVenc = document.getElementById('m-venc');
+    campoVenc.readOnly = false;
+    campoVenc.style.opacity = '';
+    campoVenc.style.cursor = '';
+    campoVenc.title = '';
+  }
 }
 
 function _restaurarCamposDatas(){
@@ -2876,6 +2890,12 @@ function calcularDtFatura(){
   const dtFatura = `${vencAno}-${String(vencMes).padStart(2,'0')}-${String(c.vencimento).padStart(2,'0')}`;
   document.getElementById('m-dt-fatura').value = dtFatura;
   document.getElementById('m-venc').value = dtFatura;
+  // Bloqueia edição manual do vencimento (calculado pelo cartão)
+  const campoVenc = document.getElementById('m-venc');
+  campoVenc.readOnly = true;
+  campoVenc.style.opacity = '0.5';
+  campoVenc.style.cursor = 'not-allowed';
+  campoVenc.title = 'Vencimento calculado automaticamente pelo cartão';
 }
 
 function filtrarCatsPorTipo(tipo, cartaoIdExcluir){
