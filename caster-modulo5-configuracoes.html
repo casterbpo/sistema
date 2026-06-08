@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CasterBPO — Configurações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+  --g900:#0b1f13;--g800:#122b1c;--g700:#1a3d28;--g600:#245336;--g500:#2e6a44;--g400:#3d8a5a;--g300:#5aaa76;--g100:#c4e8d0;--g050:#edf7f1;
+  --d700:#b37f00;--d600:#c99520;--d500:#d4a832;--d400:#e0bc55;--d300:#e8cc7a;--d050:#fdf8ee;
+  --n900:#111418;--n800:#1e2328;--n700:#2d3339;--n600:#414950;--n500:#596168;--n400:#737c84;--n300:#959da4;--n200:#bcc2c7;--n100:#dde1e4;--n050:#f4f5f6;
+  --vermelho:#c0392b;--verm-bg:#fdecea;--azul:#2563eb;--azul-bg:#eff6ff;
+  --amarelo:#d97706;--amar-bg:#fffbeb;--verde-ok:#16a34a;--verde-bg:#f0fdf4;
+  --bg:#f2f0eb;--bg-card:#fff;--borda:#e4e0d8;--texto:#111418;--texto2:#596168;--texto3:#959da4;
+  --fonte-d:'Cormorant Garamond',serif;--fonte-b:'DM Sans',sans-serif;--fonte-m:'DM Mono',monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-modal:0 8px 40px rgba(0,0,0,.18);
+}
+</style>
+
+<style>
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--fonte-b);background:var(--bg);color:var(--texto);font-size:14px;line-height:1.5;min-height:100vh;}
+.hidden{display:none!important;}
+
+/* Oculta topbar quando dentro de iframe */
+body.embed .topbar { display: none !important; }
+body.embed .layout { min-height: 100vh; }
+body.embed .conteudo, body.embed .page { padding-top: 0; }
+body.embed { padding-top: 0; }
+
+/* TOPBAR */
+.topbar{background:var(--g900);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:80;border-bottom:1px solid rgba(201,168,76,.12);}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--d600),var(--d700));display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:18px;height:18px;}
+.logo-wordmark{font-family:var(--fonte-d);font-size:1.15rem;font-weight:700;color:var(--d400);letter-spacing:.03em;}
+.logo-wordmark em{font-style:normal;color:rgba(255,255,255,.85);}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.1);}
+.empresa-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-sm);padding:4px 10px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;}
+.empresa-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--g300);}
+.spacer{flex:1;}
+.tnav-btn{background:transparent;border:none;color:rgba(255,255,255,.45);padding:5px 11px;border-radius:var(--r-sm);font-size:12px;font-family:var(--fonte-b);font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.tnav-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);}
+.tnav-btn.ativo{background:rgba(201,168,76,.15);color:var(--d300);}
+.tnav-btn svg{width:14px;height:14px;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 52px);}
+.sidebar{background:var(--bg-card);border-right:1px solid var(--borda);padding:1.2rem 0;}
+.sidebar-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--texto3);padding:.5rem 1.2rem;margin-bottom:.3rem;}
+.conf-btn{display:flex;align-items:center;gap:9px;padding:9px 1.2rem;font-size:12px;font-weight:500;color:var(--texto2);cursor:pointer;border:none;background:transparent;font-family:var(--fonte-b);width:100%;text-align:left;transition:all .15s;border-left:3px solid transparent;}
+.conf-btn:hover{background:var(--n050);color:var(--n800);}
+.conf-btn.ativo{background:var(--g050);color:var(--g700);border-left-color:var(--g500);font-weight:600;}
+.conf-btn svg{width:15px;height:15px;flex-shrink:0;}
+.sidebar-sep{border:none;border-top:1px solid var(--borda);margin:.6rem 0;}
+
+/* CONTEÚDO */
+.conteudo{padding:1.5rem 2rem;}
+.conf-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.conf-header h2{font-family:var(--fonte-d);font-size:1.5rem;font-weight:600;color:var(--n900);}
+.conf-header p{font-size:12px;color:var(--texto3);margin-top:2px;}
+
+/* BOTÕES */
+.btn-p{background:var(--g700);color:#fff;border:none;border-radius:var(--r-md);padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+.btn-p:hover{background:var(--g600);}
+.btn-p svg{width:14px;height:14px;}
+.btn-s{background:var(--bg-card);color:var(--texto2);border:1px solid var(--borda);border-radius:var(--r-md);padding:7px 14px;font-size:12px;font-weight:500;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+.btn-s:hover{border-color:var(--g400);color:var(--g600);}
+.btn-s svg{width:13px;height:13px;}
+.btn-icon{background:transparent;border:1px solid var(--borda);border-radius:var(--r-sm);padding:4px 8px;font-size:11px;cursor:pointer;color:var(--texto3);transition:all .15s;display:inline-flex;align-items:center;gap:3px;font-family:var(--fonte-b);}
+.btn-icon:hover{border-color:var(--g400);color:var(--g600);}
+.btn-icon.del:hover{border-color:var(--vermelho);color:var(--vermelho);}
+.btn-icon svg{width:11px;height:11px;}
+
+/* CARD */
+.card{background:var(--bg-card);border:1px solid var(--borda);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1rem;}
+.card-header{padding:.9rem 1.2rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;}
+.card-titulo{font-family:var(--fonte-d);font-size:1rem;font-weight:600;color:var(--n900);}
+.card-sub{font-size:11px;color:var(--texto3);}
+.card-body{padding:1.2rem;}
+
+/* TABELA */
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--g900);}
+thead th{padding:8px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(201,168,76,.65);text-align:left;}
+thead th.center{text-align:center;}
+tbody tr{border-bottom:1px solid var(--borda);transition:background .12s;}
+tbody tr:hover{background:var(--n050);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:8px 12px;font-size:12px;vertical-align:middle;}
+td.center{text-align:center;}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;}
+.tag-entrada{background:var(--azul-bg);color:var(--azul);}
+.tag-saida{background:var(--verm-bg);color:var(--vermelho);}
+.tag-ativo{background:var(--verde-bg);color:var(--verde-ok);}
+
+/* BADGE COLOR */
+.cat-mae-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+
+/* FORMULÁRIO */
+.form-row{display:grid;gap:.8rem;margin-bottom:.8rem;}
+.fr-1{grid-template-columns:1fr;}
+.fr-2{grid-template-columns:1fr 1fr;}
+.fr-3{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--texto3);}
+.form-label.req::after{content:' *';color:var(--vermelho);}
+.form-input,.form-select,.form-textarea{background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-md);padding:9px 12px;font-size:13px;font-family:var(--fonte-b);color:var(--texto);outline:none;transition:border-color .15s;width:100%;}
+.form-input:focus,.form-select:focus{border-color:var(--g400);box-shadow:0 0 0 3px rgba(61,138,90,.1);}
+.form-hint{font-size:10px;color:var(--texto3);}
+.form-secao{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--g500);margin-bottom:.5rem;margin-top:.4rem;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(2px);}
+.overlay.aberto{opacity:1;pointer-events:all;}
+.modal{background:var(--bg-card);border-radius:var(--r-xl);width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-modal);transform:translateY(12px) scale(.98);transition:transform .22s;}
+.overlay.aberto .modal{transform:translateY(0) scale(1);}
+.modal-sm{width:400px;}
+.modal-header{background:var(--g900);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-radius:var(--r-xl) var(--r-xl) 0 0;position:sticky;top:0;z-index:2;}
+.modal-titulo{font-family:var(--fonte-d);font-size:1.1rem;font-weight:600;color:var(--d300);}
+.modal-fechar{background:rgba(255,255,255,.08);border:none;width:28px;height:28px;border-radius:50%;color:rgba(255,255,255,.5);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-fechar:hover{background:rgba(255,255,255,.15);color:#fff;}
+.modal-body{padding:1.5rem;}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--borda);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--bg-card);}
+
+/* EMPRESA HEADER CARD */
+.emp-card-topo{background:linear-gradient(135deg,var(--g800),var(--g900));padding:1.5rem;display:flex;align-items:center;gap:1.2rem;}
+.emp-inicial{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--d500),var(--d700));display:flex;align-items:center;justify-content:center;font-family:var(--fonte-d);font-size:1.6rem;font-weight:700;color:var(--g900);}
+.emp-info-nome{font-family:var(--fonte-d);font-size:1.3rem;font-weight:600;color:#fff;}
+.emp-info-cnpj{font-family:var(--fonte-m);font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;}
+.emp-info-seg{font-size:11px;color:var(--d300);margin-top:4px;}
+
+/* ITEM LISTA CAT */
+.cat-item{display:flex;align-items:center;gap:10px;padding:9px 1.2rem;border-bottom:1px solid var(--borda);transition:background .12s;}
+.cat-item:hover{background:var(--n050);}
+.cat-item:last-child{border-bottom:none;}
+.cat-item-nome{flex:1;font-size:13px;}
+.cat-item-mae{font-size:11px;color:var(--texto3);}
+
+/* DRAG HANDLE */
+.drag-handle{color:var(--n200);cursor:grab;font-size:16px;padding:0 4px;}
+
+/* SALDO INPUT */
+.saldo-inline{display:flex;align-items:center;gap:6px;}
+.saldo-inline input{width:120px;background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-sm);padding:5px 8px;font-size:12px;font-family:var(--fonte-m);outline:none;}
+.saldo-inline input:focus{border-color:var(--g400);}
+
+/* SWITCH */
+.switch{position:relative;display:inline-block;width:36px;height:20px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--n200);transition:.3s;border-radius:20px;}
+.slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:white;transition:.3s;border-radius:50%;}
+input:checked+.slider{background:var(--g500);}
+input:checked+.slider:before{transform:translateX(16px);}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--g900);color:var(--d400);border:1px solid rgba(201,168,76,.35);border-radius:var(--r-md);padding:10px 16px;font-size:13px;box-shadow:var(--shadow-modal);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;display:flex;align-items:center;gap:8px;font-weight:500;}
+.toast.ok{border-color:rgba(201,168,76,.5);color:var(--d300);}
+.toast.err{border-color:rgba(201,168,76,.5);color:var(--d400);}
+.toast svg{width:15px;height:15px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;}}
+
+/* ZONA PERIGOSA */
+.zona-perigo{background:#fff5f5;border:1px solid #fecaca;border-radius:var(--r-lg);padding:1.2rem;margin-top:1rem;}
+.zona-perigo h3{font-size:13px;font-weight:600;color:#991b1b;margin-bottom:.5rem;}
+.zona-perigo p{font-size:12px;color:#b91c1c;margin-bottom:.8rem;}
+
+/* LOGOFF */
+#cb-logoff{background:var(--g800);color:var(--d400)!important;border-left:3px solid var(--d600)!important;font-weight:600;margin:0 .6rem .6rem;width:calc(100% - 1.2rem);border-radius:var(--r-sm);}
+#cb-logoff:hover{background:var(--g700);color:var(--d300)!important;}
+#cb-logoff svg{stroke:var(--d400);}
+</style>
+
+<style>
+/* RESPONSÁVEIS */
+.resp-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.8rem;}
+.resp-item{background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-md);padding:.75rem 1rem;display:flex;flex-direction:column;gap:.5rem;position:relative;}
+.resp-item-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.6rem;align-items:end;}
+.resp-item-outro{margin-top:.3rem;}
+.resp-remove{background:transparent;border:none;color:var(--texto3);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;border-radius:4px;transition:color .15s;flex-shrink:0;}
+.resp-remove:hover{color:var(--vermelho);}
+.btn-add-resp{background:transparent;border:1px dashed var(--g400);color:var(--g500);border-radius:var(--r-md);padding:7px 14px;font-size:12px;font-family:var(--fonte-b);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s;margin-bottom:.8rem;}
+.btn-add-resp:hover{background:var(--g050);border-color:var(--g500);}
+
+/* CATEGORIAS hierárquicas */
+.cat-group{margin-bottom:1.2rem;}
+.cat-mae-header{background:var(--g900);color:var(--d300);padding:.6rem 1.2rem;font-family:var(--fonte-d);font-size:1rem;font-weight:600;display:flex;align-items:center;justify-content:space-between;}
+.cat-nivel1{border-left:3px solid var(--g400);margin-left:0;}
+.cat-nivel2{border-left:3px solid var(--d400);margin-left:1.5rem;}
+.cat-cod{font-family:var(--fonte-m);font-size:11px;color:var(--g400);min-width:40px;font-weight:600;}
+.cat-cod-d{font-family:var(--fonte-m);font-size:11px;color:var(--d500);min-width:48px;font-weight:600;}
+.cat-expand{background:transparent;border:none;color:var(--texto3);cursor:pointer;font-size:11px;padding:2px 6px;border-radius:4px;}
+.cat-expand:hover{background:var(--n100);}
+.cat-sub-wrap{display:none;}
+.cat-sub-wrap.aberto{display:block;}
+
+/* RESP */
+@media(max-width:800px){.layout{grid-template-columns:1fr;}.sidebar{display:flex;flex-wrap:wrap;padding:.5rem;gap:4px;border-right:none;border-bottom:1px solid var(--borda);}.conf-btn{border-radius:var(--r-sm);border:1px solid var(--borda);border-left:3px solid transparent;padding:6px 10px;}.fr-2,.fr-3{grid-template-columns:1fr;}}
+
+/* CARTÕES */
+.cartao-card{background:linear-gradient(135deg,var(--g800),var(--g900));border-radius:var(--r-lg);padding:1.2rem 1.4rem;position:relative;overflow:hidden;border:1px solid rgba(201,168,76,.18);}
+.cartao-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(201,168,76,.06);}
+.cartao-card::after{content:'';position:absolute;bottom:-20px;left:20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.03);}
+.cartao-bandeira{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--d400);margin-bottom:.4rem;}
+.cartao-nome{font-family:var(--fonte-d);font-size:1rem;font-weight:600;color:#fff;}
+.cartao-limite-info{display:flex;gap:1.2rem;margin-top:.8rem;}
+.cartao-limite-item{display:flex;flex-direction:column;gap:1px;}
+.cartao-limite-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);}
+.cartao-limite-val{font-family:var(--fonte-m);font-size:12px;font-weight:600;color:#fff;}
+.cartao-limite-val.disponivel{color:var(--g300);}
+.cartao-limite-val.usado{color:var(--d400);}
+.cartao-bar-wrap{margin-top:.7rem;}
+.cartao-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.cartao-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
+.tag-cartao{background:rgba(201,168,76,.15);color:var(--d300);border:1px solid rgba(201,168,76,.3);}
+.fatura-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;}
+.fatura-aberta{background:var(--amar-bg);color:var(--amarelo);}
+.fatura-fechada{background:var(--verm-bg);color:var(--vermelho);}
+.fatura-paga{background:var(--verde-bg);color:var(--verde-ok);}
+</style>
+<!-- Oculta topbar quando carregado dentro de iframe -->
+<style>
+  :root { --hide-topbar: flex; }
+  .topbar { display: var(--hide-topbar) !important; }
+  body.embed .conteudo, body.embed .page { padding-top: 0; }
+  body.embed { padding-top: 0; }
+</style>
+<script>
+  if (window.self !== window.top) {
+    document.documentElement.style.setProperty('--hide-topbar', 'none');
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.classList.add('embed');
+      var l = document.querySelector('.layout');
+      if (l) l.style.minHeight = '100vh';
+    });
+  }
+</script>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="ir('caster-modulo1-painel.html')">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
+    <span class="logo-wordmark">Caster<em>BPO</em></span>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="empresa-badge"><span class="dot"></span><span id="badge-empresa">—</span></div>
+  <div class="spacer"></div>
+  <nav style="display:flex;gap:2px;">
+    <button class="tnav-btn" onclick="ir('caster-modulo1-painel.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
+    <button class="tnav-btn" onclick="ir('caster-modulo2-lancamentos.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><span>Lançamentos</span></button>
+    <button class="tnav-btn" onclick="ir('caster-modulo3-conciliacao.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span>Conciliação</span></button>
+    <button class="tnav-btn" onclick="ir('caster-modulo4-relatorios.html')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Relatórios</span></button>
+    <button class="tnav-btn ativo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Configurações</span></button>
+  </nav>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-titulo">Empresa</div>
+    <button class="conf-btn ativo" id="cb-empresa" onclick="mostrar('empresa',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Dados da Empresa
+    </button>
+    <hr class="sidebar-sep">
+    <div class="sidebar-titulo">Financeiro</div>
+    <button class="conf-btn" id="cb-bancos" onclick="mostrar('bancos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Bancos e Caixas
+    </button>
+    <button class="conf-btn" id="cb-cartoes" onclick="mostrar('cartoes',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="6" cy="15" r="1.5" fill="currentColor"/><circle cx="10" cy="15" r="1.5" fill="currentColor" opacity=".5"/></svg>
+      Cartões de Crédito
+    </button>
+    <button class="conf-btn" id="cb-categorias" onclick="mostrar('categorias',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Categorias
+    </button>
+    <button class="conf-btn" id="cb-cc" onclick="mostrar('cc',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      Centros de Custo
+    </button>
+    <button class="conf-btn" id="cb-fornecedores" onclick="mostrar('fornecedores',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Fornecedores e Clientes
+    </button>
+    <hr class="sidebar-sep">
+    <div class="sidebar-titulo">Sistema</div>
+    <button class="conf-btn" id="cb-backup" onclick="mostrar('backup',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Backup e Dados
+    </button>
+    <hr class="sidebar-sep">
+    <button class="conf-btn" id="cb-logoff" onclick="fazerLogoff()" style="color:var(--d400);border-left-color:transparent;margin-top:auto;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair do Sistema
+    </button>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="conteudo">
+
+    <!-- ═══ EMPRESA ═══ -->
+    <div id="conf-empresa">
+      <div class="conf-header">
+        <div><h2>Dados da Empresa</h2><p>Informações cadastrais e configurações gerais</p></div>
+        <button class="btn-p" onclick="salvarEmpresa()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Salvar alterações</button>
+      </div>
+
+      <div class="card">
+        <div class="emp-card-topo">
+          <div class="emp-inicial" id="emp-inicial-vis">—</div>
+          <div>
+            <div class="emp-info-nome" id="emp-nome-vis">—</div>
+            <div class="emp-info-cnpj" id="emp-cnpj-vis">—</div>
+            <div class="emp-info-seg" id="emp-seg-vis">—</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-secao">Identificação</div>
+          <div class="form-row fr-2">
+            <div class="form-group"><label class="form-label req">Razão Social</label><input class="form-input" id="e-razao"></div>
+            <div class="form-group"><label class="form-label">Nome Fantasia</label><input class="form-input" id="e-fantasia"></div>
+          </div>
+          <div class="form-row fr-2">
+            <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="e-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraCNPJ(this)"></div>
+            <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-input" id="e-ie" placeholder="Opcional"></div>
+          </div>
+          <div class="form-row fr-2">
+            <div class="form-group"><label class="form-label">Segmento</label>
+              <select class="form-select" id="e-seg">
+                <option>Comércio</option><option>Serviços</option><option>Indústria</option>
+                <option>Tecnologia</option><option>Saúde</option><option>Educação</option><option>Outro</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Regime Tributário</label>
+              <select class="form-select" id="e-regime">
+                <option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option><option>MEI</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-secao" style="margin-top:.6rem;">Contato</div>
+          <div class="form-row fr-2">
+            <div class="form-group"><label class="form-label">E-mail principal</label><input class="form-input" id="e-email" type="email"></div>
+            <div class="form-group"><label class="form-label">Telefone principal</label><input class="form-input" id="e-tel" placeholder="(00) 00000-0000" maxlength="15" oninput="mascaraTel(this)"></div>
+          </div>
+          <div class="form-secao" style="margin-top:.4rem;">Responsáveis</div>
+          <div class="resp-list" id="resp-list"></div>
+          <button class="btn-add-resp" onclick="adicionarResponsavel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar responsável
+          </button>
+          <div class="form-row fr-1" style="margin-top:.2rem;">
+            <div class="form-group"><label class="form-label">Observações gerais</label><textarea class="form-input form-textarea" id="e-obs" rows="3" placeholder="Observações sobre a empresa, contratos, particularidades..."></textarea></div>
+          </div>
+          <div class="form-secao" style="margin-top:.6rem;">Endereço</div>
+          <div class="form-row fr-2">
+            <div class="form-group"><label class="form-label">Cidade</label><input class="form-input" id="e-cidade"></div>
+            <div class="form-group"><label class="form-label">Estado</label>
+              <select class="form-select" id="e-estado">
+                <option value="">—</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+                <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+                <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+                <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option>
+                <option>SE</option><option>TO</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-secao" style="margin-top:.6rem;">Logo da Empresa</div>
+          <div class="form-row fr-1">
+            <div class="form-group">
+              <label class="form-label">Imagem da logo</label>
+              <input type="file" id="e-logo" accept="image/*" class="form-input" style="padding:6px;" onchange="previewLogo(this)">
+              <div id="logo-preview" style="margin-top:8px;display:none;align-items:center;gap:10px;">
+                <img id="logo-img" style="max-height:60px;max-width:200px;object-fit:contain;border-radius:4px;border:1px solid var(--borda);">
+                <button class="btn-s" style="font-size:11px;" onclick="removerLogo()">✕ Remover</button>
+              </div>
+              <span class="form-hint">A logo aparecerá nos relatórios exportados para PDF. Formatos: PNG, JPG, SVG.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BANCOS ═══ -->
+    <div id="conf-bancos" class="hidden">
+      <div class="conf-header">
+        <div><h2>Bancos e Caixas</h2><p>Contas bancárias e caixas físicos da empresa</p></div>
+        <button class="btn-p" onclick="abrirModalBanco()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova conta</button>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Nome</th><th>Banco</th><th>Tipo</th><th>Agência/Conta</th><th>Saldo Atual</th><th class="center">Ativo</th><th class="center">Ações</th></tr></thead>
+            <tbody id="tbody-bancos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CARTÕES DE CRÉDITO ═══ -->
+    <div id="conf-cartoes" class="hidden">
+      <div class="conf-header">
+        <div><h2>Cartões de Crédito</h2><p>Gerencie seus cartões, limites e faturas</p></div>
+        <button class="btn-p" onclick="abrirModalCartao()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo cartão</button>
+      </div>
+      <div id="grid-cartoes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-bottom:1.2rem;"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-titulo">Todos os Cartões</div>
+          <div style="display:flex;gap:.5rem;">
+
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Nome do Cartão</th><th>Bandeira</th><th>Fechamento</th><th>Vencimento</th><th>Limite Total</th><th>Disponível</th><th class="center">Ativo</th><th class="center">Ações</th></tr></thead>
+            <tbody id="tbody-cartoes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CATEGORIAS ═══ -->
+    <div id="conf-categorias" class="hidden">
+      <div class="conf-header">
+        <div><h2>Categorias</h2><p>Numeração automática por hierarquia. Entradas → 1.x.x · Saídas → 2.x.x</p></div>
+        
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="card">
+          <div class="cat-mae-header">
+  <span>1. Entradas</span>
+  <div style="display:flex;align-items:center;gap:.6rem;">
+    <span id="qt-entradas" style="font-size:11px;font-weight:400;color:var(--d200);">0 categorias</span>
+    <button class="btn-icon" onclick="abrirModalCat(null,'Entradas')"
+      style="border-color:rgba(201,168,76,.4);color:var(--d300);background:rgba(201,168,76,.08);">
+      + Categoria
+    </button>
+  </div>
+</div>
+          <div id="lista-entradas" style="padding:.4rem 0;"></div>
+        </div>
+        <div class="card">
+          <div class="cat-mae-header">
+  <span>2. Saídas</span>
+  <div style="display:flex;align-items:center;gap:.6rem;">
+    <span id="qt-saidas" style="font-size:11px;font-weight:400;color:var(--d200);">0 categorias</span>
+    <button class="btn-icon" onclick="abrirModalCat(null,'Saídas')"
+      style="border-color:rgba(201,168,76,.4);color:var(--d300);background:rgba(201,168,76,.08);">
+      + Categoria
+    </button>
+  </div>
+</div>
+          <div id="lista-saidas" style="padding:.4rem 0;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CENTROS DE CUSTO ═══ -->
+    <div id="conf-cc" class="hidden">
+      <div class="conf-header">
+        <div><h2>Centros de Custo</h2><p>Departamentos e divisões para alocação de lançamentos</p></div>
+        <button class="btn-p" onclick="abrirModalCC()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo centro</button>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Nome</th><th>Código</th><th>Descrição</th><th>Lançamentos</th><th class="center">Ações</th></tr></thead>
+            <tbody id="tbody-cc"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FORNECEDORES ═══ -->
+    <div id="conf-fornecedores" class="hidden">
+      <div class="conf-header">
+        <div><h2>Fornecedores e Clientes</h2><p>Base de parceiros utilizados nos lançamentos</p></div>
+        <button class="btn-p" onclick="abrirModalForn()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo contato</button>
+      </div>
+      <div style="margin-bottom:.8rem;position:relative;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--texto3);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="forn-busca" class="form-input" placeholder="Buscar por nome, tipo, CNPJ/CPF, e-mail, cidade, observação..." style="padding-left:34px;" oninput="filtrarFornecedores()">
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Nome</th><th>Tipo</th><th>CNPJ/CPF</th><th>E-mail</th><th>Lançamentos</th><th class="center">Ações</th></tr></thead>
+            <tbody id="tbody-forns"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BACKUP ═══ -->
+    <div id="conf-backup" class="hidden">
+      <div class="conf-header">
+        <div><h2>Backup e Dados</h2><p>Exporte, importe e gerencie os dados do sistema</p></div>
+      </div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-header"><div class="card-titulo">Exportar dados</div></div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--texto2);margin-bottom:1.2rem;">Faça backup completo de todos os dados desta empresa em formato JSON.</p>
+          <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+            <button class="btn-p" onclick="exportarBackup()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar JSON (backup completo)</button>
+            <button class="btn-s" onclick="exportarTodosCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>Exportar lançamentos CSV</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-header"><div class="card-titulo">Importar dados</div></div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--texto2);margin-bottom:.8rem;">Restaure um backup JSON exportado anteriormente.</p>
+          <input type="file" id="import-file" accept=".json" class="hidden" onchange="importarBackup(event)">
+          <button class="btn-s" onclick="document.getElementById('import-file').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>Selecionar arquivo JSON</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-titulo">Informações do banco de dados</div></div>
+        <div class="card-body" id="db-info"></div>
+      </div>
+      <div class="zona-perigo">
+        <h3>⚠ Zona de perigo</h3>
+        <p>Estas ações são irreversíveis. Faça um backup antes de continuar.</p>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+          <button class="btn-s" style="border-color:var(--vermelho);color:var(--vermelho);" onclick="limparLancamentos()">Limpar lançamentos da empresa</button>
+          <button class="btn-s" style="border-color:#991b1b;color:#991b1b;" onclick="resetarTudo()">Resetar todo o sistema</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: BANCO -->
+<div class="overlay" id="overlay-banco">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo" id="banco-modal-titulo">Nova Conta</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-banco')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label req">Nome da conta</label><input class="form-input" id="b-nome" placeholder="Ex: Bradesco Principal"></div>
+        <div class="form-group"><label class="form-label req">Banco</label>
+          <select class="form-select" id="b-banco" onchange="toggleOutroBanco(this)">
+            <option>Bradesco</option><option>Itaú</option><option>Santander</option><option>Banco do Brasil</option>
+            <option>Caixa Econômica Federal</option><option>Nubank</option><option>Sicoob</option><option>Sicredi</option>
+            <option>Inter</option><option>C6 Bank</option><option>BTG Pactual</option><option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row fr-1 hidden" id="b-outro-wrap">
+        <div class="form-group">
+          <label class="form-label req">Nome do banco</label>
+          <input class="form-input" id="b-banco-outro" placeholder="Ex: Banco Sicoob, Financeira XYZ...">
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="b-tipo">
+            <option>Conta Corrente</option><option>Conta Poupança</option><option>Conta Digital</option><option>Caixa</option><option>Investimento</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Saldo inicial (R$)</label><input class="form-input" id="b-saldo" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label">Agência</label><input class="form-input" id="b-agencia" placeholder="0000"></div>
+        <div class="form-group"><label class="form-label">Número da conta</label><input class="form-input" id="b-conta" placeholder="00000-0"></div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group">
+          <label class="form-label">Limite de crédito (R$)</label>
+          <input class="form-input" id="b-limite" type="number" step="0.01" min="0" placeholder="0,00">
+          <span class="form-hint">Cheque especial, limite do cartão, linha de crédito etc. O valor utilizado é calculado automaticamente pelo saldo da conta.</span>
+        </div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label">Observação</label><input class="form-input" id="b-obs" placeholder="Opcional"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModal('overlay-banco')">Cancelar</button>
+      <button class="btn-p" onclick="salvarBanco()">✓ Salvar conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CARTÃO -->
+<div class="overlay" id="overlay-cartao">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo" id="cartao-modal-titulo">Novo Cartão</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-cartao')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label req">Nome do cartão</label><input class="form-input" id="ct-nome" placeholder="Ex: Nubank Gold, Itaú Empresarial"></div>
+        <div class="form-group"><label class="form-label req">Bandeira</label>
+          <select class="form-select" id="ct-bandeira">
+            <option>Visa</option><option>Mastercard</option><option>Elo</option><option>American Express</option><option>Hipercard</option><option>Diners</option><option>Outra</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label req">Banco emissor</label>
+          <select class="form-select" id="ct-banco" onchange="toggleOutroBancoCartao(this)">
+            <option>Nubank</option><option>Itaú</option><option>Bradesco</option><option>Santander</option><option>Banco do Brasil</option>
+            <option>Caixa Econômica Federal</option><option>Sicoob</option><option>Sicredi</option><option>Inter</option><option>C6 Bank</option><option>BTG Pactual</option><option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label req">Limite total (R$)</label><input class="form-input" id="ct-limite" type="number" step="0.01" min="0" placeholder="0,00"></div>
+      </div>
+      <div class="form-row fr-1 hidden" id="ct-outro-wrap">
+        <div class="form-group"><label class="form-label req">Nome do banco</label><input class="form-input" id="ct-banco-outro" placeholder="Ex: Financeira XYZ..."></div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group">
+          <label class="form-label req">Dia de fechamento</label>
+          <input class="form-input" id="ct-fechamento" type="number" min="1" max="31" placeholder="Ex: 15">
+          <span class="form-hint">Dia do mês em que a fatura fecha</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label req">Dia de vencimento</label>
+          <input class="form-input" id="ct-vencimento" type="number" min="1" max="31" placeholder="Ex: 25">
+          <span class="form-hint">Dia do mês em que a fatura vence</span>
+        </div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label">Observação</label><input class="form-input" id="ct-obs" placeholder="Opcional"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModal('overlay-cartao')">Cancelar</button>
+      <button class="btn-p" onclick="salvarCartao()">✓ Salvar cartão</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CATEGORIA -->
+<div class="overlay" id="overlay-cat">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-titulo" id="cat-modal-titulo">Nova Categoria</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-cat')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label req">Nome da categoria</label><input class="form-input" id="cat-nome" placeholder="Ex: Receita Bruta, Venda de Roupa..."></div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label req">Categoria mãe</label>
+          <select class="form-select" id="cat-mae" onchange="atualizarSelectPai()">
+            <option value="Entradas">1. Entradas (Receitas)</option>
+            <option value="Saídas">2. Saídas (Despesas)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row fr-1" id="grupo-cat-pai">
+        <div class="form-group">
+          <label class="form-label">Subcategoria de (opcional)</label>
+          <select class="form-select" id="cat-pai">
+            <option value="">— Categoria de 1º nível —</option>
+          </select>
+          <span class="form-hint">Se selecionado, esta será uma subdivisão (ex: 1.1.1)</span>
+        </div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="cat-desc" placeholder="Opcional"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModal('overlay-cat')">Cancelar</button>
+      <button class="btn-p" onclick="salvarCategoria()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CC -->
+<div class="overlay" id="overlay-cc">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-titulo" id="cc-modal-titulo">Novo Centro de Custo</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-cc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label req">Nome</label><input class="form-input" id="cc-nome" placeholder="Ex: Comercial, Financeiro, TI..."></div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label">Código</label><input class="form-input" id="cc-cod" placeholder="Ex: CC001"></div>
+        <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="cc-resp" placeholder="Nome"></div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="cc-desc" placeholder="Opcional"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModal('overlay-cc')">Cancelar</button>
+      <button class="btn-p" onclick="salvarCC()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FORNECEDOR -->
+<div class="overlay" id="overlay-forn">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo" id="forn-modal-titulo">Novo Contato</span>
+      <button class="modal-fechar" onclick="fecharModal('overlay-forn')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label req">Nome</label><input class="form-input" id="forn-nome" placeholder="Razão social ou nome"></div>
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="forn-tipo">
+            <option value="fornecedor">Fornecedor</option><option value="cliente">Cliente</option><option value="ambos">Ambos</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-input" id="forn-doc" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraCNPJ(this)"></div>
+        <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="forn-email" type="email"></div>
+      </div>
+      <div class="form-row fr-2">
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="forn-tel" placeholder="(00) 00000-0000" maxlength="15" oninput="mascaraTel(this)"></div>
+        <div class="form-group"><label class="form-label">Cidade/Estado</label><input class="form-input" id="forn-cidade"></div>
+      </div>
+      <div class="form-row fr-1">
+        <div class="form-group"><label class="form-label">Observação</label><input class="form-input" id="forn-obs"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="fecharModal('overlay-forn')">Cancelar</button>
+      <button class="btn-p" onclick="salvarForn()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const CHAVE = 'caster_bpo_v2';
+const SUPA_URL = 'https://mojqonunykhrdmunojzu.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vanFvbnVueWtocmRtdW5vanp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNDQyNzEsImV4cCI6MjA5NDgyMDI3MX0.GWlYgvN7TxEQdjuVoOKZkHZ6b16hruPtih-ykZ_ieEU';
+const REDIRECT_URL = 'https://casterbpo.github.io/sistema/index.html';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ═══ GUARD DE SESSÃO ═══
+(async function guardSessao() {
+  // Só roda fora de iframe
+  if (window.self !== window.top) return;
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) {
+    window.location.href = REDIRECT_URL;
+  }
+})();
+
+let DB = JSON.parse(localStorage.getItem(CHAVE) || 'null') || {
+  empresas: [], bancos: {}, lancamentos: {}, categorias: {},
+  centrosCusto: {}, fornecedores: {}, fornecedoresObj: {}, orcamentos: {}, cartoes: {}
+};
+if (!DB.cartoes) DB.cartoes = {};
+
+function salvarDB() {
+  localStorage.setItem(CHAVE, JSON.stringify(DB));
+}
+
+async function upsertBancoSupa(b, eid) {
+  const { error } = await supa.from('bancos').upsert({
+    id: b.id, empresa_id: eid, nome: b.nome, banco: b.banco,
+    tipo: b.tipo, saldo: b.saldo || 0, agencia: b.agencia,
+    conta: b.conta, obs: b.obs, ativo: b.ativo !== false,
+    limite: b.limite || 0
+  }, { onConflict: 'id' });
+  if (error) console.warn('Erro Supabase bancos:', error);
+}
+
+async function upsertCategoriaSupa(c, eid) {
+  const { error } = await supa.from('categorias').upsert({
+    id: c.id, empresa_id: eid, nome: c.nome,
+    mae: c.mae, pai: c.pai || null, descricao: c.descricao || null,
+    ordem: c.ordem ?? 0
+  }, { onConflict: 'id' });
+  if (error) console.warn('Erro Supabase categorias:', error);
+}
+
+async function upsertCCSupa(c, eid) {
+  const { error } = await supa.from('centros_custo').upsert({
+    id: c.id, empresa_id: eid, nome: c.nome,
+    cod: c.cod, resp: c.resp, descricao: c.descricao || null
+  }, { onConflict: 'id' });
+  if (error) console.warn('Erro Supabase centros_custo:', error);
+}
+
+async function upsertFornSupa(f, eid) {
+  const { error } = await supa.from('fornecedores').upsert({
+    id: f.id, empresa_id: eid, nome: f.nome, tipo: f.tipo,
+    doc: f.doc, email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs
+  }, { onConflict: 'nome,empresa_id' });
+  if (error) console.warn('Erro Supabase fornecedores:', error);
+}
+function uid(){ return crypto.randomUUID(); }
+
+// ═══ CATEGORIA-RAIZ PROTEGIDA: PASSIVOS ═══
+// UUID fixo reservado para a categoria-raiz Passivos
+// (fixo para ser sempre o mesmo em todos os dispositivos)
+const PASSIVOS_ID = '00000000-0000-0000-0000-000000000001';
+
+async function garantirPassivos() {
+  // Garante que a categoria-raiz "Passivos" sempre exista em Saídas
+  if (!DB.categorias[EMP.id]) DB.categorias[EMP.id] = [];
+  const cats = DB.categorias[EMP.id];
+  if (!cats.find(c => c.id === PASSIVOS_ID)) {
+    const maxOrdem = cats.filter(c => c.mae === 'Saídas' && !c.pai).reduce((m, c) => Math.max(m, c.ordem ?? 0), -1);
+    cats.push({
+      id: PASSIVOS_ID,
+      nome: 'Passivos',
+      mae: 'Saídas',
+      pai: null,
+      descricao: 'Categoria raiz de passivos (não excluível)',
+      ordem: maxOrdem + 1,
+      _protegido: true
+    });
+    salvarDB();
+    await upsertCategoriaSupa(cats.find(c => c.id === PASSIVOS_ID), EMP.id);
+  }
+}
+
+function idCatCartao(cartaoId) {
+  // Gera UUID determinístico a partir do cartaoId
+  // Usa namespace fixo 00000000-0000-0000-0000- + primeiros 12 hex do cartaoId
+  const hex = cartaoId.replace(/-/g, '');
+  return '00000001-0000-0000-0000-' + hex.slice(0, 12).padEnd(12, '0');
+}
+
+async function garantirCatCartao(cartao) {
+  if (!DB.categorias[EMP.id]) DB.categorias[EMP.id] = [];
+  const cats = DB.categorias[EMP.id];
+  const catId = idCatCartao(cartao.id);
+  const existente = cats.find(c => c.id === catId);
+  const nome = 'Cartão ' + cartao.nome;
+  if (!existente) {
+    const maxOrdem = cats.filter(c => c.pai === PASSIVOS_ID).reduce((m, c) => Math.max(m, c.ordem ?? 0), -1);
+    const nova = {
+      id: catId,
+      nome,
+      mae: 'Saídas',
+      pai: PASSIVOS_ID,
+      descricao: 'Categoria automática do cartão ' + cartao.nome,
+      ordem: maxOrdem + 1,
+      _cartaoId: cartao.id,
+      _protegido: true
+    };
+    cats.push(nova);
+    salvarDB();
+    await upsertCategoriaSupa(nova, EMP.id);
+  } else if (existente.nome !== nome) {
+    existente.nome = nome;
+    salvarDB();
+    await upsertCategoriaSupa(existente, EMP.id);
+  }
+}
+
+function removerCatCartao(cartaoId) {
+  if (!DB.categorias[EMP.id]) return;
+  const catId = idCatCartao(cartaoId);
+  const existe = DB.categorias[EMP.id].find(c => c.id === catId);
+  if (!existe) return;
+  DB.categorias[EMP.id] = DB.categorias[EMP.id].filter(c => c.id !== catId);
+  salvarDB();
+  supa.from('categorias').delete().eq('id', catId);
+}
+
+async function sincronizarCatsCartoes() {
+  const cartoes = DB.cartoes[EMP.id] || [];
+  await garantirPassivos();           // garante que o pai existe no Supabase antes dos filhos
+  for (const c of cartoes) {
+    await garantirCatCartao(c);
+  }
+  // Remove cats órfãs
+  const idsCartoes = cartoes.map(c => idCatCartao(c.id));
+  (DB.categorias[EMP.id] || [])
+    .filter(c => c._cartaoId && !idsCartoes.includes(c.id))
+    .forEach(c => removerCatCartao(c._cartaoId));
+}
+function fmtM(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function voltarPainel(){
+  if(window.self!==window.top) window.parent.irAba('dashboard', window.parent.document.getElementById('sb-dashboard'));
+  else window.location.href='caster-modulo1-painel.html';
+}
+function ir(url){
+  if(window.self!==window.top){
+    const mapaAbas = {
+      'caster-modulo2-lancamentos.html':'lancamentos',
+      'caster-modulo3-conciliacao.html':'conciliacao',
+      'caster-modulo4-relatorios.html':'relatorios',
+      'caster-modulo5-configuracoes.html':'configuracoes'
+    };
+    const abaAlvo = mapaAbas[url] || 'dashboard';
+    window.parent.irAba(abaAlvo, window.parent.document.getElementById('sb-'+abaAlvo));
+  } else window.location.href=url;
+}
+function fecharModal(id){document.getElementById(id).classList.remove('aberto');}
+
+async function fazerLogoff(){
+  if(!confirm('Deseja sair do sistema?')) return;
+  await supa.auth.signOut();
+  sessionStorage.clear();
+  window.top.location.href = 'https://casterbpo.github.io/sistema/index.html';
+}
+
+let EMP=null;
+let editandoBanco=null,editandoCat=null,editandoCC=null,editandoForn=null;
+
+async function init() {
+  const eid = sessionStorage.getItem('empresa_ativa');
+  if (!eid && DB.empresas.length) sessionStorage.setItem('empresa_ativa', DB.empresas[0].id);
+
+  // Carrega do cache local primeiro (UI rápida)
+  const eidAtual = sessionStorage.getItem('empresa_ativa');
+  if (eidAtual) EMP = DB.empresas.find(e => e.id === eidAtual);
+  if (!EMP && DB.empresas.length) EMP = DB.empresas[0];
+  if (!DB.fornecedoresObj) DB.fornecedoresObj = {};
+
+  if (EMP) {
+    document.getElementById('badge-empresa').textContent = EMP.fantasia || EMP.razao;
+    renderEmpresa();
+  }
+
+  // Depois busca do Supabase (atualiza se houver diferença)
+  try {
+    const eid2 = sessionStorage.getItem('empresa_ativa');
+    if (!eid2) return;
+
+    // Empresa
+    const { data: empData } = await supa.from('empresas').select('*').eq('id', eid2).single();
+    if (empData) {
+      const idx = DB.empresas.findIndex(e => e.id === eid2);
+      const empLocal = {
+        id: empData.id, razao: empData.razao, fantasia: empData.fantasia,
+        cnpj: empData.cnpj, ie: empData.ie,
+        segmento: empData.segmento, regime: empData.regime,
+        email: empData.email, tel: empData.tel, cidade: empData.cidade,
+        estado: empData.estado, obs: empData.obs, responsaveis: empData.responsaveis || [],
+        logo: empData.logo || null
+      };
+      if (idx >= 0) DB.empresas[idx] = { ...DB.empresas[idx], ...empLocal };
+      else DB.empresas.push(empLocal);
+      EMP = DB.empresas.find(e => e.id === eid2);
+    }
+
+    // Bancos
+    const { data: bancosData } = await supa.from('bancos').select('*').eq('empresa_id', eid2);
+    if (bancosData) {
+      DB.bancos[eid2] = bancosData.map(b => ({
+        id: b.id, nome: b.nome, banco: b.banco, tipo: b.tipo,
+        saldo: b.saldo, agencia: b.agencia, conta: b.conta, obs: b.obs, ativo: b.ativo,
+        limite: b.limite || 0
+      }));
+    }
+
+    // Categorias
+    const { data: catsData } = await supa.from('categorias').select('*').eq('empresa_id', eid2);
+    if (catsData) {
+      DB.categorias[eid2] = catsData.map((c,i) => ({
+        id: c.id, nome: c.nome, mae: c.mae, pai: c.pai, descricao: c.descricao, ordem: c.ordem??i
+      }));
+      // Migração automática: se nenhuma categoria tem ordem definida no banco,
+      // atribui ordem pela posição atual e persiste no Supabase
+      const semOrdem = catsData.filter(c => c.ordem == null);
+      if (semOrdem.length > 0) {
+        // Agrupar por mae+pai e atribuir ordem sequencial dentro de cada grupo
+        const grupos = {};
+        DB.categorias[eid2].forEach(c => {
+          const chave = (c.mae||'') + '::' + (c.pai||'');
+          if (!grupos[chave]) grupos[chave] = [];
+          grupos[chave].push(c);
+        });
+        const updates = [];
+        Object.values(grupos).forEach(grupo => {
+          grupo.forEach((c, i) => {
+            c.ordem = i;
+            updates.push(supa.from('categorias').update({ ordem: i }).eq('id', c.id));
+          });
+        });
+        await Promise.all(updates);
+      }
+    }
+
+    // Centros de Custo
+    const { data: ccsData } = await supa.from('centros_custo').select('*').eq('empresa_id', eid2);
+    if (ccsData) {
+      DB.centrosCusto[eid2] = ccsData.map(c => ({
+        id: c.id, nome: c.nome, cod: c.cod, resp: c.resp, descricao: c.descricao
+      }));
+    }
+
+    // Fornecedores
+    const { data: fornsData } = await supa.from('fornecedores').select('*').eq('empresa_id', eid2);
+    if (fornsData) {
+      DB.fornecedores[eid2] = fornsData.map(f => ({
+        id: f.id, nome: f.nome, tipo: f.tipo, doc: f.doc,
+        email: f.email, tel: f.tel, cidade: f.cidade, obs: f.obs
+      }));
+    }
+
+    // Cartões
+    try {
+      const { data: cartoesData } = await supa.from('cartoes').select('*').eq('empresa_id', eid2);
+      if (cartoesData) {
+        DB.cartoes[eid2] = cartoesData.map(c => ({
+          id: c.id, nome: c.nome, bandeira: c.bandeira, banco: c.banco,
+          limite: c.limite || 0, fechamento: c.fechamento, vencimento: c.vencimento,
+          obs: c.obs, ativo: c.ativo !== false
+        }));
+      }
+    } catch(e) { /* tabela pode não existir ainda */ }
+
+    // Lançamentos — necessários para calcular limite usado dos cartões
+    try {
+      const { data: lancsData } = await supa.from('lancamentos')
+        .select('id,tipo,valor,cartaoId:cartao_id,faturaQuitada:fatura_quitada,dtVencimento:dt_vencimento,obs')
+        .eq('empresa_id', eid2);
+      if (lancsData) {
+        DB.lancamentos[eid2] = lancsData.map(l => ({
+          ...l,
+          cartaoId:      l.cartaoId      ?? l.cartao_id      ?? null,
+          faturaQuitada: l.faturaQuitada === true || l.fatura_quitada === true || false,
+          _isAutoFatura: (l.obs||'').startsWith('__auto_fatura__') || false,
+        }));
+        salvarDB();
+      }
+    } catch(e) { console.warn('Lançamentos não carregados no mod5:', e); }
+
+    // Garante categoria-raiz Passivos e cats de cartões
+    if (EMP) {
+      garantirPassivos();
+      sincronizarCatsCartoes();
+    }
+
+    // Salva no cache local e re-renderiza
+    localStorage.setItem(CHAVE, JSON.stringify(DB));
+    if (EMP) {
+      document.getElementById('badge-empresa').textContent = EMP.fantasia || EMP.razao;
+      renderEmpresa();
+      const confCartoes = document.getElementById('conf-cartoes');
+if (confCartoes && !confCartoes.classList.contains('hidden')) {
+  renderCartoes();
+}
+    }
+
+  } catch (err) {
+    console.warn('Erro ao carregar do Supabase, usando cache local:', err);
+  }
+}
+
+function mostrar(nome,btn){
+  ['empresa','bancos','cartoes','categorias','cc','fornecedores','backup'].forEach(n=>{
+    document.getElementById('conf-'+n).classList.toggle('hidden',n!==nome);
+    const b=document.getElementById('cb-'+n);
+    if(b) b.classList.toggle('ativo',n===nome);
+  });
+  const renderMap={empresa:renderEmpresa,bancos:renderBancos,cartoes:renderCartoes,categorias:renderCategorias,cc:renderCC,fornecedores:renderFornecedores,backup:renderBackup};
+  if(renderMap[nome]) renderMap[nome]();
+}
+
+// ═══ EMPRESA ═══
+function renderEmpresa(){
+  if(!EMP) return;
+  document.getElementById('emp-inicial-vis').textContent=(EMP.fantasia||EMP.razao||'?').charAt(0).toUpperCase();
+  document.getElementById('emp-nome-vis').textContent=EMP.fantasia||EMP.razao||'—';
+  document.getElementById('emp-cnpj-vis').textContent=EMP.cnpj||'CNPJ não informado';
+  document.getElementById('emp-seg-vis').textContent=EMP.segmento||'—';
+  document.getElementById('e-razao').value=EMP.razao||'';
+  document.getElementById('e-fantasia').value=EMP.fantasia||'';
+  document.getElementById('e-cnpj').value=EMP.cnpj||'';
+  document.getElementById('e-ie').value=EMP.ie||'';
+  document.getElementById('e-seg').value=EMP.segmento||'Comércio';
+  document.getElementById('e-regime').value=EMP.regime||'Simples Nacional';
+  document.getElementById('e-email').value=EMP.email||'';
+  document.getElementById('e-tel').value=EMP.tel||'';
+  document.getElementById('e-cidade').value=EMP.cidade||'';
+  document.getElementById('e-estado').value=EMP.estado||'';
+  document.getElementById('e-obs').value=EMP.obs||'';
+  renderResponsaveis(EMP.responsaveis||[]);
+if(EMP.logo){
+  document.getElementById('logo-img').src=EMP.logo;
+  document.getElementById('logo-preview').style.display='flex';
+} else {
+  document.getElementById('logo-preview').style.display='none';
+}
+}
+
+// ── Responsáveis ──
+const CARGOS_PADRAO=['Sócio(a)','Diretor(a)','Gerente Financeiro','Contador(a)','Administrativo','Representante Legal','Outro'];
+
+function renderResponsaveis(lista){
+  const container=document.getElementById('resp-list');
+  container.innerHTML='';
+  if(!lista||!lista.length){adicionarResponsavel();return;}
+  lista.forEach((r,i)=>container.appendChild(criarItemResponsavel(r,i)));
+}
+
+function criarItemResponsavel(r={},idx){
+  const div=document.createElement('div');
+  div.className='resp-item';
+  div.dataset.idx=idx;
+  const isOutro=r.cargo&&!CARGOS_PADRAO.slice(0,-1).includes(r.cargo)&&r.cargo!=='Outro';
+  const cargoVal=isOutro?'Outro':r.cargo||'';
+  div.innerHTML=`
+    <div class="resp-item-row">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input resp-nome" placeholder="Nome completo" value="${r.nome||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cargo</label>
+        <select class="form-select resp-cargo" onchange="toggleOutroCargo(this)">
+          <option value="">— Selecione —</option>
+          ${CARGOS_PADRAO.map(c=>`<option value="${c}"${cargoVal===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <input class="form-input resp-tel" type="tel" placeholder="(00) 00000-0000"
+          inputmode="numeric" maxlength="15"
+          value="${r.tel||''}"
+          oninput="mascaraTel(this)">
+      </div>
+      <button class="resp-remove" onclick="removerResponsavel(this)" title="Remover">×</button>
+    </div>
+    <div class="resp-item-outro" style="display:${cargoVal==='Outro'||isOutro?'block':'none'}">
+      <div class="form-group">
+        <label class="form-label">Descreva o cargo/função</label>
+        <input class="form-input resp-outro" placeholder="Ex: Consultor externo, Procurador..." value="${isOutro?r.cargo:''}">
+      </div>
+    </div>`;
+  return div;
+}
+
+function adicionarResponsavel(){
+  const container=document.getElementById('resp-list');
+  const idx=container.children.length;
+  container.appendChild(criarItemResponsavel({},idx));
+}
+
+function removerResponsavel(btn){
+  const item=btn.closest('.resp-item');
+  const container=document.getElementById('resp-list');
+  if(container.children.length<=1){toast('Mantenha ao menos um responsável','err');return;}
+  item.remove();
+}
+
+function toggleOutroCargo(sel){
+  const wrap=sel.closest('.resp-item').querySelector('.resp-item-outro');
+  wrap.style.display=sel.value==='Outro'?'block':'none';
+}
+
+function coletarResponsaveis(){
+  return Array.from(document.querySelectorAll('.resp-item')).map(item=>{
+    const nome=item.querySelector('.resp-nome').value.trim();
+    const cargoSel=item.querySelector('.resp-cargo').value;
+    const cargoOutro=item.querySelector('.resp-outro').value.trim();
+   const cargo=cargoSel==='Outro'?cargoOutro:cargoSel;
+const tel=item.querySelector('.resp-tel').value.trim();
+return {nome,cargo,tel};
+  }).filter(r=>r.nome||r.cargo||r.tel);
+}
+
+async function salvarEmpresa(){
+  Object.assign(EMP,{
+    razao:document.getElementById('e-razao').value.trim(),
+    fantasia:document.getElementById('e-fantasia').value.trim(),
+    cnpj:document.getElementById('e-cnpj').value.trim(),
+    ie:document.getElementById('e-ie').value.trim(),
+    segmento:document.getElementById('e-seg').value,
+    regime:document.getElementById('e-regime').value,
+    email:document.getElementById('e-email').value.trim(),
+    tel:document.getElementById('e-tel').value.trim(),
+    cidade:document.getElementById('e-cidade').value.trim(),
+    estado:document.getElementById('e-estado').value,
+    obs:document.getElementById('e-obs').value.trim(),
+    responsaveis:coletarResponsaveis()
+  });
+  salvarDB();
+  const { error } = await supa.from('empresas').upsert({
+    id: EMP.id, razao: EMP.razao, fantasia: EMP.fantasia, cnpj: EMP.cnpj,
+    ie: EMP.ie, segmento: EMP.segmento, regime: EMP.regime, email: EMP.email,
+    tel: EMP.tel, cidade: EMP.cidade, estado: EMP.estado,
+    obs: EMP.obs, responsaveis: EMP.responsaveis || [],
+    logo: EMP.logo || null
+  }, { onConflict: 'id' });
+  if (error) console.warn('Erro Supabase empresa:', error);
+  renderEmpresa();
+  toast('Dados da empresa salvos!','ok');
+  notificarModulos('dados_atualizados');
+}
+
+// ═══ BANCOS ═══
+function renderBancos(){
+  const bancos=DB.bancos[EMP.id]||[];
+  const lancs=DB.lancamentos[EMP.id]||[];
+
+  document.getElementById('tbody-bancos').innerHTML=bancos.map(b=>{
+    // Saldo real = saldo inicial + recebimentos pagos - pagamentos pagos nesta conta
+    const movimentos=lancs.filter(l=>l.bancoId===b.id&&l.dtPagamento);
+    const saldoCalculado=movimentos.reduce((s,l)=>s+(l.tipo==='receber'?l.valor:-l.valor), b.saldo||0);
+
+    const limite=b.limite||0;
+    // Limite utilizado = quanto do limite está sendo consumido (saldo negativo)
+    const limiteUsado=limite>0 ? Math.max(0,-saldoCalculado) : 0;
+    const limiteDisp=limite-limiteUsado;
+    const pctUsado=limite>0 ? Math.min(100,(limiteUsado/limite)*100) : 0;
+    const corBarra=pctUsado>=90?'var(--vermelho)':pctUsado>=60?'var(--amarelo)':'var(--verde-ok)';
+
+    const limiteHtml=limite>0
+      ?`<div style="margin-top:5px;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--texto3);margin-bottom:3px;">
+            <span>Limite: <strong style="color:var(--texto2);">${fmtM(limite)}</strong></span>
+            <span>Disponível: <strong style="color:${limiteDisp<=0?'var(--vermelho)':'var(--verde-ok)'};">${fmtM(Math.max(0,limiteDisp))}</strong></span>
+          </div>
+          <div style="height:4px;background:var(--n100);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${pctUsado}%;background:${corBarra};border-radius:2px;transition:width .3s;"></div>
+          </div>
+          ${limiteUsado>0?`<div style="font-size:10px;color:${corBarra};margin-top:2px;">Utilizando ${fmtM(limiteUsado)} do limite (${pctUsado.toFixed(0)}%)</div>`:''}
+        </div>`
+      :'';
+
+    const saldoDisplay=saldoCalculado!==b.saldo
+      ?saldoCalculado
+      :b.saldo||0;
+
+    return`<tr>
+    <td><div style="font-weight:500;">${b.nome}</div>${b.obs?`<div style="font-size:10px;color:var(--texto3);">${b.obs}</div>`:''}${limiteHtml}</td>
+    <td>${b.banco}</td>
+    <td>${b.tipo}</td>
+    <td><span style="font-family:var(--fonte-m);font-size:11px;color:var(--texto3);">${b.agencia?`Ag ${b.agencia} / `:''} ${b.conta||'—'}</span></td>
+    <td>
+      <div class="saldo-inline">
+        <input type="number" step="0.01" value="${saldoDisplay.toFixed(2)}" onchange="atualizarSaldo('${b.id}',this.value)" style="width:120px;background:var(--n050);border:1px solid var(--n100);border-radius:var(--r-sm);padding:5px 8px;font-size:12px;font-family:var(--fonte-m);outline:none;${saldoDisplay<0?'color:var(--vermelho);':''}">
+        <button class="btn-icon" onclick="salvarSaldo('${b.id}')">✓</button>
+      </div>
+    </td>
+    <td class="center"><label class="switch"><input type="checkbox" ${b.ativo!==false?'checked':''} onchange="toggleBanco('${b.id}',this.checked)"><span class="slider"></span></label></td>
+    <td class="center">
+      <div style="display:flex;gap:4px;justify-content:center;">
+        <button class="btn-icon" onclick="editarBanco('${b.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
+        <button class="btn-icon del" onclick="excluirBanco('${b.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Excluir</button>
+      </div>
+    </td>
+  </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--texto3);">Nenhuma conta cadastrada</td></tr>';
+}
+
+function abrirModalBanco(id=null){
+  editandoBanco=id;
+  document.getElementById('banco-modal-titulo').textContent=id?'Editar Conta':'Nova Conta';
+  ['b-nome','b-agencia','b-conta','b-obs','b-banco-outro'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('b-saldo').value='0';
+  document.getElementById('b-limite').value='';
+  document.getElementById('b-banco').value='Bradesco';
+  document.getElementById('b-outro-wrap').classList.add('hidden');
+  if(id){
+    const b=(DB.bancos[EMP.id]||[]).find(x=>x.id===id);
+    if(b){
+      document.getElementById('b-nome').value=b.nome||'';
+      // Se o banco salvo não está na lista padrão, é "Outro"
+      const opcoesPadrao=['Bradesco','Itaú','Santander','Banco do Brasil','Caixa Econômica Federal','Nubank','Sicoob','Sicredi','Inter','C6 Bank','BTG Pactual'];
+      const ehOutro = b.banco && !opcoesPadrao.includes(b.banco);
+      document.getElementById('b-banco').value = ehOutro ? 'Outro' : (b.banco||'Bradesco');
+      if(ehOutro){
+        document.getElementById('b-banco-outro').value = b.banco||'';
+        document.getElementById('b-outro-wrap').classList.remove('hidden');
+      }
+      document.getElementById('b-tipo').value=b.tipo||'Conta Corrente';
+      document.getElementById('b-saldo').value=b.saldo||0;
+      document.getElementById('b-agencia').value=b.agencia||'';
+      document.getElementById('b-conta').value=b.conta||'';
+      document.getElementById('b-limite').value=b.limite||'';
+      document.getElementById('b-obs').value=b.obs||'';
+    }
+  }
+  document.getElementById('overlay-banco').classList.add('aberto');
+}
+
+function editarBanco(id){abrirModalBanco(id);}
+
+function toggleOutroBanco(sel){
+  document.getElementById('b-outro-wrap').classList.toggle('hidden', sel.value!=='Outro');
+  if(sel.value!=='Outro') document.getElementById('b-banco-outro').value='';
+}
+
+async function salvarBanco(){
+  const nome=document.getElementById('b-nome').value.trim();
+  if(!nome){toast('Informe o nome da conta','err');return;}
+  const bancroSel=document.getElementById('b-banco').value;
+  const bancoNome = bancroSel==='Outro'
+    ? document.getElementById('b-banco-outro').value.trim()
+    : bancroSel;
+  if(!bancoNome){toast('Informe o nome do banco','err');return;}
+  const banco={
+    id:editandoBanco||uid(),
+    nome,
+    banco: bancoNome,
+    tipo:document.getElementById('b-tipo').value,
+    saldo:parseFloat(document.getElementById('b-saldo').value)||0,
+    agencia:document.getElementById('b-agencia').value.trim(),
+    conta:document.getElementById('b-conta').value.trim(),
+    limite:parseFloat(document.getElementById('b-limite').value)||0,
+    obs:document.getElementById('b-obs').value.trim(),
+    ativo:true
+  };
+  if(!DB.bancos[EMP.id]) DB.bancos[EMP.id]=[];
+  if(editandoBanco){
+    const idx=DB.bancos[EMP.id].findIndex(b=>b.id===editandoBanco);
+    if(idx>=0) DB.bancos[EMP.id][idx]=banco;
+  } else {
+    DB.bancos[EMP.id].push(banco);
+  }
+  salvarDB();
+  await upsertBancoSupa(banco, EMP.id);
+  fecharModal('overlay-banco');
+  renderBancos();
+  toast(editandoBanco?'Conta atualizada!':'Conta criada!','ok');
+  notificarModulos('banco_atualizado');
+}
+
+async function excluirBanco(id){
+  if(!confirm('Excluir esta conta?')) return;
+  DB.bancos[EMP.id]=(DB.bancos[EMP.id]||[]).filter(b=>b.id!==id);
+  salvarDB(); renderBancos();
+  toast('Conta excluída','ok');
+  await supa.from('bancos').delete().eq('id', id);
+  notificarModulos('banco_atualizado');
+}
+
+async function toggleBanco(id,val){
+  const b=(DB.bancos[EMP.id]||[]).find(x=>x.id===id);
+  if(b){b.ativo=val;salvarDB();await upsertBancoSupa(b, EMP.id);}
+}
+
+function atualizarSaldo(id,val){
+  const b=(DB.bancos[EMP.id]||[]).find(x=>x.id===id);
+  if(b) b.saldo=parseFloat(val)||0;
+}
+
+async function salvarSaldo(id){
+  const b=(DB.bancos[EMP.id]||[]).find(x=>x.id===id);
+  salvarDB();
+  if(b) await upsertBancoSupa(b, EMP.id);
+  renderBancos();toast('Saldo atualizado!','ok');
+  notificarModulos('banco_atualizado');
+}
+
+// ═══ CARTÕES DE CRÉDITO ═══
+let editandoCartao = null;
+
+async function upsertCartaoSupa(c, eid) {
+  const { error } = await supa.from('cartoes').upsert({
+    id: c.id, empresa_id: eid, nome: c.nome, bandeira: c.bandeira,
+    banco: c.banco, limite: c.limite || 0, fechamento: c.fechamento,
+    vencimento: c.vencimento,
+    obs: c.obs, ativo: c.ativo !== false
+  }, { onConflict: 'id' });
+  if (error) console.warn('Erro Supabase cartoes:', error);
+}
+
+function calcularFaturaAberta(cartaoId, eid) {
+  // Soma lançamentos do cartão sem pagamento de fatura
+  const lancs = DB.lancamentos[eid] || [];
+  // Lançamentos vinculados ao cartão como conta (bancoId) e sem dtPagamento (pendentes)
+  const faturados = lancs.filter(l => l.cartaoId === cartaoId);
+  return faturados.reduce((s, l) => s + (l.tipo === 'pagar' ? l.valor : -l.valor), 0);
+}
+
+function calcularLimiteUsado(cartao, eid) {
+  const lancs = DB.lancamentos[eid] || [];
+  // Soma despesas vinculadas ao cartão ainda não pagas (fatura em aberto)
+ const pendentes = lancs.filter(l => l.cartaoId === cartao.id && l.tipo === 'pagar' && !l.faturaQuitada && !l._isAutoFatura);
+  const usado = pendentes.reduce((s, l) => s + l.valor, 0);
+  return usado;
+}
+
+function renderCartoes() {
+  const cartoes = DB.cartoes[EMP.id] || [];
+  const lancs = DB.lancamentos[EMP.id] || [];
+
+  // Cards visuais
+  const grid = document.getElementById('grid-cartoes');
+  if (!cartoes.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--texto3);font-size:13px;">Nenhum cartão cadastrado. Clique em <strong>+ Novo cartão</strong> para começar.</div>';
+  } else {
+    grid.innerHTML = cartoes.filter(c => c.ativo !== false).map(c => {
+      const limiteUsado = calcularLimiteUsado(c, EMP.id);
+      const limite = c.limite || 0;
+      const disponivel = Math.max(0, limite - limiteUsado);
+      const pct = limite > 0 ? Math.min(100, (limiteUsado / limite) * 100) : 0;
+      const corBarra = pct >= 90 ? '#c0392b' : pct >= 60 ? '#d97706' : 'var(--g300)';
+      const bandeiraCor = { Visa: '#1a1f71', Mastercard: '#eb001b', Elo: '#007b5e', 'American Express': '#2e77bc', Hipercard: '#c8102e' }[c.bandeira] || 'var(--d600)';
+      return `<div class="cartao-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
+          <div class="cartao-bandeira" style="color:${bandeiraCor}!important;filter:brightness(2);">${c.bandeira}</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-icon" style="border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);" onclick="editarCartao('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          </div>
+        </div>
+        <div class="cartao-nome">${c.nome}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">${c.banco} · Fecha dia ${c.fechamento} · Vence dia ${c.vencimento}</div>
+        <div class="cartao-limite-info">
+          <div class="cartao-limite-item"><span class="cartao-limite-label">Limite</span><span class="cartao-limite-val">${fmtM(limite)}</span></div>
+          <div class="cartao-limite-item"><span class="cartao-limite-label">Usado</span><span class="cartao-limite-val usado">${fmtM(limiteUsado)}</span></div>
+          <div class="cartao-limite-item"><span class="cartao-limite-label">Disponível</span><span class="cartao-limite-val disponivel">${fmtM(disponivel)}</span></div>
+        </div>
+        <div class="cartao-bar-wrap">
+          <div class="cartao-bar"><div class="cartao-bar-fill" style="width:${pct}%;background:${corBarra};"></div></div>
+          <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:3px;">${pct.toFixed(0)}% utilizado</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Tabela
+  document.getElementById('tbody-cartoes').innerHTML = cartoes.map(c => {
+    const limiteUsado = calcularLimiteUsado(c, EMP.id);
+    const limite = c.limite || 0;
+    const disponivel = Math.max(0, limite - limiteUsado);
+    const corDisp = disponivel < limite * 0.15 ? 'var(--vermelho)' : disponivel < limite * 0.4 ? 'var(--amarelo)' : 'var(--verde-ok)';
+    return `<tr>
+      <td><div style="font-weight:500;">${c.nome}</div>${c.obs ? `<div style="font-size:10px;color:var(--texto3);">${c.obs}</div>` : ''}</td>
+      <td><span class="tag tag-cartao">${c.bandeira}</span></td>
+      <td style="font-family:var(--fonte-m);font-size:12px;">Dia ${c.fechamento}</td>
+      <td style="font-family:var(--fonte-m);font-size:12px;">Dia ${c.vencimento}</td>
+      <td style="font-family:var(--fonte-m);font-size:12px;">${fmtM(limite)}</td>
+      <td style="font-family:var(--fonte-m);font-size:12px;color:${corDisp};font-weight:600;">${fmtM(disponivel)}</td>
+      <td class="center"><label class="switch"><input type="checkbox" ${c.ativo !== false ? 'checked' : ''} onchange="toggleCartao('${c.id}',this.checked)"><span class="slider"></span></label></td>
+      <td class="center">
+        <div style="display:flex;gap:4px;justify-content:center;">
+          <button class="btn-icon" onclick="editarCartao('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
+          <button class="btn-icon del" onclick="excluirCartao('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Excluir</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--texto3);">Nenhum cartão cadastrado</td></tr>';
+}
+
+function abrirModalCartao(id = null) {
+  editandoCartao = id;
+  document.getElementById('cartao-modal-titulo').textContent = id ? 'Editar Cartão' : 'Novo Cartão';
+  ['ct-nome', 'ct-obs', 'ct-banco-outro'].forEach(x => document.getElementById(x).value = '');
+  document.getElementById('ct-limite').value = '';
+  document.getElementById('ct-fechamento').value = '';
+  document.getElementById('ct-vencimento').value = '';
+  document.getElementById('ct-bandeira').value = 'Visa';
+  document.getElementById('ct-banco').value = 'Nubank';
+  document.getElementById('ct-outro-wrap').classList.add('hidden');
+
+  if (id) {
+    const c = (DB.cartoes[EMP.id] || []).find(x => x.id === id);
+    if (c) {
+      document.getElementById('ct-nome').value = c.nome || '';
+      document.getElementById('ct-bandeira').value = c.bandeira || 'Visa';
+      const opcoesBanco = ['Nubank','Itaú','Bradesco','Santander','Banco do Brasil','Caixa Econômica Federal','Sicoob','Sicredi','Inter','C6 Bank','BTG Pactual'];
+      const ehOutro = c.banco && !opcoesBanco.includes(c.banco);
+      document.getElementById('ct-banco').value = ehOutro ? 'Outro' : (c.banco || 'Nubank');
+      if (ehOutro) { document.getElementById('ct-banco-outro').value = c.banco || ''; document.getElementById('ct-outro-wrap').classList.remove('hidden'); }
+      document.getElementById('ct-limite').value = c.limite || '';
+      document.getElementById('ct-fechamento').value = c.fechamento || '';
+      document.getElementById('ct-vencimento').value = c.vencimento || '';
+      document.getElementById('ct-obs').value = c.obs || '';
+    }
+  } else {
+    // Sem pré-preenchimento adicional para novo cartão
+  }
+  document.getElementById('overlay-cartao').classList.add('aberto');
+}
+
+function editarCartao(id) { abrirModalCartao(id); }
+
+function toggleOutroBancoCartao(sel) {
+  document.getElementById('ct-outro-wrap').classList.toggle('hidden', sel.value !== 'Outro');
+  if (sel.value !== 'Outro') document.getElementById('ct-banco-outro').value = '';
+}
+
+async function salvarCartao() {
+  const nome = document.getElementById('ct-nome').value.trim();
+  if (!nome) { toast('Informe o nome do cartão', 'err'); return; }
+  const limite = parseFloat(document.getElementById('ct-limite').value) || 0;
+  if (!limite) { toast('Informe o limite do cartão', 'err'); return; }
+  const fechamento = parseInt(document.getElementById('ct-fechamento').value) || 0;
+  const vencimento = parseInt(document.getElementById('ct-vencimento').value) || 0;
+  if (!fechamento || fechamento < 1 || fechamento > 31) { toast('Informe o dia de fechamento (1-31)', 'err'); return; }
+  if (!vencimento || vencimento < 1 || vencimento > 31) { toast('Informe o dia de vencimento (1-31)', 'err'); return; }
+  const bancoSel = document.getElementById('ct-banco').value;
+  const bancoNome = bancoSel === 'Outro' ? document.getElementById('ct-banco-outro').value.trim() : bancoSel;
+  if (!bancoNome) { toast('Informe o banco emissor', 'err'); return; }
+
+  const cartao = {
+    id: editandoCartao || uid(),
+    nome, bandeira: document.getElementById('ct-bandeira').value,
+    banco: bancoNome, limite, fechamento, vencimento,
+    obs: document.getElementById('ct-obs').value.trim(),
+    ativo: true
+  };
+
+  if (!DB.cartoes[EMP.id]) DB.cartoes[EMP.id] = [];
+  if (editandoCartao) {
+    const idx = DB.cartoes[EMP.id].findIndex(c => c.id === editandoCartao);
+    if (idx >= 0) { DB.cartoes[EMP.id][idx] = { ...DB.cartoes[EMP.id][idx], ...cartao }; }
+  } else {
+    DB.cartoes[EMP.id].push(cartao);
+  }
+  salvarDB();
+  await upsertCartaoSupa(cartao, EMP.id);
+  fecharModal('overlay-cartao');
+  renderCartoes();
+  toast(editandoCartao ? 'Cartão atualizado!' : 'Cartão criado!', 'ok');
+  notificarModulos('cartao_atualizado');
+}
+
+async function excluirCartao(id) {
+  if (!confirm('Excluir este cartão? Lançamentos vinculados não serão removidos.')) return;
+  DB.cartoes[EMP.id] = (DB.cartoes[EMP.id] || []).filter(c => c.id !== id);
+  // Remove automaticamente a subcategoria gerada para este cartão
+  removerCatCartao(id);
+  salvarDB(); renderCartoes(); renderCategorias();
+  toast('Cartão excluído', 'ok');
+  await supa.from('cartoes').delete().eq('id', id);
+  notificarModulos('cartao_atualizado');
+}
+
+async function toggleCartao(id, val) {
+  const c = (DB.cartoes[EMP.id] || []).find(x => x.id === id);
+  if (c) { c.ativo = val; salvarDB(); await upsertCartaoSupa(c, EMP.id); renderCartoes(); }
+}
+
+function exportarCartoesCSV() {
+  const cartoes = DB.cartoes[EMP.id] || [];
+  const linhas = [['Nome','Bandeira','Banco','Limite (R$)','Fechamento','Vencimento','Fatura Atual (R$)','Fatura Ref','Obs','Ativo']];
+  cartoes.forEach(c => {
+    linhas.push([c.nome, c.bandeira, c.banco, (c.limite||0).toFixed(2).replace('.',','), c.fechamento, c.vencimento, (c.faturaAtual||0).toFixed(2).replace('.',','), c.faturaRef||'', c.obs||'', c.ativo!==false?'Sim':'Não']);
+  });
+  const csv = '\ufeff' + linhas.map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = `cartoes_${(EMP.fantasia||EMP.razao).replace(/\s/g,'_')}.csv`;
+  a.click(); toast('CSV exportado!', 'ok');
+}
+
+function exportarCartoesJSON() {
+  const cartoes = DB.cartoes[EMP.id] || [];
+  const blob = new Blob([JSON.stringify({empresa:EMP.fantasia||EMP.razao, cartoes, exportadoEm:new Date().toISOString()}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cartoes_${(EMP.fantasia||EMP.razao).replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); toast('JSON exportado!', 'ok');
+}
+
+// ═══ CATEGORIAS ═══
+function getCodigo(cats, c){
+  // Determina prefixo-mãe
+  const prefixMae = c.mae==='Entradas'?'1':'2';
+  if(!c.pai){
+    // 1º nível: contar irmãos (mesmo mae, sem pai) antes dele
+    const irmaos=cats.filter(x=>x.mae===c.mae&&!x.pai);
+    const pos=irmaos.findIndex(x=>x.id===c.id)+1;
+    return `${prefixMae}.${pos}`;
+  } else {
+    // 2º nível: filho de uma categoria
+    const pai=cats.find(x=>x.id===c.pai);
+    const codPai=getCodigo(cats, pai);
+    const filhos=cats.filter(x=>x.pai===c.pai);
+    const pos=filhos.findIndex(x=>x.id===c.id)+1;
+    return `${codPai}.${pos}`;
+  }
+}
+
+function getCatsOrdenadas(cats){
+  // Retorna cópia do array com itens ordenados por (mae, pai, ordem)
+  return [...cats].sort((a,b)=>{
+    if(a.mae!==b.mae) return a.mae.localeCompare(b.mae);
+    const pA=a.pai||'';const pB=b.pai||'';
+    if(pA!==pB) return pA.localeCompare(pB);
+    return (a.ordem??0)-(b.ordem??0);
+  });
+}
+
+function renderCategorias(){
+  // Usar cópia ordenada — nunca mutar o array original aqui
+  const cats=getCatsOrdenadas(DB.categorias[EMP.id]||[]);
+  // Atualizar o array em DB com a mesma ordem para getCodigo funcionar corretamente
+  DB.categorias[EMP.id]=cats;
+  const ents=cats.filter(c=>c.mae==='Entradas'&&!c.pai);
+  const sais=cats.filter(c=>c.mae==='Saídas'&&!c.pai);
+  const totalEnt=cats.filter(c=>c.mae==='Entradas').length;
+  const totalSai=cats.filter(c=>c.mae==='Saídas').length;
+  document.getElementById('qt-entradas').textContent=`${totalEnt} categorias`;
+  document.getElementById('qt-saidas').textContent=`${totalSai} categorias`;
+
+  const renderLista=(nivel1,contenedorId)=>{
+    if(!nivel1.length){
+      document.getElementById(contenedorId).innerHTML='<div style="padding:1.2rem;text-align:center;color:var(--texto3);font-size:12px;">Nenhuma categoria</div>';
+      return;
+    }
+    document.getElementById(contenedorId).innerHTML=nivel1.map(c=>{
+      const cod=getCodigo(cats,c);
+      const filhos=cats.filter(x=>x.pai===c.id);
+      const filhosHtml=filhos.map(f=>{
+        const codF=getCodigo(cats,f);
+        const btnDelFilho=f._protegido
+          ?``
+          :`<button class="btn-icon del" onclick="excluirCat('${f.id}')">✕</button>`;
+        return `<div class="cat-item cat-nivel2">
+          <span class="cat-cod-d">${codF}</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:500;">${f.nome}</div>
+            ${f.descricao?`<div style="font-size:10px;color:var(--texto3);">${f.descricao}</div>`:''}
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-icon" onclick="moverCat('${f.id}','up')" title="Mover para cima" style="padding:4px 6px;">▲</button>
+            <button class="btn-icon" onclick="moverCat('${f.id}','down')" title="Mover para baixo" style="padding:4px 6px;">▼</button>
+            <button class="btn-icon" onclick="editarCat('${f.id}')">Editar</button>
+            ${btnDelFilho}
+          </div>
+        </div>`;
+      }).join('');
+      const btnDelPai=c._protegido
+        ?``
+        :`<button class="btn-icon del" onclick="excluirCat('${c.id}')">✕</button>`;
+      return `<div class="cat-item cat-nivel1">
+        <span class="cat-cod">${cod}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;">${c.nome}</div>
+          ${c.descricao?`<div style="font-size:10px;color:var(--texto3);">${c.descricao}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn-icon" onclick="moverCat('${c.id}','up')" title="Mover para cima" style="padding:4px 6px;">▲</button>
+          <button class="btn-icon" onclick="moverCat('${c.id}','down')" title="Mover para baixo" style="padding:4px 6px;">▼</button>
+          <button class="btn-icon" onclick="abrirModalCat(null,'${c.mae}','${c.id}')" title="Adicionar subdivisão" style="color:var(--g500);border-color:var(--g400);">+ Sub</button>
+          <button class="btn-icon" onclick="editarCat('${c.id}')">Editar</button>
+          ${btnDelPai}
+        </div>
+      </div>
+      ${filhos.length?`<div class="cat-sub-wrap aberto">${filhosHtml}</div>`:''}`;
+    }).join('');
+  };
+  renderLista(ents,'lista-entradas');
+  renderLista(sais,'lista-saidas');
+}
+
+function atualizarSelectPai(){
+  const mae=document.getElementById('cat-mae').value;
+  const cats=DB.categorias[EMP.id]||[];
+  const nivel1=cats.filter(c=>c.mae===mae&&!c.pai);
+  const sel=document.getElementById('cat-pai');
+  const idEditando=editandoCat;
+  sel.innerHTML='<option value="">— Categoria de 1º nível (sem subdivisão) —</option>'+
+    nivel1.filter(c=>c.id!==idEditando).map(c=>`<option value="${c.id}">${getCodigo(cats,c)} — ${c.nome}</option>`).join('');
+}
+
+function abrirModalCat(id=null, maePreset=null, paiPreset=null){
+  editandoCat=id;
+  document.getElementById('cat-modal-titulo').textContent=id?'Editar Categoria':paiPreset?'Nova Subdivisão':'Nova Categoria';
+  document.getElementById('cat-nome').value='';
+  document.getElementById('cat-desc').value='';
+  document.getElementById('cat-pai').value='';
+  if(id){
+    const c=(DB.categorias[EMP.id]||[]).find(x=>x.id===id);
+    if(c){
+      document.getElementById('cat-nome').value=c.nome;
+      document.getElementById('cat-mae').value=c.mae;
+      document.getElementById('cat-desc').value=c.descricao||'';
+      atualizarSelectPai();
+      document.getElementById('cat-pai').value=c.pai||'';
+    }
+  } else {
+    document.getElementById('cat-mae').value=maePreset||'Entradas';
+    atualizarSelectPai();
+    if(paiPreset) document.getElementById('cat-pai').value=paiPreset;
+  }
+  document.getElementById('overlay-cat').classList.add('aberto');
+}
+
+function editarCat(id){abrirModalCat(id);}
+
+async function salvarCategoria(){
+  const nome=document.getElementById('cat-nome').value.trim();
+  if(!nome){toast('Informe o nome da categoria','err');return;}
+  const pai=document.getElementById('cat-pai').value||null;
+  const mae=document.getElementById('cat-mae').value;
+  const allCats=DB.categorias[EMP.id]||[];
+  // Calcular ordem: se novo, vai para o final do grupo; se editando, mantém ordem atual
+  let ordemCat=0;
+  if(editandoCat){
+    const existing=allCats.find(c=>c.id===editandoCat);
+    ordemCat=existing?.ordem??0;
+  } else {
+    const irmaosFim=allCats.filter(c=>c.mae===mae&&(c.pai||null)===(pai||null));
+    ordemCat=irmaosFim.length>0?Math.max(...irmaosFim.map(c=>c.ordem??0))+1:0;
+  }
+  const cat={id:editandoCat||uid(),nome,mae,pai,descricao:document.getElementById('cat-desc').value.trim(),ordem:ordemCat};
+  if(!DB.categorias[EMP.id]) DB.categorias[EMP.id]=[];
+  if(editandoCat){const idx=DB.categorias[EMP.id].findIndex(c=>c.id===editandoCat);if(idx>=0)DB.categorias[EMP.id][idx]=cat;}
+  else DB.categorias[EMP.id].push(cat);
+  salvarDB();
+  await upsertCategoriaSupa(cat, EMP.id);
+  fecharModal('overlay-cat');renderCategorias();
+  toast(editandoCat?'Categoria atualizada!':'Categoria criada!','ok');
+  notificarModulos('dados_atualizados');
+}
+
+async function excluirCat(id){
+  const cats=DB.categorias[EMP.id]||[];
+  const cat=cats.find(c=>c.id===id);
+
+  // Bloqueia exclusão de categorias protegidas
+  if(cat&&cat._protegido){
+    if(cat._cartaoId){
+      toast('Esta categoria é gerada automaticamente pelo cartão e não pode ser excluída. Para removê-la, exclua o cartão correspondente.','err');
+    } else {
+      toast('A categoria "'+cat.nome+'" é protegida pelo sistema e não pode ser excluída.','err');
+    }
+    return;
+  }
+
+  const temFilhos=cats.some(c=>c.pai===id);
+  if(temFilhos&&!confirm('Esta categoria possui subdivisões. Excluir também removerá as subdivisões. Continuar?')) return;
+  if(!temFilhos&&!confirm('Excluir esta categoria?')) return;
+  const idsParaDeletar=[id, ...cats.filter(c=>c.pai===id).map(c=>c.id)];
+  DB.categorias[EMP.id]=cats.filter(c=>c.id!==id&&c.pai!==id);
+  salvarDB();renderCategorias();toast('Categoria excluída','ok');
+  // Deleta pai e todos os filhos no Supabase
+  await supa.from('categorias').delete().in('id', idsParaDeletar);
+  notificarModulos('dados_atualizados');
+}
+
+// ═══ REORDENAR CATEGORIAS ═══
+async function moverCat(id, direcao){
+  const cats=DB.categorias[EMP.id]||[];
+  const c=cats.find(x=>x.id===id);
+  if(!c)return;
+  // Irmãos no mesmo grupo, ordenados
+  const irmaos=cats
+    .filter(x=>x.mae===c.mae&&(x.pai||null)===(c.pai||null))
+    .sort((a,b)=>(a.ordem??0)-(b.ordem??0));
+  // Normalizar ordens sequenciais para garantir valores únicos
+  irmaos.forEach((x,i)=>{ x.ordem=i; });
+  const idx=irmaos.findIndex(x=>x.id===id);
+  const outro=direcao==='up'?irmaos[idx-1]:irmaos[idx+1];
+  if(!outro)return;
+  // Trocar apenas os dois
+  const tmp=c.ordem;
+  c.ordem=outro.ordem;
+  outro.ordem=tmp;
+  salvarDB();
+  renderCategorias();
+  // Uma única chamada RPC para trocar os dois no banco
+  await supa.rpc('trocar_ordem_categorias', {
+    id1: c.id, ordem1: c.ordem,
+    id2: outro.id, ordem2: outro.ordem
+  });
+}
+
+// ═══ CENTROS DE CUSTO ═══
+function renderCC(){
+  const ccs=DB.centrosCusto[EMP.id]||[];
+  const lancs=DB.lancamentos[EMP.id]||[];
+  document.getElementById('tbody-cc').innerHTML=ccs.map(c=>{
+    const qt=lancs.filter(l=>l.centroCusto===c.id).length;
+    return`<tr>
+      <td><div style="font-weight:500;">${c.nome}</div>${c.resp?`<div style="font-size:10px;color:var(--texto3);">Resp: ${c.resp}</div>`:''}</td>
+      <td><span style="font-family:var(--fonte-m);font-size:11px;background:var(--n050);padding:2px 6px;border-radius:4px;">${c.cod||'—'}</span></td>
+      <td style="color:var(--texto3);font-size:11px;">${c.desc||'—'}</td>
+      <td>${qt} lançamentos</td>
+      <td class="center">
+        <div style="display:flex;gap:4px;justify-content:center;">
+          <button class="btn-icon" onclick="editarCC('${c.id}')">Editar</button>
+          <button class="btn-icon del" onclick="excluirCC('${c.id}')">Excluir</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--texto3);">Nenhum centro de custo</td></tr>';
+}
+
+function abrirModalCC(id=null){
+  editandoCC=id;
+  document.getElementById('cc-modal-titulo').textContent=id?'Editar Centro de Custo':'Novo Centro de Custo';
+  ['cc-nome','cc-cod','cc-resp','cc-desc'].forEach(x=>document.getElementById(x).value='');
+  if(id){const c=(DB.centrosCusto[EMP.id]||[]).find(x=>x.id===id);if(c){document.getElementById('cc-nome').value=c.nome;document.getElementById('cc-cod').value=c.cod||'';document.getElementById('cc-resp').value=c.resp||'';document.getElementById('cc-desc').value=c.desc||'';}}
+  document.getElementById('overlay-cc').classList.add('aberto');
+}
+
+function editarCC(id){abrirModalCC(id);}
+
+async function salvarCC(){
+  const nome=document.getElementById('cc-nome').value.trim();
+  if(!nome){toast('Informe o nome','err');return;}
+  const cc={id:editandoCC||uid(),nome,cod:document.getElementById('cc-cod').value.trim(),resp:document.getElementById('cc-resp').value.trim(),desc:document.getElementById('cc-desc').value.trim()};
+  if(!DB.centrosCusto[EMP.id]) DB.centrosCusto[EMP.id]=[];
+  if(editandoCC){const idx=DB.centrosCusto[EMP.id].findIndex(c=>c.id===editandoCC);if(idx>=0)DB.centrosCusto[EMP.id][idx]=cc;}
+  else DB.centrosCusto[EMP.id].push(cc);
+  salvarDB();
+  await upsertCCSupa(cc, EMP.id);
+  fecharModal('overlay-cc');renderCC();
+  toast(editandoCC?'Centro atualizado!':'Centro criado!','ok');
+  notificarModulos('dados_atualizados');
+}
+
+async function excluirCC(id){
+  if(!confirm('Excluir este centro de custo?'))return;
+  DB.centrosCusto[EMP.id]=(DB.centrosCusto[EMP.id]||[]).filter(c=>c.id!==id);
+  salvarDB();renderCC();toast('Centro excluído','ok');
+  await supa.from('centros_custo').delete().eq('id', id);
+  notificarModulos('dados_atualizados');
+}
+
+// ═══ FORNECEDORES ═══
+function renderFornecedores(){
+  if(!DB.fornecedoresObj) DB.fornecedoresObj={};
+  const termo=(document.getElementById('forn-busca')||{}).value||'';
+  filtrarFornecedores(termo);
+}
+
+function filtrarFornecedores(termo){
+  if(termo===undefined) termo=(document.getElementById('forn-busca')||{}).value||'';
+  if(!DB.fornecedoresObj) DB.fornecedoresObj={};
+  const forns=DB.fornecedoresObj[EMP.id]||[];
+  const lancs=DB.lancamentos[EMP.id]||[];
+  const q=termo.trim().toLowerCase();
+  const filtrados=q?forns.filter(f=>{
+    const tipoLabel={fornecedor:'fornecedor',cliente:'cliente',ambos:'ambos'}[f.tipo]||f.tipo;
+    return [f.nome,tipoLabel,f.doc,f.email,f.tel,f.cidade,f.obs].some(v=>(v||'').toLowerCase().includes(q));
+  }):forns;
+  document.getElementById('tbody-forns').innerHTML=filtrados.map(f=>{
+    const qt=lancs.filter(l=>(l.fornecedor||'').toLowerCase()===f.nome.toLowerCase()).length;
+    const tipoLabel={fornecedor:'Fornecedor',cliente:'Cliente',ambos:'Ambos'}[f.tipo]||f.tipo;
+    return`<tr>
+      <td>
+        <div style="font-weight:500;">${f.nome}</div>
+        ${f.obs?`<div style="font-size:11px;color:var(--texto3);margin-top:2px;">${f.obs}</div>`:''}
+      </td>
+      <td><span class="tag" style="background:var(--n050);color:var(--texto2);">${tipoLabel}</span></td>
+      <td><span style="font-family:var(--fonte-m);font-size:11px;">${f.doc||'—'}</span></td>
+      <td style="font-size:11px;color:var(--texto3);">${f.email||'—'}</td>
+      <td>${qt}</td>
+      <td class="center">
+        <div style="display:flex;gap:4px;justify-content:center;">
+          <button class="btn-icon" onclick="editarForn('${f.id}')">Editar</button>
+          <button class="btn-icon del" onclick="excluirForn('${f.id}')">Excluir</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||(q
+    ?`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--texto3);">Nenhum resultado para "<strong>${termo}</strong>"</td></tr>`
+    :'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--texto3);">Nenhum contato cadastrado</td></tr>');
+}
+
+function abrirModalForn(id=null){
+  editandoForn=id;
+  document.getElementById('forn-modal-titulo').textContent=id?'Editar Contato':'Novo Contato';
+  ['forn-nome','forn-doc','forn-email','forn-tel','forn-cidade','forn-obs'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('forn-tipo').value='fornecedor';
+  if(id){
+    const f=(DB.fornecedoresObj[EMP.id]||[]).find(x=>x.id===id);
+    if(f){document.getElementById('forn-nome').value=f.nome;document.getElementById('forn-tipo').value=f.tipo;document.getElementById('forn-doc').value=f.doc||'';document.getElementById('forn-email').value=f.email||'';document.getElementById('forn-tel').value=f.tel||'';document.getElementById('forn-cidade').value=f.cidade||'';document.getElementById('forn-obs').value=f.obs||'';}
+  }
+  document.getElementById('overlay-forn').classList.add('aberto');
+}
+
+function editarForn(id){abrirModalForn(id);}
+
+async function salvarForn(){
+  const nome=document.getElementById('forn-nome').value.trim();
+  if(!nome){toast('Informe o nome','err');return;}
+  const f={id:editandoForn||uid(),nome,tipo:document.getElementById('forn-tipo').value,doc:document.getElementById('forn-doc').value.trim(),email:document.getElementById('forn-email').value.trim(),tel:document.getElementById('forn-tel').value.trim(),cidade:document.getElementById('forn-cidade').value.trim(),obs:document.getElementById('forn-obs').value.trim()};
+  if(!DB.fornecedoresObj) DB.fornecedoresObj={};
+  if(!DB.fornecedoresObj[EMP.id]) DB.fornecedoresObj[EMP.id]=[];
+  if(!DB.fornecedores[EMP.id]) DB.fornecedores[EMP.id]=[];
+  if(editandoForn){const idx=DB.fornecedoresObj[EMP.id].findIndex(x=>x.id===editandoForn);if(idx>=0)DB.fornecedoresObj[EMP.id][idx]=f;}
+  else{DB.fornecedoresObj[EMP.id].push(f);if(!DB.fornecedores[EMP.id].includes(nome))DB.fornecedores[EMP.id].push(nome);}
+  salvarDB();
+  await upsertFornSupa(f, EMP.id);
+  fecharModal('overlay-forn');renderFornecedores();
+  toast(editandoForn?'Contato atualizado!':'Contato criado!','ok');
+  notificarModulos('dados_atualizados');
+}
+
+async function excluirForn(id){
+  if(!confirm('Excluir este contato?'))return;
+  if(DB.fornecedoresObj&&DB.fornecedoresObj[EMP.id]){
+    const forn = DB.fornecedoresObj[EMP.id].find(f=>f.id===id);
+    DB.fornecedoresObj[EMP.id]=DB.fornecedoresObj[EMP.id].filter(f=>f.id!==id);
+    // Remove também do array de nomes
+    if(forn && DB.fornecedores[EMP.id])
+      DB.fornecedores[EMP.id]=DB.fornecedores[EMP.id].filter(n=>n!==forn.nome);
+  }
+  salvarDB();renderFornecedores();toast('Contato excluído','ok');
+  await supa.from('fornecedores').delete().eq('id', id);
+  notificarModulos('dados_atualizados');
+}
+
+// ═══ BACKUP ═══
+function renderBackup(){
+  const lancs=(DB.lancamentos[EMP.id]||[]).length;
+  const bancos=(DB.bancos[EMP.id]||[]).length;
+  const cats=(DB.categorias[EMP.id]||[]).length;
+  const cartoes=(DB.cartoes[EMP.id]||[]).length;
+  const dbSize=new Blob([JSON.stringify(DB)]).size;
+  document.getElementById('db-info').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+      <div style="background:var(--n050);padding:.8rem;border-radius:var(--r-md);text-align:center;"><div style="font-family:var(--fonte-d);font-size:1.4rem;font-weight:700;">${lancs}</div><div style="font-size:11px;color:var(--texto3);">Lançamentos</div></div>
+      <div style="background:var(--n050);padding:.8rem;border-radius:var(--r-md);text-align:center;"><div style="font-family:var(--fonte-d);font-size:1.4rem;font-weight:700;">${bancos}</div><div style="font-size:11px;color:var(--texto3);">Contas bancárias</div></div>
+      <div style="background:var(--n050);padding:.8rem;border-radius:var(--r-md);text-align:center;"><div style="font-family:var(--fonte-d);font-size:1.4rem;font-weight:700;">${cartoes}</div><div style="font-size:11px;color:var(--texto3);">Cartões</div></div>
+      <div style="background:var(--n050);padding:.8rem;border-radius:var(--r-md);text-align:center;"><div style="font-family:var(--fonte-d);font-size:1.4rem;font-weight:700;">${cats}</div><div style="font-size:11px;color:var(--texto3);">Categorias</div></div>
+    </div>
+    <div style="margin-top:1rem;font-size:12px;color:var(--texto3);">Tamanho dos dados: <strong>${(dbSize/1024).toFixed(1)} KB</strong> · Sincronizado com Supabase · Cache local no navegador</div>`;
+}
+
+function exportarBackup(){
+  const dados={empresa:EMP,bancos:DB.bancos[EMP.id],lancamentos:DB.lancamentos[EMP.id],categorias:DB.categorias[EMP.id],centrosCusto:DB.centrosCusto[EMP.id],fornecedores:DB.fornecedores[EMP.id],fornecedoresObj:(DB.fornecedoresObj||{})[EMP.id],orcamentos:(DB.orcamentos||{})[EMP.id],cartoes:(DB.cartoes||{})[EMP.id],exportadoEm:new Date().toISOString(),dreConfig: JSON.parse(localStorage.getItem('caster_dre_config')||'null'), };
+  const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`backup_${(EMP.fantasia||EMP.razao).replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('Backup exportado com sucesso!','ok');
+}
+
+function importarBackup(e){
+  const f=e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const dados=JSON.parse(ev.target.result);
+      if(!confirm(`Importar backup de "${dados.empresa?.razao}"?\nIsso substituirá os dados atuais desta empresa.`)) return;
+      const id=EMP.id;
+      if(dados.empresa) Object.assign(EMP,dados.empresa,{id});
+      if(dados.bancos) DB.bancos[id]=dados.bancos;
+      if(dados.lancamentos) DB.lancamentos[id]=dados.lancamentos;
+      if(dados.categorias) DB.categorias[id]=dados.categorias;
+      if(dados.centrosCusto) DB.centrosCusto[id]=dados.centrosCusto;
+      if(dados.fornecedores) DB.fornecedores[id]=dados.fornecedores;
+      if(!DB.fornecedoresObj) DB.fornecedoresObj={};
+      if(dados.fornecedoresObj) DB.fornecedoresObj[id]=dados.fornecedoresObj;
+      if(!DB.orcamentos) DB.orcamentos={};
+      if(dados.orcamentos) DB.orcamentos[id]=dados.orcamentos;
+      if(!DB.cartoes) DB.cartoes={};
+      if(dados.cartoes) DB.cartoes[id]=dados.cartoes;
+      salvarDB();renderBackup();
+if(dados.dreConfig) localStorage.setItem('caster_dre_config', JSON.stringify(dados.dreConfig));
+      toast('Backup importado com sucesso!','ok');
+    } catch(err){ toast('Erro ao importar: arquivo inválido','err'); }
+  };
+  r.readAsText(f);
+}
+
+function exportarTodosCSV(){
+  const lancs=DB.lancamentos[EMP.id]||[];
+  const cats=DB.categorias[EMP.id]||[];
+  const ccs=DB.centrosCusto[EMP.id]||[];
+  const linhas=[['Tipo','Fornecedor','Descrição','Categoria','C.Custo','Competência','Vencimento','Pagamento','Valor','Status','Documento','Conciliado']];
+  const hj=new Date().toISOString().slice(0,10);
+  lancs.forEach(l=>{
+    const cat=(cats.find(c=>c.id===l.categoria)||{}).nome||'';
+    const cc=(ccs.find(c=>c.id===l.centroCusto)||{}).nome||'';
+    const s=!l.dtPagamento?(l.dtVencimento<hj?'Vencido':'Pendente'):(l.tipo==='receber'?'Recebido':'Pago');
+    const fmt=d=>{if(!d)return'';const[y,m,dia]=d.split('-');return`${dia}/${m}/${y}`;};
+    linhas.push([l.tipo==='receber'?'Receber':'Pagar',l.fornecedor,l.descricao,cat,cc,fmt(l.dtCompetencia),fmt(l.dtVencimento),fmt(l.dtPagamento),l.valor.toFixed(2).replace('.',','),s,l.documento,l.conciliado?'Sim':'Não']);
+  });
+  const csv='\ufeff'+linhas.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`lancamentos_${(EMP.fantasia||EMP.razao).replace(/\s/g,'_')}.csv`;
+  a.click();
+  toast('CSV exportado!','ok');
+}
+
+function limparLancamentos(){
+  if(!confirm('⚠ Tem certeza? Todos os lançamentos desta empresa serão excluídos permanentemente.')) return;
+  DB.lancamentos[EMP.id]=[];
+  salvarDB();renderBackup();
+  toast('Lançamentos excluídos','ok');
+  supa.from('lancamentos').delete().eq('empresa_id', EMP.id).then(({error})=>{
+    if(error) console.warn('Erro ao limpar lançamentos no Supabase:', error);
+  });
+}
+
+function resetarTudo(){
+  if(prompt('Digite CONFIRMAR para resetar todo o sistema:') !== 'CONFIRMAR'){toast('Operação cancelada');return;}
+  localStorage.removeItem(CHAVE);
+  toast('Sistema resetado. Recarregando...','ok');
+  setTimeout(()=>window.location.href='caster-modulo1-painel.html',1500);
+}
+
+function toast(msg,tipo=''){
+  const c=document.getElementById('toasts');const t=document.createElement('div');
+  t.className='toast'+(tipo==='ok'?' ok':tipo==='err'?' err':'');
+  t.innerHTML=msg;c.appendChild(t);setTimeout(()=>t.remove(),3200);
+}
+
+function previewLogo(input){
+  const file=input.files[0];
+  if(!file)return;
+
+  // Comprime a imagem para no máximo 800px e ~200KB antes de salvar
+  const img=new Image();
+  const urlTemp=URL.createObjectURL(file);
+  img.onload=function(){
+    URL.revokeObjectURL(urlTemp);
+    const MAX=800;
+    let w=img.width, h=img.height;
+    if(w>MAX||h>MAX){
+      if(w>h){h=Math.round(h*MAX/w);w=MAX;}
+      else{w=Math.round(w*MAX/h);h=MAX;}
+    }
+    const canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    // Tenta WebP, cai em JPEG se não suportado
+    let dataUrl=canvas.toDataURL('image/webp',0.82);
+    if(!dataUrl.startsWith('data:image/webp')) dataUrl=canvas.toDataURL('image/jpeg',0.82);
+    EMP.logo=dataUrl;
+    document.getElementById('logo-img').src=dataUrl;
+    document.getElementById('logo-preview').style.display='flex';
+    salvarDB();
+    // Persiste logo no Supabase imediatamente, sem esperar "Salvar alterações"
+    supa.from('empresas').update({ logo: dataUrl }).eq('id', EMP.id).then(({error})=>{
+      if(error){ console.warn('Erro ao salvar logo no Supabase:', error); toast('Logo salva localmente (erro no servidor)','err'); }
+      else toast('Logo salva com sucesso!','ok');
+    });
+  };
+  img.onerror=function(){
+    // Fallback: lê como DataURL sem compressão
+    const reader=new FileReader();
+    reader.onload=e=>{
+      EMP.logo=e.target.result;
+      document.getElementById('logo-img').src=e.target.result;
+      document.getElementById('logo-preview').style.display='flex';
+      salvarDB();
+      supa.from('empresas').update({ logo: e.target.result }).eq('id', EMP.id).then(({error})=>{
+        if(error){ console.warn('Erro ao salvar logo no Supabase:', error); toast('Logo salva localmente (erro no servidor)','err'); }
+        else toast('Logo salva com sucesso!','ok');
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+  img.src=urlTemp;
+}
+
+function removerLogo(){
+  EMP.logo=null;
+  document.getElementById('logo-preview').style.display='none';
+  document.getElementById('e-logo').value='';
+  salvarDB();
+  supa.from('empresas').update({ logo: null }).eq('id', EMP.id).then(({error})=>{
+    if(error) console.warn('Erro ao remover logo no Supabase:', error);
+  });
+  toast('Logo removida','ok');
+}
+
+// ═══ MÁSCARAS ═══
+function mascaraCNPJ(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length<=11){
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  } else {
+    v=v.replace(/(\d{2})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1/$2');
+    v=v.replace(/(\d{4})(\d{1,2})$/,'$1-$2');
+  }
+  el.value=v;
+}
+
+function mascaraTel(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>11) v=v.slice(0,11);
+  if(v.length<=10){
+    v=v.replace(/(\d{2})(\d)/,'($1) $2');
+    v=v.replace(/(\d{4})(\d{1,4})$/,'$1-$2');
+  } else {
+    v=v.replace(/(\d{2})(\d)/,'($1) $2');
+    v=v.replace(/(\d{5})(\d{1,4})$/,'$1-$2');
+  }
+  el.value=v;
+}
+
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('aberto');}));
+
+const eid=sessionStorage.getItem('empresa_ativa');
+if(!eid&&DB.empresas.length) sessionStorage.setItem('empresa_ativa',DB.empresas[0].id);
+
+// ══════════════════════════════════════════════════
+// SINCRONIZAÇÃO — notifica todos os módulos abertos
+// ══════════════════════════════════════════════════
+function notificarModulos(tipo) {
+  const eid = EMP?.id;
+  const payload = { tipo, empresaId: eid };
+  // 1) iframe → pai (módulo 1)
+  try { window.parent.postMessage(payload, '*'); } catch(_){}
+  // 2) mesma aba → outros iframes via BroadcastChannel
+  try {
+    const bc = new BroadcastChannel('caster_bpo');
+    bc.postMessage(payload);
+    bc.close();
+  } catch(_){}
+}
+
+// ── SUPABASE REALTIME: escuta mudanças feitas por outros usuários/abas ──
+// Subscreve nas tabelas relevantes para a empresa ativa.
+// Se outro usuário (ou outra aba) alterar dados, esta aba recarrega automaticamente.
+(function iniciarRealtimeConf() {
+  const eid = sessionStorage.getItem('empresa_ativa');
+  if (!eid) return;
+
+  const canal = supa
+    .channel('conf-sync-' + eid)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bancos',        filter: `empresa_id=eq.${eid}` }, () => { init(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'categorias',    filter: `empresa_id=eq.${eid}` }, () => { init(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'centros_custo', filter: `empresa_id=eq.${eid}` }, () => { init(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'fornecedores',  filter: `empresa_id=eq.${eid}` }, () => { init(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'cartoes',       filter: `empresa_id=eq.${eid}` }, () => { init(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'empresas',      filter: `id=eq.${eid}` },         () => { init(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'lancamentos',   filter: `empresa_id=eq.${eid}` }, () => { recarregarLimitesCartoes(); })
+    .subscribe();
+
+  // Limpa canal ao fechar/navegar
+  window.addEventListener('beforeunload', () => { try { supa.removeChannel(canal); } catch(_){} });
+})();
+
+// ── BroadcastChannel: recebe avisos de outros módulos (ex: novo lançamento de cartão) ──
+(function ouvirModulos() {
+  try {
+    const bc = new BroadcastChannel('caster_bpo');
+    bc.onmessage = function(e) {
+      const tipo = e.data?.tipo || '';
+      if (tipo === 'cartao_atualizado' || tipo === 'lancamento_salvo' || tipo === 'dados_atualizados' || tipo === 'banco_atualizado') {
+        recarregarLimitesCartoes();
+      }
+    };
+    window.addEventListener('beforeunload', () => { try { bc.close(); } catch(_){} });
+  } catch(_) {}
+})();
+
+// Recarrega apenas os lançamentos e re-renderiza cartões (sem full init)
+async function recarregarLimitesCartoes() {
+  if (!EMP) return;
+  try {
+    const { data: lancsData } = await supa.from('lancamentos')
+      .select('id,tipo,valor,cartaoId:cartao_id,faturaQuitada:fatura_quitada,obs')
+      .eq('empresa_id', EMP.id);
+    if (lancsData) {
+      DB.lancamentos[EMP.id] = lancsData.map(l => ({
+        ...l,
+        cartaoId:      l.cartaoId      ?? l.cartao_id      ?? null,
+        faturaQuitada: l.faturaQuitada === true || l.fatura_quitada === true || false,
+        _isAutoFatura: (l.obs||'').startsWith('__auto_fatura__') || false,
+      }));
+      salvarDB();
+    }
+  } catch(e) { 
+    // Fallback: usa localStorage (já atualizado pelo módulo 2 via salvarDB)
+    const CHAVE = 'caster_bpo_v2';
+    try {
+      const cache = JSON.parse(localStorage.getItem(CHAVE) || 'null');
+      if (cache?.lancamentos?.[EMP.id]) DB.lancamentos[EMP.id] = cache.lancamentos[EMP.id];
+    } catch(_) {}
+  }
+  // Re-renderiza só a seção de cartões se estiver visível
+  const confCartoes = document.getElementById('conf-cartoes');
+  if (confCartoes && !confCartoes.classList.contains('hidden')) {
+    renderCartoes();
+  }
+  // Atualiza cards visuais mesmo se a seção de cartões não estiver aberta
+  const grid = document.getElementById('grid-cartoes');
+  if (grid) renderCartoes();
+}
+
+init();
+</script>
+</body>
+</html>
